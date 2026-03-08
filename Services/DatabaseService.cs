@@ -7,7 +7,7 @@ namespace ShadowrunDiscordBot.Services;
 /// <summary>
 /// Database service with Entity Framework Core and SQLite
 /// </summary>
-public class DatabaseService : IAsyncDisposable
+public partial class DatabaseService : IAsyncDisposable
 {
     private readonly ShadowrunDbContext _context;
     private readonly ILogger<DatabaseService> _logger;
@@ -320,6 +320,33 @@ public class ShadowrunDbContext : DbContext
     public DbSet<ActiveICE> ActiveICE { get; set; } = null!;
     public DbSet<AstralState> AstralStates { get; set; } = null!;
     public DbSet<AstralSignature> AstralSignatures { get; set; } = null!;
+    
+    // Game Session Management
+    public DbSet<GameSession> GameSessions { get; set; } = null!;
+    public DbSet<SessionParticipant> SessionParticipants { get; set; } = null!;
+    public DbSet<NarrativeEvent> NarrativeEvents { get; set; } = null!;
+    public DbSet<PlayerChoice> PlayerChoices { get; set; } = null!;
+    public DbSet<NPCRelationship> NPCRelationships { get; set; } = null!;
+    public DbSet<ActiveMission> ActiveMissions { get; set; } = null!;
+    public DbSet<MissionDefinition> MissionDefinitions { get; set; } = null!;
+    
+    // Session Management (Phase 4)
+    public DbSet<SessionBreak> SessionBreaks { get; set; } = null!;
+    public DbSet<SessionTag> SessionTags { get; set; } = null!;
+    public DbSet<SessionNote> SessionNotes { get; set; } = null!;
+    public DbSet<CompletedSession> CompletedSessions { get; set; } = null!;
+    public DbSet<CompletedSessionTag> CompletedSessionTags { get; set; } = null!;
+    public DbSet<CompletedSessionNote> CompletedSessionNotes { get; set; } = null!;
+
+    // Dynamic Content Engine (Phase 5)
+    public DbSet<SessionContentData> SessionContentData { get; set; } = null!;
+    public DbSet<NPCPersonalityData> NPCPersonalityData { get; set; } = null!;
+    public DbSet<NPCLearningEvent> NPCLearningEvents { get; set; } = null!;
+    public DbSet<GeneratedContent> GeneratedContent { get; set; } = null!;
+    public DbSet<PerformanceMetricsRecord> PerformanceMetricsRecords { get; set; } = null!;
+    public DbSet<StoryPreferencesRecord> StoryPreferencesRecords { get; set; } = null!;
+    public DbSet<ContentRegeneration> ContentRegenerations { get; set; } = null!;
+    public DbSet<CampaignArcRecord> CampaignArcRecords { get; set; } = null!;
 
     public ShadowrunDbContext(DbContextOptions<ShadowrunDbContext> options) : base(options)
     {
@@ -387,5 +414,207 @@ public class ShadowrunDbContext : DbContext
 
         modelBuilder.Entity<CombatSession>()
             .HasIndex(s => new { s.DiscordChannelId, s.IsActive });
+
+        // Game Session relationships
+        modelBuilder.Entity<GameSession>()
+            .HasMany(s => s.Participants)
+            .WithOne(p => p.GameSession)
+            .HasForeignKey(p => p.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<GameSession>()
+            .HasMany(s => s.NarrativeEvents)
+            .WithOne(e => e.GameSession)
+            .HasForeignKey(e => e.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<GameSession>()
+            .HasMany(s => s.PlayerChoices)
+            .WithOne(c => c.GameSession)
+            .HasForeignKey(c => c.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<GameSession>()
+            .HasMany(s => s.NPCRelationships)
+            .WithOne(r => r.GameSession)
+            .HasForeignKey(r => r.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<GameSession>()
+            .HasMany(s => s.ActiveMissions)
+            .WithOne(m => m.GameSession)
+            .HasForeignKey(m => m.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SessionParticipant>()
+            .HasOne(p => p.Character)
+            .WithMany()
+            .HasForeignKey(p => p.CharacterId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Game Session indexes
+        modelBuilder.Entity<GameSession>()
+            .HasIndex(s => new { s.DiscordChannelId, s.Status });
+
+        modelBuilder.Entity<GameSession>()
+            .HasIndex(s => s.DiscordGuildId);
+
+        modelBuilder.Entity<NarrativeEvent>()
+            .HasIndex(e => e.GameSessionId);
+
+        modelBuilder.Entity<PlayerChoice>()
+            .HasIndex(c => new { c.GameSessionId, c.DiscordUserId });
+
+        modelBuilder.Entity<NPCRelationship>()
+            .HasIndex(r => new { r.GameSessionId, r.NPCName });
+
+        modelBuilder.Entity<ActiveMission>()
+            .HasIndex(m => new { m.GameSessionId, m.Status });
+
+        // Mission Definition relationships
+        modelBuilder.Entity<MissionDefinition>()
+            .HasOne(m => m.GameSession)
+            .WithMany()
+            .HasForeignKey(m => m.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<MissionDefinition>()
+            .HasIndex(m => new { m.GameSessionId, m.Status });
+
+        // Session Break relationships
+        modelBuilder.Entity<SessionBreak>()
+            .HasOne(b => b.GameSession)
+            .WithMany()
+            .HasForeignKey(b => b.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SessionBreak>()
+            .HasIndex(b => new { b.GameSessionId, b.BreakEndedAt });
+
+        // Session Tag relationships
+        modelBuilder.Entity<SessionTag>()
+            .HasOne(t => t.GameSession)
+            .WithMany()
+            .HasForeignKey(t => t.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SessionTag>()
+            .HasIndex(t => new { t.GameSessionId, t.TagName });
+
+        // Session Note relationships
+        modelBuilder.Entity<SessionNote>()
+            .HasOne(n => n.GameSession)
+            .WithMany()
+            .HasForeignKey(n => n.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SessionNote>()
+            .HasIndex(n => n.GameSessionId);
+
+        // Completed Session relationships
+        modelBuilder.Entity<CompletedSession>()
+            .HasMany(s => s.Tags)
+            .WithOne(t => t.CompletedSession)
+            .HasForeignKey(t => t.CompletedSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CompletedSession>()
+            .HasMany(s => s.Notes)
+            .WithOne(n => n.CompletedSession)
+            .HasForeignKey(n => n.CompletedSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Completed Session indexes
+        modelBuilder.Entity<CompletedSession>()
+            .HasIndex(s => new { s.DiscordGuildId, s.StartedAt });
+
+        modelBuilder.Entity<CompletedSession>()
+            .HasIndex(s => s.OriginalSessionId);
+
+        modelBuilder.Entity<CompletedSession>()
+            .HasIndex(s => new { s.DiscordChannelId, s.ArchivedAt });
+
+        // Phase 5: Session Content Data
+        modelBuilder.Entity<SessionContentData>()
+            .HasOne<GameSession>()
+            .WithMany()
+            .HasForeignKey(d => d.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SessionContentData>()
+            .HasIndex(d => d.GameSessionId)
+            .IsUnique();
+
+        // Phase 5: NPC Personality Data
+        modelBuilder.Entity<NPCPersonalityData>()
+            .HasOne<GameSession>()
+            .WithMany()
+            .HasForeignKey(d => d.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<NPCPersonalityData>()
+            .HasIndex(d => new { d.GameSessionId, d.NPCName })
+            .IsUnique();
+
+        // Phase 5: NPC Learning Events
+        modelBuilder.Entity<NPCLearningEvent>()
+            .HasOne<GameSession>()
+            .WithMany()
+            .HasForeignKey(e => e.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<NPCLearningEvent>()
+            .HasIndex(e => new { e.GameSessionId, e.NPCName });
+
+        // Phase 5: Generated Content
+        modelBuilder.Entity<GeneratedContent>()
+            .HasOne<GameSession>()
+            .WithMany()
+            .HasForeignKey(c => c.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<GeneratedContent>()
+            .HasIndex(c => new { c.GameSessionId, c.ContentType });
+
+        // Phase 5: Performance Metrics
+        modelBuilder.Entity<PerformanceMetricsRecord>()
+            .HasOne<GameSession>()
+            .WithMany()
+            .HasForeignKey(m => m.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PerformanceMetricsRecord>()
+            .HasIndex(m => new { m.GameSessionId, m.RecordedAt });
+
+        // Phase 5: Story Preferences
+        modelBuilder.Entity<StoryPreferencesRecord>()
+            .HasOne<GameSession>()
+            .WithMany()
+            .HasForeignKey(p => p.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<StoryPreferencesRecord>()
+            .HasIndex(p => p.GameSessionId)
+            .IsUnique();
+
+        // Phase 5: Content Regeneration
+        modelBuilder.Entity<ContentRegeneration>()
+            .HasOne<GameSession>()
+            .WithMany()
+            .HasForeignKey(r => r.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ContentRegeneration>()
+            .HasIndex(r => new { r.GameSessionId, r.ContentType });
+
+        // Phase 5: Campaign Arc Records
+        modelBuilder.Entity<CampaignArcRecord>()
+            .HasOne<GameSession>()
+            .WithMany()
+            .HasForeignKey(a => a.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CampaignArcRecord>()
+            .HasIndex(a => new { a.GameSessionId, a.IsCompleted });
     }
 }

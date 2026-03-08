@@ -79,6 +79,15 @@ class Program
             Console.WriteLine("  /combat start/status/end/add/remove/next/attack/reroll-init - Combat system");
             Console.WriteLine("  /matrix deck-info - Matrix commands");
             Console.WriteLine("  /cyberware list - Cyberware management");
+            Console.WriteLine();
+            Console.WriteLine("  Dynamic Content (Phase 5):");
+            Console.WriteLine("  /difficulty - View/adjust difficulty");
+            Console.WriteLine("  /campaign arc - Campaign arc management");
+            Console.WriteLine("  /content regenerate - Regenerate content");
+            Console.WriteLine("  /learning status - AI learning status");
+            Console.WriteLine("  /story evolve/hook - Story evolution");
+            Console.WriteLine("  /npc learn/profile - NPC learning");
+            Console.WriteLine();
             Console.WriteLine("  /help - Get help with commands");
             Console.WriteLine();
             Console.WriteLine("Press Ctrl+C to exit...");
@@ -134,6 +143,25 @@ class Program
                 services.AddSingleton<DiceService>();
                 services.AddSingleton<DatabaseService>();
                 services.AddSingleton<CombatService>();
+                services.AddSingleton<GMService>();
+                
+                // Game Session Management
+                services.AddSingleton<GameSessionService>();
+                services.AddSingleton<NarrativeContextService>();
+                
+                // Autonomous Mission System (Phase 2)
+                services.AddSingleton<AutonomousMissionService>();
+                
+                // Interactive Storytelling System (Phase 3)
+                services.AddSingleton<InteractiveStoryService>();
+                
+                // Session Management System (Phase 4)
+                services.AddSingleton<SessionManagementService>();
+                
+                // Dynamic Content Engine (Phase 5)
+                services.AddSingleton<ContentDatabaseService>();
+                services.AddSingleton<DynamicContentEngine>();
+                services.AddSingleton<Commands.DynamicContentCommands>();
                 
                 // Web UI
                 services.AddHostedService<WebUIService>();

@@ -1,208 +1,418 @@
-# Implementation Verification Checklist
+# Phase 1 Implementation Verification Checklist
 
-## ✅ All Requirements Completed
+## Pre-Deployment Verification
 
-### 1. GMService.cs Creation
-- [x] File created at: `/Services/GMService.cs`
-- [x] File size: 16,667 bytes (356 lines)
-- [x] Namespace: `ShadowrunDiscordBot.Services`
-- [x] Dependencies: DiceService (injected via constructor)
+### ✅ Code Structure
+- [x] All model classes inherit from proper base classes
+- [x] All services follow async/await pattern
+- [x] All methods have XML documentation
+- [x] Proper using statements in all files
+- [x] No circular dependencies
 
-### 2. Mission Generator
-- [x] Method: `GenerateMission(string missionType)`
-- [x] Mission types implemented:
-  - [x] cyberdeck (5 templates)
-  - [x] assassination (5 templates)
-  - [x] extraction (5 templates)
-  - [x] theft (5 templates)
-  - [x] investigation (5 templates)
-- [x] Total templates: 25
-- [x] Template structure includes placeholders
+### ✅ Database Models
+- [x] Primary keys defined with [Key] attribute
+- [x] Required fields marked with [Required]
+- [x] MaxLength constraints on string fields
+- [x] Navigation properties virtual
+- [x] Collections initialized
+- [x] Enums defined for status fields
 
-### 3. NPC Generator
-- [x] Method: `GenerateNPC(string role)`
-- [x] NPC roles implemented:
-  - [x] corporate exec
-  - [x] fixer
-  - [x] street doc
-  - [x] shadowrunner
-  - [x] corporate guard
-  - [x] terrorist
-- [x] Generated attributes:
-  - [x] Name (randomized)
-  - [x] Role
-  - [x] Company (10 megacorps)
-  - [x] Description (3 variations per role)
-  - [x] Stats (INT, BODY, REA, STR, CHR, EDGE)
-  - [x] Motivation (6 types)
-  - [x] Backstory (6 templates)
-  - [x] Difficulty rating
-- [x] NPC class defined
+### ✅ Service Implementation
+- [x] Constructor injection used
+- [x] ILogger injected and used
+- [x] Async methods return Task<T>
+- [x] Proper try-catch blocks
+- [x] Comprehensive logging
+- [x] Validation before operations
 
-### 4. Location Generator
-- [x] Method: `GenerateLocation(string locationType)`
-- [x] Location types implemented:
-  - [x] corporate (5 locations)
-  - [x] seedy (5 locations)
-  - [x] safehouse (5 locations)
-  - [x] combat (5 locations)
-- [x] Total locations: 20
+### ✅ Command Handler
+- [x] All commands registered in BuildSlashCommands()
+- [x] Command routing added in RouteCommandAsync()
+- [x] Handler methods implemented
+- [x] Error handling in place
+- [x] Ephemeral responses for errors
+- [x] Embeds for rich responses
 
-### 5. Plot Hook Generator
-- [x] Method: `GeneratePlotHook()`
-- [x] Total plot hooks: 8
-- [x] Variety of scenarios covered
+### ✅ Dependency Injection
+- [x] Services registered in Program.cs
+- [x] Services injected where needed
+- [x] No circular dependencies
+- [x] Singleton vs Scoped properly used
 
-### 6. Loot Generator
-- [x] Method: `GenerateLoot()`
-- [x] Total loot types: 8
-- [x] Includes: data shards, nuyen, cyberware, weapons, etc.
+### ✅ Database Context
+- [x] DbSets added for all new entities
+- [x] Relationships configured in OnModelCreating
+- [x] Indexes created for performance
+- [x] Cascade deletes configured
+- [x] Foreign keys properly set
 
-### 7. Random Event Generator
-- [x] Method: `GenerateRandomEvent()`
-- [x] Total event types: 8
-- [x] Complications and opportunities
+## Compilation Checks
 
-### 8. Equipment Generator
-- [x] Method: `GenerateEquipment(string type)`
-- [x] Equipment types implemented:
-  - [x] weapon (6 options)
-  - [x] armor (4 options)
-  - [x] cyberware (5 options)
-  - [x] general (4 options)
-- [x] Total equipment: 19
+### File Structure
+```
+✅ Models/
+   ✅ GameSessionModels.cs (NEW)
 
-## ✅ CommandHandler Integration
+✅ Services/
+   ✅ GameSessionService.cs (NEW)
+   ✅ NarrativeContextService.cs (NEW)
+   ✅ DatabaseService.GameSession.cs (NEW)
+   ✅ DatabaseService.cs (UPDATED - partial class)
 
-### Command Registration
-- [x] `/npc` command registered in `BuildSlashCommands()`
-- [x] `/mission` command registered in `BuildSlashCommands()`
-- [x] `/location` command registered in `BuildSlashCommands()`
-- [x] `/plot-hook` command registered in `BuildSlashCommands()`
-- [x] `/loot` command registered in `BuildSlashCommands()`
-- [x] `/random-event` command registered in `BuildSlashCommands()`
-- [x] `/equipment` command registered in `BuildSlashCommands()`
+✅ Core/
+   ✅ CommandHandler.cs (UPDATED)
 
-### Command Routing
-- [x] "npc" case added to `RouteCommandAsync()` switch
-- [x] "mission" case added to `RouteCommandAsync()` switch
-- [x] "location" case added to `RouteCommandAsync()` switch
-- [x] "plot-hook" case added to `RouteCommandAsync()` switch
-- [x] "loot" case added to `RouteCommandAsync()` switch
-- [x] "random-event" case added to `RouteCommandAsync()` switch
-- [x] "equipment" case added to `RouteCommandAsync()` switch
+✅ Program.cs (UPDATED)
 
-### Command Handlers
-- [x] `HandleNPCCommandAsync()` implemented
-- [x] `HandleMissionCommandAsync()` implemented
-- [x] `HandleLocationCommandAsync()` implemented
-- [x] `HandlePlotHookCommandAsync()` implemented
-- [x] `HandleLootCommandAsync()` implemented
-- [x] `HandleRandomEventCommandAsync()` implemented
-- [x] `HandleEquipmentCommandAsync()` implemented
+✅ Documentation/
+   ✅ PHASE1_IMPLEMENTATION_GUIDE.md
+   ✅ PHASE1_SUMMARY.md
+```
 
-### Handler Features
-- [x] Input validation
-- [x] Error handling (try-catch)
-- [x] Logging
-- [x] Discord embed formatting
-- [x] Color coding per command type
-- [x] Timestamps
-- [x] Proper error messages
+### Code Quality Checks
 
-## ✅ Documentation Updates
+#### Models/GameSessionModels.cs
+- [x] All classes public
+- [x] XML comments on all public members
+- [x] Proper data types (int, long, string, DateTime, Enum)
+- [x] Navigation properties virtual
+- [x] No logic in models (pure data)
 
-### README.md
-- [x] GM Toolkit section added to Features
-- [x] Command Reference section created
-- [x] All GM commands documented
-- [x] Usage examples provided
+#### Services/GameSessionService.cs
+- [x] Class public
+- [x] Constructor public
+- [x] All public methods async
+- [x] XML comments on all methods
+- [x] Proper exception handling
+- [x] Logging statements
 
-### Additional Documentation
-- [x] GM_TOOLKIT_DEMO.md created (5,180 bytes)
-- [x] IMPLEMENTATION_SUMMARY.md created (7,727 bytes)
-- [x] VERIFICATION_CHECKLIST.md created (this file)
+#### Services/NarrativeContextService.cs
+- [x] Class public
+- [x] Constructor public
+- [x] All public methods async
+- [x] XML comments on all methods
+- [x] Proper exception handling
+- [x] Logging statements
 
-## ✅ Code Quality
+#### Services/DatabaseService.GameSession.cs
+- [x] Partial class declaration
+- [x] All methods async
+- [x] XML comments
+- [x] Follows existing pattern
+- [x] Proper use of EF Core
 
-### Error Handling
-- [x] All command handlers have try-catch blocks
-- [x] Error messages are user-friendly
-- [x] Errors are logged properly
+#### Core/CommandHandler.cs
+- [x] All commands have descriptions
+- [x] Subcommands properly nested
+- [x] Option types correct
+- [x] Required flags set properly
+- [x] Handler methods match command structure
 
-### Code Structure
-- [x] Follows existing code patterns
-- [x] Proper dependency injection
-- [x] Clean separation of concerns
-- [x] Methods are well-organized
-- [x] Variable names are descriptive
+## Functional Testing Plan
 
-### Performance
-- [x] Uses Random.Shared for efficiency
-- [x] No unnecessary allocations
-- [x] Minimal memory footprint
+### Session Management Tests
+```
+Test 1: Start Session
+Command: /session start name:"Test Session"
+Expected: Session created, success embed displayed
 
-## ✅ Testing Readiness
+Test 2: Join Session
+Command: /session join
+Expected: User added as participant
 
-### Command Testing
-- [x] Commands can be invoked from Discord
-- [x] Parameters are properly parsed
-- [x] Responses are formatted correctly
-- [x] Error cases are handled
+Test 3: Update Location
+Command: /session location name:"Test Location"
+Expected: Location updated
 
-### Integration Testing
-- [x] Works with existing DiceService
-- [x] No conflicts with other commands
-- [x] Compatible with existing systems
+Test 4: Session Status
+Command: /session status
+Expected: Current session info displayed
 
-## ✅ File Integrity
+Test 5: Pause Session
+Command: /session pause
+Expected: Session paused
 
-### Files Created
-1. [x] `/Services/GMService.cs` - 16,667 bytes
-2. [x] `/GM_TOOLKIT_DEMO.md` - 5,180 bytes
-3. [x] `/IMPLEMENTATION_SUMMARY.md` - 7,727 bytes
-4. [x] `/VERIFICATION_CHECKLIST.md` - This file
+Test 6: Resume Session
+Command: /session resume
+Expected: Session resumed
 
-### Files Modified
-1. [x] `/Core/CommandHandler.cs` - Updated with GM commands
-2. [x] `/README.md` - Updated with GM features and commands
+Test 7: Session Progress
+Command: /session progress
+Expected: Progress summary displayed
 
-## ✅ All Original Requirements Met
+Test 8: End Session
+Command: /session end
+Expected: Session ended, duration shown
+```
 
-From the original task specification:
+### Narrative Tests
+```
+Test 9: Record Event
+Command: /narrative record title:"Test Event" description:"Test description"
+Expected: Event recorded
 
-### 1. Create Services/GMService.cs
-- [x] File created
-- [x] All methods implemented:
-  - [x] GenerateMission()
-  - [x] GenerateNPC()
-  - [x] GenerateLocation()
-  - [x] GeneratePlotHook()
-  - [x] GenerateLoot()
-  - [x] GenerateRandomEvent()
-  - [x] GenerateEquipment()
+Test 10: Generate Summary
+Command: /narrative summary
+Expected: Story summary generated
 
-### 2. Add GM Commands to CommandHandler
-- [x] RegisterCommands method updated (actually BuildSlashCommands)
-- [x] HandleCommand method updated (actually RouteCommandAsync)
-- [x] Handler methods added:
-  - [x] HandleNPCCommand()
-  - [x] HandleMissionCommand()
-  - [x] HandleLocationCommand()
-  - [x] HandlePlotHookCommand()
-  - [x] HandleLootCommand()
-  - [x] HandleRandomEventCommand()
-  - [x] HandleEquipmentCommand()
+Test 11: Search Events
+Command: /narrative search term:"Test"
+Expected: Matching events shown
+```
 
-## Summary
+### NPC Relationship Tests
+```
+Test 12: Create NPC
+Command: /npc-relationship update name:"Test NPC" attitude:5 trust:3
+Expected: NPC relationship created
 
-✅ **100% Complete**
-- All required files created
-- All required methods implemented
-- All commands registered and routed
-- All handlers implemented
-- Documentation complete
-- Error handling in place
-- Testing ready
+Test 13: List NPCs
+Command: /npc-relationship list
+Expected: All NPCs listed
 
-The GM Mission Generator and NPC system has been fully implemented and is ready for use.
+Test 14: View NPC
+Command: /npc-relationship view name:"Test NPC"
+Expected: NPC details shown
+```
+
+### Mission Tests
+```
+Test 15: Add Mission
+Command: /mission-track add name:"Test Mission" type:Extraction objective:"Test objective" payment:10000
+Expected: Mission created
+
+Test 16: List Missions
+Command: /mission-track list
+Expected: Active missions shown
+
+Test 17: Update Mission
+Command: /mission-track update id:1 status:Completed
+Expected: Mission status updated
+```
+
+## Database Migration Verification
+
+### Automatic Migration (Recommended)
+```bash
+1. Stop the bot
+2. Ensure shadowrun.db file is writable
+3. Start the bot
+4. Check logs for "Database initialized successfully"
+5. Verify tables created with SQLite browser
+```
+
+### Manual Migration (Alternative)
+```bash
+1. dotnet ef migrations add AddGameSessionManagement
+2. Review generated migration file
+3. dotnet ef database update
+4. Verify tables created
+```
+
+### Expected Tables
+```sql
+GameSessions
+- Id (INTEGER PRIMARY KEY)
+- DiscordChannelId (INTEGER)
+- DiscordGuildId (INTEGER)
+- GameMasterUserId (INTEGER)
+- SessionName (TEXT)
+- InGameDateTime (TEXT)
+- CurrentLocation (TEXT)
+- LocationDescription (TEXT)
+- Status (INTEGER)
+- StartedAt (TEXT)
+- EndedAt (TEXT)
+- LastActivityAt (TEXT)
+- Notes (TEXT)
+- Metadata (TEXT)
+
+SessionParticipants
+- Id (INTEGER PRIMARY KEY)
+- GameSessionId (INTEGER FK)
+- DiscordUserId (INTEGER)
+- CharacterId (INTEGER FK nullable)
+- JoinedAt (TEXT)
+- SessionKarma (INTEGER)
+- SessionNuyen (INTEGER)
+- Notes (TEXT)
+- IsActive (INTEGER)
+
+NarrativeEvents
+- Id (INTEGER PRIMARY KEY)
+- GameSessionId (INTEGER FK)
+- Title (TEXT)
+- Description (TEXT)
+- EventType (INTEGER)
+- InGameDateTime (TEXT)
+- RecordedAt (TEXT)
+- NPCsInvolved (TEXT)
+- Location (TEXT)
+- Tags (TEXT)
+- Importance (INTEGER)
+
+PlayerChoices
+- Id (INTEGER PRIMARY KEY)
+- GameSessionId (INTEGER FK)
+- DiscordUserId (INTEGER)
+- ChoiceDescription (TEXT)
+- PlayerDecision (TEXT)
+- Consequences (TEXT)
+- MadeAt (TEXT)
+- IsResolved (INTEGER)
+- RelatedNarrativeEventId (INTEGER FK nullable)
+
+NPCRelationships
+- Id (INTEGER PRIMARY KEY)
+- GameSessionId (INTEGER FK)
+- NPCName (TEXT)
+- NPCRole (TEXT)
+- Organization (TEXT)
+- Attitude (INTEGER)
+- TrustLevel (INTEGER)
+- Notes (TEXT)
+- FirstMeeting (TEXT)
+- InteractionHistory (TEXT)
+- CreatedAt (TEXT)
+- LastInteraction (TEXT)
+- IsActive (INTEGER)
+
+ActiveMissions
+- Id (INTEGER PRIMARY KEY)
+- GameSessionId (INTEGER FK)
+- MissionName (TEXT)
+- Johnson (TEXT)
+- MissionType (TEXT)
+- Objective (TEXT)
+- Status (INTEGER)
+- PaymentOffered (INTEGER)
+- PaymentReceived (INTEGER nullable)
+- KarmaReward (INTEGER)
+- TargetLocation (TEXT)
+- TargetOrganization (TEXT)
+- Deadline (TEXT nullable)
+- Notes (TEXT)
+- AcceptedAt (TEXT)
+- CompletedAt (TEXT nullable)
+```
+
+### Index Verification
+```sql
+-- Expected indexes
+IX_GameSessions_DiscordChannelId_Status
+IX_GameSessions_DiscordGuildId
+IX_NarrativeEvents_GameSessionId
+IX_PlayerChoices_GameSessionId_DiscordUserId
+IX_NPCRelationships_GameSessionId_NPCName
+IX_ActiveMissions_GameSessionId_Status
+```
+
+## Integration Testing
+
+### Test with Existing Systems
+```
+1. Create character with /character create
+2. Start session with /session start
+3. Join with character: /session join character:[name]
+4. Use existing combat system
+5. Record narrative event
+6. Verify all systems work together
+```
+
+### Performance Testing
+```
+1. Create session with 10+ participants
+2. Record 50+ narrative events
+3. Generate summary
+4. Verify response time < 2 seconds
+```
+
+## Rollback Plan
+
+If issues occur:
+
+### Option 1: Database Rollback
+```bash
+# Keep backup of shadowrun.db before migration
+cp shadowrun.db shadowrun.db.backup
+
+# If issues occur, restore backup
+cp shadowrun.db.backup shadowrun.db
+```
+
+### Option 2: Code Rollback
+```bash
+# Revert to previous commit
+git revert HEAD
+
+# Or remove new files manually
+rm Models/GameSessionModels.cs
+rm Services/GameSessionService.cs
+rm Services/NarrativeContextService.cs
+rm Services/DatabaseService.GameSession.cs
+
+# Restore original files from backup
+```
+
+## Post-Deployment Verification
+
+### Logs to Check
+```
+✅ "Database initialized successfully"
+✅ "Command handler initialized with X commands"
+✅ "Successfully registered X slash commands"
+✅ No error messages on startup
+```
+
+### Discord Bot Verification
+```
+✅ Bot appears online in Discord
+✅ All commands visible in command list
+✅ Commands respond to input
+✅ No permission errors
+```
+
+### Database Verification
+```
+✅ All 6 new tables created
+✅ Indexes created
+✅ Can insert test data
+✅ Can query test data
+✅ Foreign key constraints working
+```
+
+## Known Limitations
+
+1. **No UI for Session Management**
+   - All management via Discord commands
+   - Consider adding web UI in Phase 2
+
+2. **No Automatic Cleanup**
+   - Old sessions remain in database
+   - Consider adding cleanup job in Phase 2
+
+3. **No Export Functionality**
+   - Cannot export session data
+   - Consider adding export in Phase 2
+
+4. **No AI Integration Yet**
+   - Narrative suggestions manual
+   - Consider AI integration in Phase 2
+
+## Success Criteria
+
+✅ Bot starts without errors
+✅ All commands registered
+✅ Database tables created
+✅ Can create and manage sessions
+✅ Can record narrative events
+✅ Can track player choices
+✅ Can manage NPC relationships
+✅ Can track missions
+✅ All existing functionality still works
+✅ Response time < 2 seconds
+✅ No memory leaks
+
+---
+
+**If all checks pass, Phase 1 is ready for production deployment!**

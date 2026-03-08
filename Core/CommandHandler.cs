@@ -350,6 +350,275 @@ public class CommandHandler
             .WithDescription("Get help with bot commands")
             .AddOption("command", ApplicationCommandOptionType.String, "Command to get help with", isRequired: false));
 
+        // Session management commands
+        commands.Add(new SlashCommandBuilder()
+            .WithName("session")
+            .WithDescription("Game session management commands")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("start")
+                .WithDescription("Start a new game session")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("name", ApplicationCommandOptionType.String, "Session name", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("end")
+                .WithDescription("End the current game session")
+                .WithType(ApplicationCommandOptionType.SubCommand))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("pause")
+                .WithDescription("Pause the current game session")
+                .WithType(ApplicationCommandOptionType.SubCommand))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("resume")
+                .WithDescription("Resume a paused game session")
+                .WithType(ApplicationCommandOptionType.SubCommand))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("status")
+                .WithDescription("View current session status")
+                .WithType(ApplicationCommandOptionType.SubCommand))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("list")
+                .WithDescription("List recent sessions in this server")
+                .WithType(ApplicationCommandOptionType.SubCommand))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("progress")
+                .WithDescription("View session progress summary")
+                .WithType(ApplicationCommandOptionType.SubCommand))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("location")
+                .WithDescription("Update current location")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("name", ApplicationCommandOptionType.String, "Location name", isRequired: true)
+                .AddOption("description", ApplicationCommandOptionType.String, "Location description", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("join")
+                .WithDescription("Join the current session")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("character", ApplicationCommandOptionType.String, "Character name to play", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("leave")
+                .WithDescription("Leave the current session")
+                .WithType(ApplicationCommandOptionType.SubCommand))
+            // Phase 4: Session Management Commands
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("archive")
+                .WithDescription("Archive a completed session")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("id", ApplicationCommandOptionType.Integer, "Session ID to archive", isRequired: true)
+                .AddOption("outcome", ApplicationCommandOptionType.String, "Session outcome summary", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("history")
+                .WithDescription("View session history")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("search", ApplicationCommandOptionType.String, "Search term", isRequired: false)
+                .AddOption("tag", ApplicationCommandOptionType.String, "Filter by tag", isRequired: false)
+                .AddOption("limit", ApplicationCommandOptionType.Integer, "Number of sessions to show", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("stats")
+                .WithDescription("View session statistics")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("id", ApplicationCommandOptionType.Integer, "Session ID (optional, uses current if not specified)", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("notes")
+                .WithDescription("Add or view session notes")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("id", ApplicationCommandOptionType.Integer, "Session ID (optional, uses current if not specified)", isRequired: false)
+                .AddOption("text", ApplicationCommandOptionType.String, "Note text (leave empty to view notes)", isRequired: false)
+                .AddOption("type", ApplicationCommandOptionType.String, "Note type (General, Player, Outcome, Reminder)", isRequired: false)
+                .AddOption("pinned", ApplicationCommandOptionType.Boolean, "Pin this note", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("break")
+                .WithDescription("Start a break in the current session")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("reason", ApplicationCommandOptionType.String, "Reason for the break", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("complete")
+                .WithDescription("Mark session as completed and archive")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("outcome", ApplicationCommandOptionType.String, "Session outcome summary", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("search")
+                .WithDescription("Search sessions by name, notes, or tags")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("query", ApplicationCommandOptionType.String, "Search query", isRequired: true)
+                .AddOption("limit", ApplicationCommandOptionType.Integer, "Number of results", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("summary")
+                .WithDescription("Get detailed session summary")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("id", ApplicationCommandOptionType.Integer, "Session ID (optional, uses current if not specified)", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("tags")
+                .WithDescription("Manage session tags")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("action", ApplicationCommandOptionType.String, "Action (add, remove, list)", isRequired: true)
+                .AddOption("tag", ApplicationCommandOptionType.String, "Tag name", isRequired: false)
+                .AddOption("id", ApplicationCommandOptionType.Integer, "Session ID (optional, uses current if not specified)", isRequired: false)
+                .AddOption("category", ApplicationCommandOptionType.String, "Tag category (Campaign, Arc, Group, Theme)", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("category")
+                .WithDescription("Set session category")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("name", ApplicationCommandOptionType.String, "Category name", isRequired: true)
+                .AddOption("id", ApplicationCommandOptionType.Integer, "Session ID (optional, uses current if not specified)", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("time")
+                .WithDescription("View time tracking statistics")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("guild", ApplicationCommandOptionType.Boolean, "Show guild-wide statistics", isRequired: false)));
+
+        // Narrative commands
+        commands.Add(new SlashCommandBuilder()
+            .WithName("narrative")
+            .WithDescription("Narrative and story management commands")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("record")
+                .WithDescription("Record a narrative event")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("title", ApplicationCommandOptionType.String, "Event title", isRequired: true)
+                .AddOption("description", ApplicationCommandOptionType.String, "Event description", isRequired: true)
+                .AddOption("type", ApplicationCommandOptionType.String, "Event type (StoryBeat, Combat, Social, Investigation, PlotTwist, CharacterDevelopment, WorldEvent, PlayerChoice)", isRequired: false)
+                .AddOption("npcs", ApplicationCommandOptionType.String, "NPCs involved (comma-separated)", isRequired: false)
+                .AddOption("importance", ApplicationCommandOptionType.Integer, "Importance level (1-10)", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("summary")
+                .WithDescription("Generate a story summary")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("events", ApplicationCommandOptionType.Integer, "Number of events to include", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("search")
+                .WithDescription("Search narrative events")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("term", ApplicationCommandOptionType.String, "Search term", isRequired: true)));
+
+        // NPC relationship commands
+        commands.Add(new SlashCommandOptionBuilder()
+            .WithName("npc-relationship")
+            .WithDescription("Manage NPC relationships")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("update")
+                .WithDescription("Create or update an NPC relationship")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("name", ApplicationCommandOptionType.String, "NPC name", isRequired: true)
+                .AddOption("attitude", ApplicationCommandOptionType.Integer, "Attitude change (-10 to +10)", isRequired: false)
+                .AddOption("trust", ApplicationCommandOptionType.Integer, "Trust change (0 to 10)", isRequired: false)
+                .AddOption("role", ApplicationCommandOptionType.String, "NPC role", isRequired: false)
+                .AddOption("organization", ApplicationCommandOptionType.String, "NPC organization", isRequired: false)
+                .AddOption("notes", ApplicationCommandOptionType.String, "Notes about NPC", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("list")
+                .WithDescription("List all NPC relationships")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("organization", ApplicationCommandOptionType.String, "Filter by organization", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("view")
+                .WithDescription("View details of an NPC relationship")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("name", ApplicationCommandOptionType.String, "NPC name", isRequired: true)));
+
+        // Mission commands
+        commands.Add(new SlashCommandBuilder()
+            .WithName("mission-track")
+            .WithDescription("Mission tracking commands")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("add")
+                .WithDescription("Add a new mission")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("name", ApplicationCommandOptionType.String, "Mission name", isRequired: true)
+                .AddOption("type", ApplicationCommandOptionType.String, "Mission type", isRequired: true)
+                .AddOption("objective", ApplicationCommandOptionType.String, "Mission objective", isRequired: true)
+                .AddOption("payment", ApplicationCommandOptionType.Integer, "Payment in nuyen", isRequired: true)
+                .AddOption("karma", ApplicationCommandOptionType.Integer, "Karma reward", isRequired: false)
+                .AddOption("johnson", ApplicationCommandOptionType.String, "Johnson name", isRequired: false)
+                .AddOption("location", ApplicationCommandOptionType.String, "Target location", isRequired: false)
+                .AddOption("organization", ApplicationCommandOptionType.String, "Target organization", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("update")
+                .WithDescription("Update mission status")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("id", ApplicationCommandOptionType.Integer, "Mission ID", isRequired: true)
+                .AddOption("status", ApplicationCommandOptionType.String, "New status (Planning, InProgress, Completed, Failed, Aborted)", isRequired: true)
+                .AddOption("notes", ApplicationCommandOptionType.String, "Notes", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("list")
+                .WithDescription("List active missions")
+                .WithType(ApplicationCommandOptionType.SubCommand)));
+
+        // Phase 5: Dynamic Content Engine Commands
+        commands.Add(new SlashCommandBuilder()
+            .WithName("difficulty")
+            .WithDescription("View or adjust current difficulty level")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("view")
+                .WithDescription("View current difficulty and performance metrics")
+                .WithType(ApplicationCommandOptionType.SubCommand))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("adjust")
+                .WithDescription("Manually adjust difficulty level")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("level", ApplicationCommandOptionType.Integer, "New difficulty level (1-10)", isRequired: true)));
+
+        commands.Add(new SlashCommandBuilder()
+            .WithName("campaign")
+            .WithDescription("Manage campaign arcs")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("arc")
+                .WithDescription("View or manage campaign arcs")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("action", ApplicationCommandOptionType.String, "Action (view/start/switch)", isRequired: false)
+                .AddOption("name", ApplicationCommandOptionType.String, "Arc name", isRequired: false)
+                .AddOption("description", ApplicationCommandOptionType.String, "Arc description", isRequired: false)));
+
+        commands.Add(new SlashCommandBuilder()
+            .WithName("content")
+            .WithDescription("Manage dynamic content")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("regenerate")
+                .WithDescription("Regenerate content with new parameters")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("type", ApplicationCommandOptionType.String, "Content type (mission/npc/plothook/encounter)", isRequired: true)
+                .AddOption("difficulty", ApplicationCommandOptionType.Integer, "Override difficulty (1-10)", isRequired: false)));
+
+        commands.Add(new SlashCommandBuilder()
+            .WithName("learning")
+            .WithDescription("View AI learning status")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("status")
+                .WithDescription("View current learning status")
+                .WithType(ApplicationCommandOptionType.SubCommand))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("reset")
+                .WithDescription("Reset learning data for this session")
+                .WithType(ApplicationCommandOptionType.SubCommand)));
+
+        commands.Add(new SlashCommandBuilder()
+            .WithName("story")
+            .WithDescription("Story evolution commands")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("evolve")
+                .WithDescription("Evolve current story based on player choices")
+                .WithType(ApplicationCommandOptionType.SubCommand))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("hook")
+                .WithDescription("Generate a new plot hook")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("type", ApplicationCommandOptionType.String, "Hook type (story/character/world/faction/mystery)", isRequired: false)));
+
+        commands.Add(new SlashCommandBuilder()
+            .WithName("npc-manage")
+            .WithDescription("NPC management and learning")
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("learn")
+                .WithDescription("Record NPC learning data")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("name", ApplicationCommandOptionType.String, "NPC name", isRequired: true)
+                .AddOption("event", ApplicationCommandOptionType.String, "Event type", isRequired: true)
+                .AddOption("description", ApplicationCommandOptionType.String, "Event description", isRequired: false))
+            .AddOption(new SlashCommandOptionBuilder()
+                .WithName("profile")
+                .WithDescription("View NPC learning profile")
+                .WithType(ApplicationCommandOptionType.SubCommand)
+                .AddOption("name", ApplicationCommandOptionType.String, "NPC name", isRequired: true)));
+
         return commands;
     }
 
@@ -425,6 +694,27 @@ public class CommandHandler
                 break;
             case "help":
                 await HandleHelpCommandAsync(command);
+                break;
+            case "session":
+                await HandleSessionCommandAsync(command);
+                break;
+            case "narrative":
+                await HandleNarrativeCommandAsync(command);
+                break;
+            case "npc-relationship":
+                await HandleNPCRelationshipCommandAsync(command);
+                break;
+            case "mission-track":
+                await HandleMissionTrackCommandAsync(command);
+                break;
+            // Phase 5: Dynamic Content Engine Commands
+            case "difficulty":
+            case "campaign":
+            case "content":
+            case "learning":
+            case "story":
+            case "npc-manage":
+                await HandleDynamicContentCommandAsync(command);
                 break;
             default:
                 await command.RespondAsync($"Unknown command: {commandName}", ephemeral: true);
@@ -593,6 +883,10 @@ public class CommandHandler
             .AddField("Matrix Commands", "/matrix status, /matrix deck-info, /matrix programs, /matrix ice, /matrix session, /matrix initiative, /matrix crack-ice, /matrix attack, /matrix bypass, /matrix load-program, /matrix unload-program, /matrix install-program, /matrix toggle-vr, /matrix program-list")
             .AddField("Cyberware Commands", "/cyberware list [category]")
             .AddField("GM Toolkit Commands", "/npc [role], /mission [type], /location [type], /plot-hook, /loot, /random-event, /equipment [type]")
+            .AddField("Session Management", "/session start/end/pause/resume/status/list/progress/location/join/leave")
+            .AddField("Narrative Commands", "/narrative record/summary/search")
+            .AddField("NPC Relationships", "/npc-relationship update/list/view")
+            .AddField("Mission Tracking", "/mission-track add/update/list")
             .Build();
 
         await command.RespondAsync(embed: embed);
@@ -1205,4 +1499,967 @@ public class CommandHandler
             await command.RespondAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
+
+    private async Task HandleSessionCommandAsync(SocketSlashCommand command)
+    {
+        var subCommand = command.Data.Options.First();
+
+        try
+        {
+            var sessionService = _services.GetRequiredService<Services.GameSessionService>();
+            var channelId = command.ChannelId ?? 0;
+            var guildId = (command.Channel as SocketGuildChannel)?.Guild.Id ?? 0;
+            var userId = command.User.Id;
+
+            switch (subCommand.Name)
+            {
+                case "start":
+                    var sessionName = subCommand.Options.FirstOrDefault(o => o.Name == "name")?.Value?.ToString();
+                    var session = await sessionService.StartSessionAsync(guildId, channelId, userId, sessionName);
+                    
+                    var startEmbed = new EmbedBuilder()
+                        .WithTitle("🎮 Game Session Started")
+                        .WithColor(Color.Green)
+                        .WithDescription($"**{session.SessionName}** has begun!")
+                        .AddField("Session ID", session.Id.ToString())
+                        .AddField("Game Master", $"<@{userId}>")
+                        .AddField("Location", session.CurrentLocation)
+                        .WithFooter("Use /session join to participate")
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: startEmbed.Build());
+                    break;
+
+                case "end":
+                    var endSession = await sessionService.EndSessionAsync(channelId);
+                    var duration = endSession.EndedAt - endSession.StartedAt;
+                    
+                    var endEmbed = new EmbedBuilder()
+                        .WithTitle("🛑 Game Session Ended")
+                        .WithColor(Color.Red)
+                        .WithDescription($"**{endSession.SessionName}** has ended.")
+                        .AddField("Duration", $"{duration?.TotalHours:F1} hours")
+                        .AddField("Participants", endSession.Participants.Count(p => p.IsActive))
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: endEmbed.Build());
+                    break;
+
+                case "pause":
+                    var pauseSession = await sessionService.PauseSessionAsync(channelId);
+                    var pauseEmbed = new EmbedBuilder()
+                        .WithTitle("⏸️ Game Session Paused")
+                        .WithColor(Color.Orange)
+                        .WithDescription($"**{pauseSession.SessionName}** is paused.")
+                        .AddField("Use", "/session resume to continue")
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: pauseEmbed.Build());
+                    break;
+
+                case "resume":
+                    var resumeSession = await sessionService.ResumeSessionAsync(channelId);
+                    var resumeEmbed = new EmbedBuilder()
+                        .WithTitle("▶️ Game Session Resumed")
+                        .WithColor(Color.Green)
+                        .WithDescription($"**{resumeSession.SessionName}** continues!")
+                        .AddField("Location", resumeSession.CurrentLocation)
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: resumeEmbed.Build());
+                    break;
+
+                case "status":
+                    var statusSession = await sessionService.GetActiveSessionAsync(channelId);
+                    if (statusSession == null)
+                    {
+                        await command.RespondAsync("No active session. Use `/session start` to begin.", ephemeral: true);
+                        return;
+                    }
+                    
+                    var statusDuration = DateTime.UtcNow - statusSession.StartedAt;
+                    var statusEmbed = new EmbedBuilder()
+                        .WithTitle($"📊 Session Status: {statusSession.SessionName}")
+                        .WithColor(Color.Blue)
+                        .AddField("Status", statusSession.Status.ToString())
+                        .AddField("Duration", $"{statusDuration.TotalHours:F1} hours")
+                        .AddField("Location", statusSession.CurrentLocation)
+                        .AddField("Participants", statusSession.Participants.Count(p => p.IsActive))
+                        .AddField("Game Master", $"<@{statusSession.GameMasterUserId}>")
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: statusEmbed.Build());
+                    break;
+
+                case "list":
+                    var sessions = await sessionService.GetGuildSessionsAsync(guildId, 10);
+                    if (sessions.Count == 0)
+                    {
+                        await command.RespondAsync("No sessions found in this server.", ephemeral: true);
+                        return;
+                    }
+                    
+                    var listText = "";
+                    foreach (var s in sessions)
+                    {
+                        var statusIcon = s.Status == SessionStatus.Active ? "🟢" : 
+                                        s.Status == SessionStatus.Paused ? "🟡" : "⚫";
+                        listText += $"{statusIcon} **{s.SessionName}** (ID: {s.Id})\n";
+                        listText += $"   Started: {s.StartedAt:yyyy-MM-dd HH:mm}\n\n";
+                    }
+                    
+                    var listEmbed = new EmbedBuilder()
+                        .WithTitle("📋 Recent Sessions")
+                        .WithColor(Color.Blue)
+                        .WithDescription(listText)
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: listEmbed.Build());
+                    break;
+
+                case "progress":
+                    try
+                    {
+                        var progress = await sessionService.GetSessionProgressAsync(channelId);
+                        var progressEmbed = new EmbedBuilder()
+                            .WithTitle($"📈 Session Progress: {progress.SessionName}")
+                            .WithColor(Color.Purple)
+                            .AddField("Duration", $"{progress.Duration.TotalHours:F1} hours")
+                            .AddField("Active Participants", progress.ActiveParticipants)
+                            .AddField("Current Location", progress.CurrentLocation)
+                            .AddField("Narrative Events", progress.NarrativeEvents)
+                            .AddField("Player Choices", progress.PlayerChoices)
+                            .AddField("Active Missions", progress.ActiveMissions)
+                            .AddField("Completed Missions", progress.CompletedMissions)
+                            .WithTimestamp(DateTime.UtcNow);
+                        await command.RespondAsync(embed: progressEmbed.Build());
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        await command.RespondAsync("No active session found.", ephemeral: true);
+                    }
+                    break;
+
+                case "location":
+                    var locationName = subCommand.Options.First(o => o.Name == "name").Value?.ToString();
+                    var locationDesc = subCommand.Options.FirstOrDefault(o => o.Name == "description")?.Value?.ToString();
+                    
+                    await sessionService.UpdateLocationAsync(channelId, locationName ?? "Unknown", locationDesc);
+                    
+                    var locationEmbed = new EmbedBuilder()
+                        .WithTitle("📍 Location Updated")
+                        .WithColor(Color.Teal)
+                        .WithDescription($"**{locationName}**")
+                        .WithTimestamp(DateTime.UtcNow);
+                    
+                    if (!string.IsNullOrEmpty(locationDesc))
+                    {
+                        locationEmbed.AddField("Description", locationDesc);
+                    }
+                    
+                    await command.RespondAsync(embed: locationEmbed.Build());
+                    break;
+
+                case "join":
+                    var characterName = subCommand.Options.FirstOrDefault(o => o.Name == "character")?.Value?.ToString();
+                    int? characterId = null;
+                    
+                    if (!string.IsNullOrEmpty(characterName))
+                    {
+                        var dbService = _services.GetRequiredService<DatabaseService>();
+                        var character = await dbService.GetCharacterByNameAsync(userId, characterName);
+                        if (character != null)
+                        {
+                            characterId = character.Id;
+                        }
+                    }
+                    
+                    var participant = await sessionService.AddParticipantAsync(channelId, userId, characterId);
+                    
+                    var joinEmbed = new EmbedBuilder()
+                        .WithTitle("👋 Joined Session")
+                        .WithColor(Color.Green)
+                        .WithDescription($"<@{userId}> has joined the session!")
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: joinEmbed.Build());
+                    break;
+
+                case "leave":
+                    await sessionService.RemoveParticipantAsync(channelId, userId);
+                    
+                    var leaveEmbed = new EmbedBuilder()
+                        .WithTitle("👋 Left Session")
+                        .WithColor(Color.Orange)
+                        .WithDescription($"<@{userId}> has left the session.")
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: leaveEmbed.Build());
+                    break;
+
+                // Phase 4: New Session Management Commands
+                case "archive":
+                    try
+                    {
+                        var managementService = _services.GetRequiredService<Services.SessionManagementService>();
+                        var archiveId = (long)subCommand.Options.First(o => o.Name == "id").Value;
+                        var archiveOutcome = subCommand.Options.FirstOrDefault(o => o.Name == "outcome")?.Value?.ToString();
+                        
+                        var archived = await managementService.ArchiveSessionAsync((int)archiveId, archiveOutcome);
+                        
+                        var archiveEmbed = new EmbedBuilder()
+                            .WithTitle("📦 Session Archived")
+                            .WithColor(Color.Purple)
+                            .WithDescription($"**{archived.SessionName}** has been archived.")
+                            .AddField("Duration", $"{archived.DurationMinutes} minutes")
+                            .AddField("Participants", archived.ParticipantCount)
+                            .AddField("Total Breaks", archived.TotalBreaks)
+                            .WithTimestamp(DateTime.UtcNow);
+                        await command.RespondAsync(embed: archiveEmbed.Build());
+                    }
+                    catch (Exception ex)
+                    {
+                        await command.RespondAsync($"Error archiving session: {ex.Message}", ephemeral: true);
+                    }
+                    break;
+
+                case "history":
+                    try
+                    {
+                        var managementService = _services.GetRequiredService<Services.SessionManagementService>();
+                        var searchHistory = subCommand.Options.FirstOrDefault(o => o.Name == "search")?.Value?.ToString();
+                        var tagFilter = subCommand.Options.FirstOrDefault(o => o.Name == "tag")?.Value?.ToString();
+                        var historyLimit = subCommand.Options.FirstOrDefault(o => o.Name == "limit")?.Value as long? ?? 10;
+                        
+                        var history = await managementService.SearchSessionHistoryAsync(
+                            guildId, searchHistory, tag: tagFilter, limit: (int)historyLimit);
+                        
+                        if (history.Count == 0)
+                        {
+                            await command.RespondAsync("No session history found matching your criteria.", ephemeral: true);
+                            return;
+                        }
+                        
+                        var historyText = "";
+                        foreach (var h in history)
+                        {
+                            historyText += $"📦 **{h.SessionName ?? "Unnamed"}** (ID: {h.Id})\n";
+                            historyText += $"   Duration: {h.DurationMinutes} min | Participants: {h.ParticipantCount}\n";
+                            historyText += $"   Started: {h.StartedAt:yyyy-MM-dd HH:mm}\n\n";
+                        }
+                        
+                        var historyEmbed = new EmbedBuilder()
+                            .WithTitle("📚 Session History")
+                            .WithColor(Color.Blue)
+                            .WithDescription(historyText)
+                            .WithFooter($"Showing {history.Count} sessions")
+                            .WithTimestamp(DateTime.UtcNow);
+                        await command.RespondAsync(embed: historyEmbed.Build());
+                    }
+                    catch (Exception ex)
+                    {
+                        await command.RespondAsync($"Error retrieving history: {ex.Message}", ephemeral: true);
+                    }
+                    break;
+
+                case "stats":
+                    try
+                    {
+                        var managementService = _services.GetRequiredService<Services.SessionManagementService>();
+                        var statsIdOption = subCommand.Options.FirstOrDefault(o => o.Name == "id")?.Value as long?;
+                        
+                        int statsSessionId;
+                        if (statsIdOption.HasValue)
+                        {
+                            statsSessionId = (int)statsIdOption.Value;
+                        }
+                        else
+                        {
+                            var currentSession = await sessionService.GetActiveSessionAsync(channelId);
+                            if (currentSession == null)
+                            {
+                                await command.RespondAsync("No active session. Please specify a session ID.", ephemeral: true);
+                                return;
+                            }
+                            statsSessionId = currentSession.Id;
+                        }
+                        
+                        var timeStats = await managementService.GetTimeStatisticsAsync(statsSessionId);
+                        
+                        var statsEmbed = new EmbedBuilder()
+                            .WithTitle($"📊 Session Statistics: {timeStats.SessionName}")
+                            .WithColor(Color.Purple)
+                            .AddField("Total Duration", $"{timeStats.TotalDuration.TotalHours:F2} hours")
+                            .AddField("Active Time", $"{timeStats.ActiveTime.TotalHours:F2} hours")
+                            .AddField("Break Time", $"{timeStats.TotalBreakTime.TotalMinutes:F0} minutes")
+                            .AddField("Total Breaks", timeStats.TotalBreaks.ToString())
+                            .AddField("Status", timeStats.Status.ToString())
+                            .WithTimestamp(DateTime.UtcNow);
+                        await command.RespondAsync(embed: statsEmbed.Build());
+                    }
+                    catch (Exception ex)
+                    {
+                        await command.RespondAsync($"Error retrieving statistics: {ex.Message}", ephemeral: true);
+                    }
+                    break;
+
+                case "notes":
+                    try
+                    {
+                        var managementService = _services.GetRequiredService<Services.SessionManagementService>();
+                        var notesIdOption = subCommand.Options.FirstOrDefault(o => o.Name == "id")?.Value as long?;
+                        var notesText = subCommand.Options.FirstOrDefault(o => o.Name == "text")?.Value?.ToString();
+                        var notesType = subCommand.Options.FirstOrDefault(o => o.Name == "type")?.Value?.ToString() ?? "General";
+                        var notesPinned = subCommand.Options.FirstOrDefault(o => o.Name == "pinned")?.Value as bool? ?? false;
+                        
+                        int notesSessionId;
+                        if (notesIdOption.HasValue)
+                        {
+                            notesSessionId = (int)notesIdOption.Value;
+                        }
+                        else
+                        {
+                            var currentSession = await sessionService.GetActiveSessionAsync(channelId);
+                            if (currentSession == null)
+                            {
+                                await command.RespondAsync("No active session. Please specify a session ID.", ephemeral: true);
+                                return;
+                            }
+                            notesSessionId = currentSession.Id;
+                        }
+                        
+                        if (string.IsNullOrEmpty(notesText))
+                        {
+                            // View notes
+                            var notes = await managementService.GetSessionNotesAsync(notesSessionId);
+                            if (notes.Count == 0)
+                            {
+                                await command.RespondAsync("No notes found for this session.", ephemeral: true);
+                                return;
+                            }
+                            
+                            var notesList = "";
+                            foreach (var note in notes.Take(10))
+                            {
+                                var pinIcon = note.IsPinned ? "📌 " : "";
+                                notesList += $"{pinIcon}**{note.NoteType}**: {note.Content}\n";
+                                notesList += $"   *{note.CreatedAt:yyyy-MM-dd HH:mm}*\n\n";
+                            }
+                            
+                            var notesEmbed = new EmbedBuilder()
+                                .WithTitle("📝 Session Notes")
+                                .WithColor(Color.Gold)
+                                .WithDescription(notesList)
+                                .WithFooter($"Showing {Math.Min(10, notes.Count)} of {notes.Count} notes")
+                                .WithTimestamp(DateTime.UtcNow);
+                            await command.RespondAsync(embed: notesEmbed.Build());
+                        }
+                        else
+                        {
+                            // Add note
+                            var note = await managementService.AddSessionNoteAsync(
+                                notesSessionId, notesText, notesType, userId, notesPinned);
+                            
+                            await command.RespondAsync($"✅ Note added to session {notesSessionId}", ephemeral: true);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await command.RespondAsync($"Error with session notes: {ex.Message}", ephemeral: true);
+                    }
+                    break;
+
+                case "break":
+                    try
+                    {
+                        var managementService = _services.GetRequiredService<Services.SessionManagementService>();
+                        var breakReason = subCommand.Options.FirstOrDefault(o => o.Name == "reason")?.Value?.ToString();
+                        
+                        var sessionBreak = await managementService.StartBreakAsync(
+                            channelId, breakReason, isAutomatic: false, initiatedByUserId: userId);
+                        
+                        var breakEmbed = new EmbedBuilder()
+                            .WithTitle("☕ Session Break Started")
+                            .WithColor(Color.Orange)
+                            .WithDescription($"Session has been paused for a break.")
+                            .AddField("Reason", sessionBreak.Reason)
+                            .AddField("Use", "/session resume to end the break")
+                            .WithTimestamp(DateTime.UtcNow);
+                        await command.RespondAsync(embed: breakEmbed.Build());
+                    }
+                    catch (Exception ex)
+                    {
+                        await command.RespondAsync($"Error starting break: {ex.Message}", ephemeral: true);
+                    }
+                    break;
+
+                case "complete":
+                    try
+                    {
+                        var managementService = _services.GetRequiredService<Services.SessionManagementService>();
+                        var completeOutcome = subCommand.Options.FirstOrDefault(o => o.Name == "outcome")?.Value?.ToString();
+                        
+                        var completed = await managementService.CompleteSessionAsync(
+                            channelId, completeOutcome, autoArchive: true);
+                        
+                        var completeEmbed = new EmbedBuilder()
+                            .WithTitle("✅ Session Completed & Archived")
+                            .WithColor(Color.Green)
+                            .WithDescription($"**{completed.SessionName}** has been completed and archived.")
+                            .AddField("Duration", $"{completed.DurationMinutes} minutes")
+                            .AddField("Participants", completed.ParticipantCount)
+                            .AddField("Total Breaks", completed.TotalBreaks)
+                            .WithTimestamp(DateTime.UtcNow);
+                        await command.RespondAsync(embed: completeEmbed.Build());
+                    }
+                    catch (Exception ex)
+                    {
+                        await command.RespondAsync($"Error completing session: {ex.Message}", ephemeral: true);
+                    }
+                    break;
+
+                case "search":
+                    try
+                    {
+                        var managementService = _services.GetRequiredService<Services.SessionManagementService>();
+                        var searchQuery = subCommand.Options.First(o => o.Name == "query").Value?.ToString();
+                        var searchLimit = subCommand.Options.FirstOrDefault(o => o.Name == "limit")?.Value as long? ?? 10;
+                        
+                        var searchResults = await managementService.SearchSessionHistoryAsync(
+                            guildId, searchQuery, limit: (int)searchLimit);
+                        
+                        if (searchResults.Count == 0)
+                        {
+                            await command.RespondAsync($"No sessions found matching '{searchQuery}'.", ephemeral: true);
+                            return;
+                        }
+                        
+                        var searchResultsText = "";
+                        foreach (var result in searchResults)
+                        {
+                            searchResultsText += $"🔍 **{result.SessionName ?? "Unnamed"}** (ID: {result.Id})\n";
+                            searchResultsText += $"   {result.StartedAt:yyyy-MM-dd} | {result.DurationMinutes} min\n\n";
+                        }
+                        
+                        var searchResultsEmbed = new EmbedBuilder()
+                            .WithTitle($"🔍 Search Results: '{searchQuery}'")
+                            .WithColor(Color.Blue)
+                            .WithDescription(searchResultsText)
+                            .WithFooter($"Found {searchResults.Count} sessions")
+                            .WithTimestamp(DateTime.UtcNow);
+                        await command.RespondAsync(embed: searchResultsEmbed.Build());
+                    }
+                    catch (Exception ex)
+                    {
+                        await command.RespondAsync($"Error searching sessions: {ex.Message}", ephemeral: true);
+                    }
+                    break;
+
+                case "summary":
+                    try
+                    {
+                        var managementService = _services.GetRequiredService<Services.SessionManagementService>();
+                        var summaryIdOption = subCommand.Options.FirstOrDefault(o => o.Name == "id")?.Value as long?;
+                        
+                        int summarySessionId;
+                        if (summaryIdOption.HasValue)
+                        {
+                            summarySessionId = (int)summaryIdOption.Value;
+                        }
+                        else
+                        {
+                            var currentSession = await sessionService.GetActiveSessionAsync(channelId);
+                            if (currentSession == null)
+                            {
+                                await command.RespondAsync("No active session. Please specify a session ID.", ephemeral: true);
+                                return;
+                            }
+                            summarySessionId = currentSession.Id;
+                        }
+                        
+                        var summary = await managementService.GetSessionSummaryAsync(summarySessionId);
+                        
+                        var summaryEmbed = new EmbedBuilder()
+                            .WithTitle($"📋 Session Summary: {summary.SessionName}")
+                            .WithColor(Color.Purple)
+                            .AddField("Status", summary.Status.ToString())
+                            .AddField("Duration", $"{summary.Duration.TotalHours:F2} hours ({summary.ActiveTime.TotalHours:F2}h active)")
+                            .AddField("Location", summary.CurrentLocation)
+                            .AddField("Participants", $"{summary.ParticipantCount} players")
+                            .AddField("Progress", $"📖 {summary.NarrativeEvents} events | 🎯 {summary.PlayerChoices} choices")
+                            .AddField("Missions", $"⚔️ {summary.ActiveMissions} active | ✅ {summary.CompletedMissions} completed")
+                            .AddField("Breaks", $"{summary.TotalBreaks} breaks ({summary.TotalBreakTime.TotalMinutes:F0} min)")
+                            .WithTimestamp(DateTime.UtcNow);
+                        
+                        if (summary.Tags.Any())
+                        {
+                            summaryEmbed.AddField("Tags", string.Join(", ", summary.Tags));
+                        }
+                        
+                        await command.RespondAsync(embed: summaryEmbed.Build());
+                    }
+                    catch (Exception ex)
+                    {
+                        await command.RespondAsync($"Error retrieving summary: {ex.Message}", ephemeral: true);
+                    }
+                    break;
+
+                case "tags":
+                    try
+                    {
+                        var managementService = _services.GetRequiredService<Services.SessionManagementService>();
+                        var tagsAction = subCommand.Options.First(o => o.Name == "action").Value?.ToString()?.ToLower();
+                        var tagsTag = subCommand.Options.FirstOrDefault(o => o.Name == "tag")?.Value?.ToString();
+                        var tagsIdOption = subCommand.Options.FirstOrDefault(o => o.Name == "id")?.Value as long?;
+                        var tagsCategory = subCommand.Options.FirstOrDefault(o => o.Name == "category")?.Value?.ToString();
+                        
+                        int tagsSessionId;
+                        if (tagsIdOption.HasValue)
+                        {
+                            tagsSessionId = (int)tagsIdOption.Value;
+                        }
+                        else
+                        {
+                            var currentSession = await sessionService.GetActiveSessionAsync(channelId);
+                            if (currentSession == null)
+                            {
+                                await command.RespondAsync("No active session. Please specify a session ID.", ephemeral: true);
+                                return;
+                            }
+                            tagsSessionId = currentSession.Id;
+                        }
+                        
+                        switch (tagsAction)
+                        {
+                            case "add":
+                                if (string.IsNullOrEmpty(tagsTag))
+                                {
+                                    await command.RespondAsync("Please specify a tag name.", ephemeral: true);
+                                    return;
+                                }
+                                await managementService.AddSessionTagAsync(tagsSessionId, tagsTag, tagsCategory, userId);
+                                await command.RespondAsync($"✅ Tag '{tagsTag}' added to session {tagsSessionId}", ephemeral: true);
+                                break;
+                                
+                            case "remove":
+                                if (string.IsNullOrEmpty(tagsTag))
+                                {
+                                    await command.RespondAsync("Please specify a tag name.", ephemeral: true);
+                                    return;
+                                }
+                                await managementService.RemoveSessionTagAsync(tagsSessionId, tagsTag);
+                                await command.RespondAsync($"✅ Tag '{tagsTag}' removed from session {tagsSessionId}", ephemeral: true);
+                                break;
+                                
+                            case "list":
+                                var tags = await managementService.GetSessionTagsAsync(tagsSessionId);
+                                if (tags.Count == 0)
+                                {
+                                    await command.RespondAsync("No tags found for this session.", ephemeral: true);
+                                    return;
+                                }
+                                
+                                var tagsList = string.Join("\n", tags.Select(t => 
+                                    $"• **{t.TagName}** ({t.Category})"));
+                                
+                                var tagsEmbed = new EmbedBuilder()
+                                    .WithTitle($"🏷️ Session Tags (ID: {tagsSessionId})")
+                                    .WithColor(Color.Gold)
+                                    .WithDescription(tagsList)
+                                    .WithTimestamp(DateTime.UtcNow);
+                                await command.RespondAsync(embed: tagsEmbed.Build());
+                                break;
+                                
+                            default:
+                                await command.RespondAsync($"Unknown tags action: {tagsAction}. Use add, remove, or list.", ephemeral: true);
+                                break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await command.RespondAsync($"Error managing tags: {ex.Message}", ephemeral: true);
+                    }
+                    break;
+
+                case "category":
+                    try
+                    {
+                        var managementService = _services.GetRequiredService<Services.SessionManagementService>();
+                        var categoryName = subCommand.Options.First(o => o.Name == "name").Value?.ToString();
+                        var categoryIdOption = subCommand.Options.FirstOrDefault(o => o.Name == "id")?.Value as long?;
+                        
+                        int categorySessionId;
+                        if (categoryIdOption.HasValue)
+                        {
+                            categorySessionId = (int)categoryIdOption.Value;
+                        }
+                        else
+                        {
+                            var currentSession = await sessionService.GetActiveSessionAsync(channelId);
+                            if (currentSession == null)
+                            {
+                                await command.RespondAsync("No active session. Please specify a session ID.", ephemeral: true);
+                                return;
+                            }
+                            categorySessionId = currentSession.Id;
+                        }
+                        
+                        await managementService.SetSessionCategoryAsync(categorySessionId, categoryName ?? "General");
+                        await command.RespondAsync($"✅ Session {categorySessionId} category set to '{categoryName}'", ephemeral: true);
+                    }
+                    catch (Exception ex)
+                    {
+                        await command.RespondAsync($"Error setting category: {ex.Message}", ephemeral: true);
+                    }
+                    break;
+
+                case "time":
+                    try
+                    {
+                        var managementService = _services.GetRequiredService<Services.SessionManagementService>();
+                        var showGuild = subCommand.Options.FirstOrDefault(o => o.Name == "guild")?.Value as bool? ?? false;
+                        
+                        if (showGuild)
+                        {
+                            var guildStats = await managementService.GetGuildTimeStatisticsAsync(guildId);
+                            
+                            var timeEmbed = new EmbedBuilder()
+                                .WithTitle("📊 Guild Time Statistics")
+                                .WithColor(Color.Purple)
+                                .AddField("Total Sessions", guildStats.TotalSessions.ToString())
+                                .AddField("Total Duration", $"{guildStats.TotalDuration.TotalHours:F1} hours")
+                                .AddField("Total Active Time", $"{guildStats.TotalActiveTime.TotalHours:F1} hours")
+                                .AddField("Total Breaks", guildStats.TotalBreaks.ToString())
+                                .AddField("Average Session", $"{guildStats.AverageSessionDuration.TotalMinutes:F0} minutes")
+                                .AddField("Longest Session", $"{guildStats.LongestSession.TotalMinutes:F0} minutes")
+                                .WithTimestamp(DateTime.UtcNow);
+                            await command.RespondAsync(embed: timeEmbed.Build());
+                        }
+                        else
+                        {
+                            var currentSession = await sessionService.GetActiveSessionAsync(channelId);
+                            if (currentSession == null)
+                            {
+                                await command.RespondAsync("No active session. Use 'guild: true' to see guild statistics.", ephemeral: true);
+                                return;
+                            }
+                            
+                            var sessionStats = await managementService.GetTimeStatisticsAsync(currentSession.Id);
+                            
+                            var timeEmbed = new EmbedBuilder()
+                                .WithTitle($"📊 Time Statistics: {sessionStats.SessionName}")
+                                .WithColor(Color.Purple)
+                                .AddField("Total Duration", $"{sessionStats.TotalDuration.TotalHours:F2} hours")
+                                .AddField("Active Time", $"{sessionStats.ActiveTime.TotalHours:F2} hours")
+                                .AddField("Break Time", $"{sessionStats.TotalBreakTime.TotalMinutes:F0} minutes")
+                                .AddField("Total Breaks", sessionStats.TotalBreaks.ToString())
+                                .WithTimestamp(DateTime.UtcNow);
+                            await command.RespondAsync(embed: timeEmbed.Build());
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await command.RespondAsync($"Error retrieving time statistics: {ex.Message}", ephemeral: true);
+                    }
+                    break;
+
+                default:
+                    await command.RespondAsync($"Unknown session subcommand: {subCommand.Name}", ephemeral: true);
+                    break;
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            await command.RespondAsync(ex.Message, ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling session command");
+            await command.RespondAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    private async Task HandleNarrativeCommandAsync(SocketSlashCommand command)
+    {
+        var subCommand = command.Data.Options.First();
+
+        try
+        {
+            var narrativeService = _services.GetRequiredService<Services.NarrativeContextService>();
+            var channelId = command.ChannelId ?? 0;
+
+            switch (subCommand.Name)
+            {
+                case "record":
+                    var title = subCommand.Options.First(o => o.Name == "title").Value?.ToString();
+                    var description = subCommand.Options.First(o => o.Name == "description").Value?.ToString();
+                    var typeStr = subCommand.Options.FirstOrDefault(o => o.Name == "type")?.Value?.ToString();
+                    var npcs = subCommand.Options.FirstOrDefault(o => o.Name == "npcs")?.Value?.ToString();
+                    var importance = subCommand.Options.FirstOrDefault(o => o.Name == "importance")?.Value as long? ?? 5;
+                    
+                    if (!Enum.TryParse<NarrativeEventType>(typeStr, out var eventType))
+                    {
+                        eventType = NarrativeEventType.StoryBeat;
+                    }
+                    
+                    var evt = await narrativeService.RecordEventAsync(
+                        channelId, title ?? "Untitled", description ?? "", eventType, 
+                        npcsInvolved: npcs, importance: (int)importance);
+                    
+                    var recordEmbed = new EmbedBuilder()
+                        .WithTitle($"📝 Narrative Event Recorded")
+                        .WithColor(Color.Purple)
+                        .WithDescription($"**{evt.Title}**\n{evt.Description}")
+                        .AddField("Type", evt.EventType.ToString())
+                        .AddField("Importance", evt.Importance.ToString())
+                        .WithTimestamp(DateTime.UtcNow);
+                    
+                    if (!string.IsNullOrEmpty(evt.NPCsInvolved))
+                    {
+                        recordEmbed.AddField("NPCs Involved", evt.NPCsInvolved);
+                    }
+                    
+                    await command.RespondAsync(embed: recordEmbed.Build());
+                    break;
+
+                case "summary":
+                    var eventCount = subCommand.Options.FirstOrDefault(o => o.Name == "events")?.Value as long? ?? 10;
+                    var summary = await narrativeService.GenerateStorySummaryAsync(channelId, (int)eventCount);
+                    
+                    var summaryEmbed = new EmbedBuilder()
+                        .WithTitle("📖 Story Summary")
+                        .WithColor(Color.Purple)
+                        .WithDescription(summary)
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: summaryEmbed.Build());
+                    break;
+
+                case "search":
+                    var searchTerm = subCommand.Options.First(o => o.Name == "term").Value?.ToString();
+                    var results = await narrativeService.SearchEventsAsync(channelId, searchTerm ?? "");
+                    
+                    if (results.Count == 0)
+                    {
+                        await command.RespondAsync($"No narrative events found matching '{searchTerm}'.", ephemeral: true);
+                        return;
+                    }
+                    
+                    var searchResults = "";
+                    foreach (var result in results.Take(10))
+                    {
+                        searchResults += $"• **{result.Title}** ({result.EventType})\n";
+                        searchResults += $"  {result.Description.Substring(0, Math.Min(100, result.Description.Length))}...\n\n";
+                    }
+                    
+                    var searchEmbed = new EmbedBuilder()
+                        .WithTitle($"🔍 Search Results: '{searchTerm}'")
+                        .WithColor(Color.Blue)
+                        .WithDescription(searchResults)
+                        .WithFooter($"Showing {Math.Min(10, results.Count)} of {results.Count} results")
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: searchEmbed.Build());
+                    break;
+
+                default:
+                    await command.RespondAsync($"Unknown narrative subcommand: {subCommand.Name}", ephemeral: true);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling narrative command");
+            await command.RespondAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    private async Task HandleNPCRelationshipCommandAsync(SocketSlashCommand command)
+    {
+        var subCommand = command.Data.Options.First();
+
+        try
+        {
+            var narrativeService = _services.GetRequiredService<Services.NarrativeContextService>();
+            var channelId = command.ChannelId ?? 0;
+
+            switch (subCommand.Name)
+            {
+                case "update":
+                    var npcName = subCommand.Options.First(o => o.Name == "name").Value?.ToString();
+                    var attitude = subCommand.Options.FirstOrDefault(o => o.Name == "attitude")?.Value as long? ?? 0;
+                    var trust = subCommand.Options.FirstOrDefault(o => o.Name == "trust")?.Value as long? ?? 0;
+                    var role = subCommand.Options.FirstOrDefault(o => o.Name == "role")?.Value?.ToString();
+                    var org = subCommand.Options.FirstOrDefault(o => o.Name == "organization")?.Value?.ToString();
+                    var notes = subCommand.Options.FirstOrDefault(o => o.Name == "notes")?.Value?.ToString();
+                    
+                    var relationship = await narrativeService.UpdateNPCRelationshipAsync(
+                        channelId, npcName ?? "Unknown", role, org, 
+                        (int)attitude, (int)trust, notes);
+                    
+                    var summary = narrativeService.FormatRelationshipSummary(relationship);
+                    
+                    var updateEmbed = new EmbedBuilder()
+                        .WithTitle("👤 NPC Relationship Updated")
+                        .WithColor(Color.Gold)
+                        .WithDescription(summary)
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: updateEmbed.Build());
+                    break;
+
+                case "list":
+                    var orgFilter = subCommand.Options.FirstOrDefault(o => o.Name == "organization")?.Value?.ToString();
+                    var npcs = string.IsNullOrEmpty(orgFilter)
+                        ? await narrativeService.GetAllNPCRelationshipsAsync(channelId)
+                        : await narrativeService.GetNPCsByOrganizationAsync(channelId, orgFilter);
+                    
+                    if (npcs.Count == 0)
+                    {
+                        await command.RespondAsync("No NPC relationships found.", ephemeral: true);
+                        return;
+                    }
+                    
+                    var listText = "";
+                    foreach (var npc in npcs)
+                    {
+                        listText += narrativeService.FormatRelationshipSummary(npc) + "\n";
+                    }
+                    
+                    var listEmbed = new EmbedBuilder()
+                        .WithTitle("👥 NPC Relationships")
+                        .WithColor(Color.Gold)
+                        .WithDescription(listText)
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: listEmbed.Build());
+                    break;
+
+                case "view":
+                    var viewName = subCommand.Options.First(o => o.Name == "name").Value?.ToString();
+                    var viewNpc = await narrativeService.GetNPCRelationshipAsync(channelId, viewName ?? "");
+                    
+                    if (viewNpc == null)
+                    {
+                        await command.RespondAsync($"No relationship found with NPC '{viewName}'.", ephemeral: true);
+                        return;
+                    }
+                    
+                    var viewSummary = narrativeService.FormatRelationshipSummary(viewNpc);
+                    var viewEmbed = new EmbedBuilder()
+                        .WithTitle($"👤 NPC: {viewNpc.NPCName}")
+                        .WithColor(Color.Gold)
+                        .WithDescription(viewSummary)
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: viewEmbed.Build());
+                    break;
+
+                default:
+                    await command.RespondAsync($"Unknown npc-relationship subcommand: {subCommand.Name}", ephemeral: true);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling NPC relationship command");
+            await command.RespondAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    private async Task HandleMissionTrackCommandAsync(SocketSlashCommand command)
+    {
+        var subCommand = command.Data.Options.First();
+
+        try
+        {
+            var narrativeService = _services.GetRequiredService<Services.NarrativeContextService>();
+            var channelId = command.ChannelId ?? 0;
+
+            switch (subCommand.Name)
+            {
+                case "add":
+                    var name = subCommand.Options.First(o => o.Name == "name").Value?.ToString();
+                    var type = subCommand.Options.First(o => o.Name == "type").Value?.ToString();
+                    var objective = subCommand.Options.First(o => o.Name == "objective").Value?.ToString();
+                    var payment = (long)subCommand.Options.First(o => o.Name == "payment").Value;
+                    var karma = subCommand.Options.FirstOrDefault(o => o.Name == "karma")?.Value as long? ?? 0;
+                    var johnson = subCommand.Options.FirstOrDefault(o => o.Name == "johnson")?.Value?.ToString();
+                    var location = subCommand.Options.FirstOrDefault(o => o.Name == "location")?.Value?.ToString();
+                    var org = subCommand.Options.FirstOrDefault(o => o.Name == "organization")?.Value?.ToString();
+                    
+                    var mission = await narrativeService.AddMissionAsync(
+                        channelId, name ?? "Unnamed", type ?? "Datasteal", 
+                        objective ?? "", payment, (int)karma, johnson, location, org);
+                    
+                    var missionSummary = narrativeService.FormatMissionSummary(mission);
+                    
+                    var addEmbed = new EmbedBuilder()
+                        .WithTitle("📋 Mission Added")
+                        .WithColor(Color.Red)
+                        .WithDescription(missionSummary)
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: addEmbed.Build());
+                    break;
+
+                case "update":
+                    var missionId = (long)subCommand.Options.First(o => o.Name == "id").Value;
+                    var statusStr = subCommand.Options.First(o => o.Name == "status").Value?.ToString();
+                    var updateNotes = subCommand.Options.FirstOrDefault(o => o.Name == "notes")?.Value?.ToString();
+                    
+                    if (!Enum.TryParse<MissionStatus>(statusStr, out var newStatus))
+                    {
+                        await command.RespondAsync($"Invalid status: {statusStr}", ephemeral: true);
+                        return;
+                    }
+                    
+                    await narrativeService.UpdateMissionStatusAsync((int)missionId, newStatus, updateNotes);
+                    
+                    var updateEmbed = new EmbedBuilder()
+                        .WithTitle("📋 Mission Updated")
+                        .WithColor(Color.Green)
+                        .WithDescription($"Mission #{missionId} status changed to **{newStatus}**")
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: updateEmbed.Build());
+                    break;
+
+                case "list":
+                    var missions = await narrativeService.GetActiveMissionsAsync(channelId);
+                    
+                    if (missions.Count == 0)
+                    {
+                        await command.RespondAsync("No active missions found.", ephemeral: true);
+                        return;
+                    }
+                    
+                    var missionList = "";
+                    foreach (var m in missions)
+                    {
+                        missionList += narrativeService.FormatMissionSummary(m) + "\n";
+                    }
+                    
+                    var listEmbed = new EmbedBuilder()
+                        .WithTitle("📋 Active Missions")
+                        .WithColor(Color.Red)
+                        .WithDescription(missionList)
+                        .WithTimestamp(DateTime.UtcNow);
+                    await command.RespondAsync(embed: listEmbed.Build());
+                    break;
+
+                default:
+                    await command.RespondAsync($"Unknown mission-track subcommand: {subCommand.Name}", ephemeral: true);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling mission track command");
+            await command.RespondAsync($"Error: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    #region Phase 5: Dynamic Content Engine Command Handler
+
+    private async Task HandleDynamicContentCommandAsync(SocketSlashCommand command)
+    {
+        try
+        {
+            var contentCommands = _services.GetRequiredService<Commands.DynamicContentCommands>();
+            await contentCommands.HandleCommandAsync(command);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling dynamic content command: {CommandName}", command.CommandName);
+            await command.RespondAsync($"An error occurred: {ex.Message}", ephemeral: true);
+        }
+    }
+
+    #endregion
 }
