@@ -16,9 +16,38 @@ class Program
 
     static async Task<int> Main(string[] args)
     {
+        Console.WriteLine("==========================================");
+        Console.WriteLine("Shadowrun Discord Bot - Setup");
+        Console.WriteLine("==========================================");
+        Console.WriteLine();
+
+        // Check if token is provided via command line or environment
+        var tokenFromArgs = args.FirstOrDefault(a => a.StartsWith("--token="))?.Substring(8);
+        var tokenFromEnv = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
+        
+        string? discordToken = tokenFromArgs ?? tokenFromEnv;
+
+        // If no token provided, prompt interactively
+        if (string.IsNullOrWhiteSpace(discordToken))
+        {
+            Console.Write("Enter your Discord Bot Token: ");
+            discordToken = Console.ReadLine();
+        }
+
+        if (string.IsNullOrWhiteSpace(discordToken))
+        {
+            Console.WriteLine("Error: Discord Token cannot be empty.");
+            Console.WriteLine("Set DISCORD_TOKEN environment variable, use --token=YOUR_TOKEN, or enter interactively.");
+            return 1;
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("Token received. Starting bot...");
+        Console.WriteLine();
+
         try
         {
-            var host = CreateHostBuilder(args).Build();
+            var host = CreateHostBuilder(args, discordToken).Build();
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
 
             logger.LogInformation("Starting Shadowrun Discord Bot...");
@@ -37,6 +66,24 @@ class Program
                 _cts.Cancel();
             };
 
+            Console.WriteLine();
+            Console.WriteLine("==========================================");
+            Console.WriteLine("✨ Shadowrun Discord Bot Started! ✨");
+            Console.WriteLine("==========================================");
+            Console.WriteLine();
+            Console.WriteLine("Commands available:");
+            Console.WriteLine("  /character create/list/view/delete - Character management");
+            Console.WriteLine("  /dice [notation] - Roll dice (e.g., 2d6+3)");
+            Console.WriteLine("  /shadowrun-dice basic/initiative - Shadowrun dice rolls");
+            Console.WriteLine("  /magic status/spells/foci/cast/summon - Magic system");
+            Console.WriteLine("  /combat start/status/end/add/remove/next/attack/reroll-init - Combat system");
+            Console.WriteLine("  /matrix deck-info - Matrix commands");
+            Console.WriteLine("  /cyberware list - Cyberware management");
+            Console.WriteLine("  /help - Get help with commands");
+            Console.WriteLine();
+            Console.WriteLine("Press Ctrl+C to exit...");
+            Console.WriteLine();
+
             await host.RunAsync(_cts.Token);
             return 0;
         }
@@ -52,7 +99,7 @@ class Program
         }
     }
 
-    private static IHostBuilder CreateHostBuilder(string[] args) =>
+    private static IHostBuilder CreateHostBuilder(string[] args, string discordToken) =>
         Host.CreateDefaultBuilder(args)
             .ConfigureAppConfiguration((context, config) =>
             {
@@ -60,11 +107,24 @@ class Program
                 config.AddJsonFile("appsettings.json", optional: false);
                 config.AddEnvironmentVariables();
                 config.AddCommandLine(args);
+                
+                // Add runtime token to configuration
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Discord:Token"] = discordToken
+                });
             })
             .ConfigureServices((context, services) =>
             {
                 // Load and validate configuration
                 var botConfig = BotConfig.Load(context.Configuration);
+                
+                // Override token if provided interactively
+                if (!string.IsNullOrWhiteSpace(discordToken))
+                {
+                    botConfig.Discord.Token = discordToken;
+                }
+                
                 services.AddSingleton(botConfig);
 
                 // Core services
@@ -73,6 +133,7 @@ class Program
                 services.AddSingleton<ErrorHandler>();
                 services.AddSingleton<DiceService>();
                 services.AddSingleton<DatabaseService>();
+                services.AddSingleton<CombatService>();
                 
                 // Web UI
                 services.AddHostedService<WebUIService>();

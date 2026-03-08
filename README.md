@@ -1,171 +1,206 @@
-# Shadowrun Discord Bot - .NET Edition
+# 🪓 Shadowrun Discord Bot (.NET)
 
-A comprehensive Discord bot for Shadowrun 3rd Edition roleplaying, rewritten in .NET 8 for maximum performance and efficiency.
+A comprehensive Shadowrun 3rd Edition Discord bot built with .NET 8, Discord.Net, and EF Core.
 
-**Version 1.0.0** - Complete .NET Rewrite 🎯✨🔮💻🤖🚀
+## 📋 Features
 
-## Features
+### Character System
+- ✅ Create, view, update, and delete characters
+- ✅ Full Shadowrun 3e attribute and skill tracking
+- ✅ Cyberware and equipment management
+- ✅ Magic and Astral projection support
+- ✅ Matrix/Netrunning system
+- ✅ Priority-based character creation
+- ✅ All 5 metatypes: Human, Elf, Dwarf, Ork, Troll
+- ✅ 6 archetypes: Mage, Street Samurai, Shaman, Rigger, Decker, Physical Adept
 
-### 🎭 Character Management
-- Complete Shadowrun 3rd Edition character creation with priority system
-- Support for all 5 metatypes: Human, Elf, Dwarf, Ork, Troll
-- 6 archetypes: Mage, Street Samurai, Shaman, Rigger, Decker, Physical Adept
-- Detailed character sheets with all attributes and derived stats
-- Karma-based character advancement
-- Character CRUD operations with validation
+### Magic System
+- ✅ Spell casting with Shadowrun dice
+- ✅ Focus management
+- ✅ Spirit summoning (Hermetic and Shamanic traditions)
+- ✅ Astral projection tracking
+- ✅ Drain calculation
+- ✅ Spell categories: Combat, Detection, Health, Illusion, Manipulation
 
-### 🎲 Dice Rolling (Friedman Algorithm)
-- Standard dice notation support (2d6, 1d20+5, 4d6k3)
-- Shadowrun-specific success counting (5+ = success)
-- Glitch and critical glitch detection
-- Exploding dice (Friedman dice) for advanced rolls
-- Initiative calculation with multiple passes
-- Cryptographically secure RNG
+### Matrix System
+- ✅ Cyberdeck/Commlink management (Micro, Standard, High, Elite)
+- ✅ MPCP ratings (3-12)
+- ✅ Program installation and management
+- ✅ ICE counter and threat tracking
+- ✅ Matrix initiative (AR: 2D6, VR: 4D6)
+- ✅ ICE cracking and bypass (Probe, Killer, Black, Tar)
+- ✅ Complex Forms
+- ✅ Security tally tracking
 
-### ⚔️ Combat System
-- Turn-based combat with initiative tracking
-- Multiple initiative passes
-- Combat pool allocation
-- Damage tracking (physical and stun)
-- Wound modifiers
-- Combat session management
+### Combat System
+- ✅ Turn-based combat
+- ✅ Initiative tracking with multiple passes
+- ✅ Attack rolls with pools
+- ✅ Defense with armor
+- ✅ Glitch and critical glitch detection
+- ✅ Round management
+- ✅ Damage tracking (physical and stun)
+- ✅ Wound modifiers
 
-### 🔮 Magic System
-- Complete spellcasting mechanics
-- Spirit summoning (Hermetic and Shamanic traditions)
-- Astral projection and perception
-- Drain calculation
-- Spell categories: Combat, Detection, Health, Illusion, Manipulation
+### GM Toolkit
+- ✅ **NPC Generator**: Generate NPCs with roles, stats, motivations, and backstories
+  - Roles: Corporate Exec, Fixer, Street Doc, Shadowrunner, Corporate Guard, Terrorist
+  - Includes: Name, Company, Description, Attributes, Motivation, Backstory
+- ✅ **Mission Generator**: Create Shadowrun missions by type
+  - Types: Cyberdeck, Assassination, Extraction, Theft, Investigation
+  - Randomized templates with placeholders for customization
+- ✅ **Location Generator**: Generate locations for your campaign
+  - Types: Corporate, Seedy, Safehouse, Combat
+- ✅ **Plot Hook Generator**: Get random plot hooks to spark adventures
+- ✅ **Loot Generator**: Generate loot drops and rewards
+- ✅ **Random Event Generator**: Add unexpected events to your sessions
+- ✅ **Equipment Generator**: Generate weapons, armor, cyberware, and general equipment
 
-### 💻 Matrix System
-- Cyberdeck management (Micro, Standard, High, Elite)
-- MPCP ratings (3-12)
-- Utility and combat programs
-- Matrix initiative with VR mode
-- ICE countermeasures (Probe, Killer, Black)
-- Security tally tracking
+### Dice System
+- ✅ Standard dice notation (2d6, 1d20+5, 4d6k3)
+- ✅ Shadowrun-specific success counting (5+ = success)
+- ✅ Friedman dice (exploding sixes)
+- ✅ Initiative calculation
+- ✅ Cryptographically secure RNG
+- ✅ Edge rolls with explosion
 
-### 🤖 Cyberware System
-- Complete cyberware and bioware management
-- Essence tracking and calculation
-- Attribute bonuses
-- Conflict detection
-- Installation and removal
+### Web UI
+- ✅ GM Dashboard for character management
+- ✅ Real-time combat status
+- ✅ Matrix and ICE monitoring
+- ✅ REST API for external integration
+- ✅ Swagger/OpenAPI documentation
+- ✅ JWT authentication
+- ✅ Rate limiting
 
-### 🚗 Vehicle System
-- Vehicle and drone management
-- Rigger integration
-- Vehicle combat
-- Modification system
-
-### 💰 Economy System
-- Nuyen (¥) currency management
-- Transaction tracking
-- Lifestyle costs
-- Equipment purchasing
-
-### 🌐 Web UI for GM Tools
-- RESTful API on port 5000
-- JWT authentication
-- Rate limiting
-- CORS support
-- Swagger/OpenAPI documentation
-- Health check endpoints
-
-## Technical Stack
-
-- **Framework:** .NET 8 (LTS)
-- **Discord Library:** Discord.Net 3.15.0
-- **Database:** SQLite with Entity Framework Core
-- **Configuration:** appsettings.json with SecretRef support
-- **Serialization:** System.Text.Json
-- **Async/Await:** Full async patterns throughout
-- **Validation:** FluentValidation
-- **Performance:** Object pooling, Span<T>, Memory<T>, async streams
-
-## Performance Optimizations
-
-1. **Cryptographically Secure RNG** - Better randomness for dice rolls
-2. **Object Pooling** - Reduced GC pressure for high-frequency operations
-3. **Span-based Parsing** - Efficient string manipulation for commands
-4. **Async I/O Streams** - Non-blocking file and network operations
-5. **Memory Caching** - Static data caching (skills, attributes)
-6. **Request Throttling** - Rate limiting to avoid Discord API limits
-7. **Connection Pooling** - Efficient database connections
-8. **Compiled Queries** - Optimized database queries
-9. **Immutable Data Structures** - Thread-safe data where appropriate
-10. **Efficient Error Handling** - Structured logging with minimal overhead
-
-## Installation
+## 🚀 Installation
 
 ### Prerequisites
-- .NET 8 SDK or Runtime
+- .NET 8.0 SDK
 - Discord Bot Token
-- Discord Application Client ID
+- Discord Client ID
+- Discord Guild ID (optional, for testing)
 
-### Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/shadowrun-discord-bot.git
-   cd shadowrun-discord-bot
-   ```
-
-2. **Configure environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Edit `.env` with your Discord credentials:
-   ```env
-   DISCORD_TOKEN=your_discord_bot_token_here
-   CLIENT_ID=your_bot_client_id_here
-   GUILD_ID=your_server_id_here
-   JWT_SECRET=your_jwt_secret_here_minimum_32_characters_long
-   ```
-
-3. **Build and run**
-   ```bash
-   dotnet build
-   dotnet run
-   ```
-
-### Docker Support
-
+### Step 1: Clone the Repository
 ```bash
-docker build -t shadowrun-discord-bot .
-docker run -d \
-  -e DISCORD_TOKEN=your_token \
-  -e CLIENT_ID=your_client_id \
-  -e GUILD_ID=your_guild_id \
-  -e JWT_SECRET=your_jwt_secret \
-  -p 5000:5000 \
-  shadowrun-discord-bot
+git clone https://github.com/yourusername/shadowrun-discord-bot.git
+cd shadowrun-discord-bot
 ```
 
-## Bot Commands
+### Step 2: Install Dependencies
+```bash
+dotnet restore
+```
 
-### Character Commands
-- `/character create` - Create a new Shadowrun character
-- `/character list` - List all your characters
-- `/character view [name]` - View character details
-- `/character delete [name]` - Delete a character
+### Step 3: Configure Discord Bot
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
+2. Create a new application
+3. Go to the "Bot" tab and create a bot
+4. Copy the **Token**
+5. Copy the **Client ID**
+6. Enable necessary intents (Message Content, Guild Messages, etc.)
 
-### Dice Commands
+### Step 4: Set Environment Variables
+
+**Option A: Environment Variables**
+```bash
+export DISCORD_TOKEN="your_bot_token_here"
+export CLIENT_ID="your_client_id_here"
+export GUILD_ID="your_guild_id_here"
+export JWT_SECRET="your_jwt_secret_minimum_32_characters"
+```
+
+**Option B: appsettings.json**
+```json
+{
+  "Discord": {
+    "Token": "your_bot_token_here",
+    "ClientId": "your_client_id_here",
+    "GuildId": "your_guild_id_here"
+  },
+  "WebUI": {
+    "JwtSecret": "your_jwt_secret_here"
+  }
+}
+```
+
+**Option C: .env File**
+```bash
+cp .env.example .env
+# Edit .env with your credentials
+```
+
+### Step 5: Run the Bot
+```bash
+dotnet run
+```
+
+The bot will:
+1. Ask for your Discord Token interactively (if not configured)
+2. Create the SQLite database
+3. Register all slash commands
+4. Connect to Discord
+5. Display the Web UI at http://localhost:5000
+6. Show all available commands
+
+## 📖 Usage
+
+### Core Commands
+
+**Dice Rolling:**
 - `/dice [notation]` - Roll dice (e.g., `/dice 2d6+3`)
 - `/shadowrun-dice basic [pool] [target]` - Shadowrun dice pool roll
-- `/shadowrun-dice initiative [reaction] [dice]` - Calculate initiative
+- `/shadowrun-dice combat [skill] [combat-pool]` - Combat roll with pool allocation
+- `/shadowrun-dice initiative [reaction] [initiative-dice]` - Roll initiative
 
-### Combat Commands
-- `/combat start` - Start combat session
-- `/combat status` - View combat status
-- `/combat end` - End combat session
+**Character Management:**
+- `/character create` - Create a new character
+- `/character list` - List your characters
+- `/character view [name]` - View your character sheet
+- `/character delete [name]` - Delete your character
 
 ### Magic Commands
+
+**Magic Status:**
+- `/magic status` - View your magic rating and attributes
+- `/magic spells` - Browse all known spells
+- `/magic foci` - View active magical foci
+
+**Spell Casting:**
+- `/magic cast [spell]` - Cast a spell with dice rolling
 - `/magic summon [type] [force]` - Summon a spirit
 
 ### Matrix Commands
-- `/matrix deck-info` - View cyberdeck information
+
+**Matrix Status:**
+- `/matrix status` - View Matrix status
+- `/matrix deck-info` - View cyberdeck specs
+- `/matrix programs` - List installed programs
+- `/matrix ice` - View deployed ICE
+- `/matrix session` - View current Matrix session
+
+**Matrix Actions:**
+- `/matrix initiative` - Roll Matrix initiative
+- `/matrix crack-ice [type] [rating]` - Attempt to break ICE
+- `/matrix attack [target] [program-rating]` - Launch Matrix attack
+- `/matrix bypass [system-type] [rating]` - Bypass security
+- `/matrix program-list [type]` - Browse available programs
+- `/matrix load-program [name]` - Load a program into active memory
+- `/matrix unload-program [name]` - Unload a program
+- `/matrix install-program [name] [type] [rating] [memory]` - Install a new program
+- `/matrix toggle-vr` - Toggle between AR and VR mode
+
+### Combat Commands
+
+**Combat Management:**
+- `/combat start` - Start a new combat
+- `/combat status` - View combat status and initiative order
+- `/combat end` - End the active combat
+- `/combat add [name] [type]` - Add a combatant (type: player/enemy)
+- `/combat remove [name]` - Remove a combatant
+- `/combat next` - Advance to the next turn
+- `/combat attack [attacker] [target] [attack-pool]` - Make an attack
+- `/combat reroll-init` - Reroll initiative for all combatants
 
 ### Cyberware Commands
 - `/cyberware list [category]` - List available cyberware
@@ -174,129 +209,241 @@ docker run -d \
 - `/help` - Get general help
 - `/help [command]` - Get specific command help
 
-## Web API
+## 🌐 Web UI
 
-### Endpoints
+The bot includes a comprehensive GM Dashboard available at `http://localhost:5000`
 
+### Features:
+- **Character Management**: View and manage all characters
+- **Combat Tracking**: Real-time combat status and initiative order
+- **Matrix Monitoring**: View deck info, programs, and ICE
+- **Tools**: Quick access to dice roller and spell database
+- **API Documentation**: Swagger UI for all endpoints
+
+### API Endpoints:
 - `GET /health` - Health check
-- `GET /api/characters?userId={id}` - List user's characters
-- `GET /api/characters/{id}` - Get character details
-- `GET /api/combat/active?channelId={id}` - Get active combat session
+- `GET /api/character/all` - List all characters
+- `GET /api/character/{id}` - Get specific character
+- `GET /api/combat/active` - Get active combat session
+- `POST /api/combat/start` - Start a new combat
+- `POST /api/combat/{id}/add-participant` - Add combatant
 - `POST /api/dice/roll` - Roll dice (body: `{ "notation": "2d6+3" }`)
 - `POST /api/dice/shadowrun` - Shadowrun roll (body: `{ "poolSize": 6, "targetNumber": 4 }`)
 
 ### Swagger Documentation
-
 Access the API documentation at: `http://localhost:5000/api-docs`
 
-## Development
+## 🔧 Development
 
 ### Project Structure
 ```
 shadowrun-discord-bot/
-├── Core/                    # Core bot services
-│   ├── BotService.cs       # Main bot orchestration
-│   ├── CommandHandler.cs   # Command routing
-│   └── ErrorHandler.cs     # Error handling
-├── Models/                  # Data models
+├── Models/              # EF Core entities
 │   ├── ShadowrunCharacter.cs
-│   ├── CombatSystem.cs
+│   ├── MagicSystem.cs
 │   ├── MatrixSystem.cs
-│   └── MagicSystem.cs
-├── Commands/                # Command modules
+│   ├── CombatSystem.cs
+│   └── DiceRollResult.cs
+├── Services/            # Business logic
+│   ├── DatabaseService.cs
+│   ├── DiceService.cs
+│   ├── MagicService.cs
+│   ├── MatrixService.cs
+│   ├── CombatService.cs
+│   ├── WebUIService.cs
+│   └── ErrorHandlingService.cs
+├── Controllers/         # Web API controllers
+│   ├── CharacterController.cs
+│   ├── CombatController.cs
+│   ├── DashboardController.cs
+│   └── DiceController.cs
+├── Core/                # Discord bot logic
+│   ├── BotService.cs
+│   ├── CommandHandler.cs
+│   └── ErrorHandler.cs
+├── Commands/            # Command modules
 │   ├── BaseCommandModule.cs
 │   └── CharacterCommands.cs
-├── Services/                # Business logic
-│   ├── DiceService.cs      # Friedman dice implementation
-│   ├── DatabaseService.cs  # EF Core database
-│   └── WebUIService.cs     # ASP.NET Core Web API
-├── Resources/               # Static data
-├── Program.cs              # Entry point
-├── BotConfig.cs            # Configuration
+├── Resources/           # Static data files
+├── Program.cs           # Entry point
+├── BotConfig.cs         # Configuration
 └── ShadowrunDiscordBot.csproj
 ```
 
-### Running Tests
-
+### Running in Development
 ```bash
+# Build in development mode
+dotnet build
+
+# Run with hot reload
+dotnet watch run
+
+# Run tests
 dotnet test
+
+# Format code
+dotnet format
 ```
 
-### Building for Production
+### Adding New Commands
+1. Add the command definition to `CommandHandler.cs` in the `BuildSlashCommands` method
+2. Create the handler method in `CommandHandler.cs`
+3. Add necessary input validation
+4. Test the command in Discord
+
+### Database Migrations
+```bash
+# Create a new migration
+dotnet ef migrations add MigrationName
+
+# Apply migrations
+dotnet ef database update
+```
+
+## 🔒 Security
+
+The bot implements several security measures:
+- **Rate Limiting**: 100 requests per minute per IP
+- **CORS**: Configured CORS for web UI
+- **Input Validation**: Comprehensive validation for all inputs (FluentValidation)
+- **Error Handling**: Graceful error handling with detailed logging
+- **Token Storage**: Token should be stored securely (environment variables or config file)
+- **JWT Authentication**: Secure API access with JWT tokens
+- **SQL Injection Prevention**: EF Core parameterized queries
+- **Cryptographically Secure RNG**: For dice rolls
+
+## 🐛 Troubleshooting
+
+### Bot not connecting to Discord
+- Verify your Discord Token is correct
+- Check your internet connection
+- Ensure Discord Developer Portal settings are correct
+- Verify the bot has necessary intents enabled
+
+### Database errors
+- Delete `shadowrun.db` (or `data/shadowrun_characters.db`) and restart the bot
+- The database will be recreated automatically
+- Check file permissions for the database directory
+
+### Commands not working
+- Verify you're using slash commands (not text commands)
+- Make sure you've waited a few minutes for commands to propagate
+- Try `/help` to see all available commands
+- Check the bot logs for error messages
+
+### Web UI not accessible
+- Verify port 5000 is not in use by another application
+- Check firewall settings
+- Ensure the WebUIService is running
+
+## 📚 Resources
+
+- [Shadowrun 3rd Edition](https://www.shadowrun.com/rpg/)
+- [Discord.Net Documentation](https://discordnet.readthedocs.io/)
+- [.NET 8 Documentation](https://docs.microsoft.com/en-us/dotnet/core/)
+- [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)
+
+## 🐳 Docker Support
 
 ```bash
-dotnet publish -c Release -r linux-x64 --self-contained
+# Build the Docker image
+docker build -t shadowrun-discord-bot .
+
+# Run the container
+docker run -d \
+  -e DISCORD_TOKEN=your_token \
+  -e CLIENT_ID=your_client_id \
+  -e GUILD_ID=your_guild_id \
+  -e JWT_SECRET=your_jwt_secret \
+  -p 5000:5000 \
+  shadowrun-discord-bot
+
+# Or use docker-compose
+docker-compose up -d
 ```
 
-### Performance Benchmarks
+## 🤝 Contributing
 
-```bash
-dotnet run -c Release --project Benchmarks
-```
-
-## Configuration
-
-### appsettings.json
-
-```json
-{
-  "Discord": {
-    "Token": "${DISCORD_TOKEN}",
-    "ClientId": "${CLIENT_ID}",
-    "GuildId": "${GUILD_ID}"
-  },
-  "Database": {
-    "ConnectionString": "Data Source=shadowrun.db",
-    "EnableSensitiveDataLogging": false
-  },
-  "Bot": {
-    "Prefix": "!",
-    "DefaultColor": 5814783,
-    "MaxCharactersPerUser": 5,
-    "MaxDiceRolls": 10
-  },
-  "WebUI": {
-    "Port": 5000,
-    "EnableSwagger": true,
-    "JwtSecret": "${JWT_SECRET}"
-  },
-  "RateLimiting": {
-    "PermitLimit": 100,
-    "Window": "00:01:00"
-  }
-}
-```
-
-## Security
-
-- **Input Validation** - FluentValidation for all user inputs
-- **Rate Limiting** - 100 requests per minute per IP
-- **CORS** - Configurable cross-origin policies
-- **JWT Authentication** - Secure API access
-- **SQL Injection Prevention** - EF Core parameterized queries
-- **Secret Management** - Environment variable support
-- **Error Handling** - No sensitive data in error messages
-
-## Contributing
-
+Contributions are welcome! Please:
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests
+4. Add tests if applicable
 5. Submit a pull request
 
-## License
+## 📝 License
 
-MIT License - see LICENSE file for details
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Support
+## 👥 Credits
 
-For issues and questions, please open an issue in the repository.
+- Built with [.NET 8](https://dotnet.microsoft.com/)
+- Powered by [Discord.Net](https://github.com/discord-net/Discord.Net)
+- Database: [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)
+- Shadowrun 3rd Edition rules
 
-## Changelog
+## 📚 Command Reference
+
+### Character Commands
+- `/character create [name] [metatype] [archetype]` - Create a new character
+- `/character list` - List your characters
+- `/character view [name]` - View character details
+- `/character delete [name]` - Delete a character
+
+### Dice Commands
+- `/dice [notation]` - Roll dice using standard notation (e.g., 2d6+3)
+- `/shadowrun-dice basic [pool] [target]` - Roll Shadowrun dice pool
+- `/shadowrun-dice initiative [reaction] [dice]` - Calculate initiative
+
+### Combat Commands
+- `/combat start` - Start a combat session
+- `/combat status` - View current combat status
+- `/combat end` - End the combat session
+- `/combat add [name] [type] [init-dice]` - Add a combatant
+- `/combat remove [name]` - Remove a combatant
+- `/combat next` - Advance to next turn
+- `/combat attack [attacker] [target] [pool] [defense] [weapon] [damage]` - Execute attack
+- `/combat reroll-init` - Reroll initiative for all combatants
+
+### Magic Commands
+- `/magic status` - View your magic status
+- `/magic spells` - List known spells
+- `/magic foci` - View active foci
+- `/magic cast [spell]` - Cast a spell
+- `/magic summon [type] [force]` - Summon a spirit
+
+### Matrix Commands
+- `/matrix status` - View cyberdeck status
+- `/matrix deck-info` - View deck information
+- `/matrix programs` - List installed programs
+- `/matrix ice` - View active ICE
+- `/matrix session` - View Matrix session status
+- `/matrix initiative` - Roll Matrix initiative
+- `/matrix crack-ice [type] [rating]` - Attempt to crack ICE
+- `/matrix attack [target] [program-rating]` - Launch Matrix attack
+- `/matrix bypass [system-type] [rating]` - Bypass security system
+- `/matrix load-program [name]` - Load a program
+- `/matrix unload-program [name]` - Unload a program
+- `/matrix install-program [name] [type] [rating] [memory]` - Install a new program
+- `/matrix toggle-vr` - Toggle between AR and VR mode
+- `/matrix program-list [type]` - List available programs
+
+### Cyberware Commands
+- `/cyberware list [category]` - List available cyberware
+
+### GM Toolkit Commands
+- `/npc [role]` - Generate an NPC (roles: corporate exec, fixer, street doc, shadowrunner, corporate guard, terrorist)
+- `/mission [type]` - Generate a mission (types: cyberdeck, assassination, extraction, theft, investigation)
+- `/location [type]` - Generate a location (types: corporate, seedy, safehouse, combat)
+- `/plot-hook` - Get a random plot hook
+- `/loot` - Generate loot
+- `/random-event` - Get a random event
+- `/equipment [type]` - Generate equipment (types: weapon, armor, cyberware, general)
+
+## 📋 Changelog
 
 ### Version 1.0.0 (2025-03-08)
-- Complete .NET 8 rewrite from Node.js
+- Complete .NET 8 rewrite
 - Implemented all Shadowrun 3rd Edition systems
 - Added Web UI for GM tools
 - Performance optimizations throughout
@@ -305,27 +452,6 @@ For issues and questions, please open an issue in the repository.
 - SQLite database with EF Core
 - RESTful API with Swagger documentation
 
-## Roadmap
-
-- [ ] Unit test coverage (80%+)
-- [ ] Integration tests
-- [ ] Performance benchmarks
-- [ ] Docker optimization
-- [ ] Kubernetes deployment configs
-- [ ] GraphQL API
-- [ ] Real-time combat visualization
-- [ ] Character sheet PDF export
-- [ ] Advanced Matrix systems
-- [ ] Rigging enhancements
-- [ ] Campaign management tools
-
-## Credits
-
-- Original Node.js implementation
-- Shadowrun 3rd Edition rules
-- Discord.Net library
-- .NET community
-
 ---
 
-**Built with ❤️ using .NET 8**
+**Made with ❤️ for the Shadowrun community**

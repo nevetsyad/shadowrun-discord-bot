@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace ShadowrunDiscordBot.Services;
 
@@ -11,7 +12,13 @@ public sealed class DiceService : IDisposable
 {
     private readonly RandomNumberGenerator _rng = RandomNumberGenerator.Create();
     private readonly object _rngLock = new();
+    private readonly ILogger<DiceService>? _logger;
     private bool _disposed;
+
+    public DiceService(ILogger<DiceService>? logger = null)
+    {
+        _logger = logger;
+    }
 
     /// <summary>
     /// Roll a single die with specified sides using cryptographically secure RNG
@@ -69,111 +76,138 @@ public sealed class DiceService : IDisposable
     /// </summary>
     public DiceResult ParseAndRoll(string notation)
     {
-        if (string.IsNullOrWhiteSpace(notation))
-            throw new ArgumentException("Dice notation cannot be empty", nameof(notation));
-
-        // Parse notation using Span for efficiency
-        var span = notation.AsSpan().Trim();
-        
-        // Find 'd' or 'D'
-        int dIndex = -1;
-        for (int i = 0; i < span.Length; i++)
+        try
         {
-            if (span[i] == 'd' || span[i] == 'D')
+            if (string.IsNullOrWhiteSpace(notation))
             {
-                dIndex = i;
-                break;
+                var ex = new ArgumentException("Dice notation cannot be empty", nameof(notation));
+                _logger?.LogError(ex, "Empty dice notation provided");
+                throw ex;
             }
-        }
 
-        if (dIndex == -1)
-            throw new ArgumentException("Invalid dice notation. Must contain 'd' (e.g., 2d6)", nameof(notation));
-
-        // Parse dice count
-        var countSpan = span.Slice(0, dIndex);
-        if (!int.TryParse(countSpan, out int diceCount))
-            diceCount = 1; // Support "d6" notation
-
-        // Parse remaining (sides + modifier)
-        var remaining = span.Slice(dIndex + 1);
-        int modifier = 0;
-        int sides;
-        bool keepHighest = false;
-        int keepCount = 0;
-
-        // Check for modifier (+ or -)
-        int modIndex = -1;
-        for (int i = 0; i < remaining.Length; i++)
-        {
-            if (remaining[i] == '+' || remaining[i] == '-')
+            // Parse notation using Span for efficiency
+            var span = notation.AsSpan().Trim();
+            
+            // Find 'd' or 'D'
+            int dIndex = -1;
+            for (int i = 0; i < span.Length; i++)
             {
-                modIndex = i;
-                break;
+                if (span[i] == 'd' || span[i] == 'D')
+                {
+                    dIndex = i;
+                    break;
+                }
             }
-        }
 
-        // Check for keep notation (k3 = keep highest 3)
-        int keepIndex = -1;
-        for (int i = 0; i < remaining.Length; i++)
-        {
-            if (remaining[i] == 'k' || remaining[i] == 'K')
+            if (dIndex == -1)
             {
-                keepIndex = i;
-                break;
+                var ex = new ArgumentException("Invalid dice notation. Must contain 'd' (e.g., 2d6)", nameof(notation));
+                _logger?.LogError(ex, "Invalid dice notation: {Notation}", notation);
+                throw ex;
             }
+
+            // Parse dice count
+            var countSpan = span.Slice(0, dIndex);
+            if (!int.TryParse(countSpan, out int diceCount))
+                diceCount = 1; // Support "d6" notation
+
+            // Parse remaining (sides + modifier)
+            var remaining = span.Slice(dIndex + 1);
+            int modifier = 0;
+            int sides;
+            bool keepHighest = false;
+            int keepCount = 0;
+
+            // Check for modifier (+ or -)
+            int modIndex = -1;
+            for (int i = 0; i < remaining.Length; i++)
+            {
+                if (remaining[i] == '+' || remaining[i] == '-')
+                {
+                    modIndex = i;
+                    break;
+                }
+            }
+
+            // Check for keep notation (k3 = keep highest 3)
+            int keepIndex = -1;
+            for (int i = 0; i < remaining.Length; i++)
+            {
+                if (remaining[i] == 'k' || remaining[i] == 'K')
+                {
+                    keepIndex = i;
+                    break;
+                }
+            }
+
+            // Parse sides
+            ReadOnlySpan<char> sidesSpan;
+            if (modIndex > 0)
+                sidesSpan = remaining.Slice(0, modIndex);
+            else if (keepIndex > 0)
+                sidesSpan = remaining.Slice(0, keepIndex);
+            else
+                sidesSpan = remaining;
+
+            if (!int.TryParse(sidesSpan, out sides))
+            {
+                var ex = new ArgumentException($"Invalid dice sides: {sidesSpan.ToString()}", nameof(notation));
+                _logger?.LogError(ex, "Invalid dice sides in notation: {Notation}", notation);
+                throw ex;
+            }
+
+            // Parse modifier
+            if (modIndex > 0)
+            {
+                var modSpan = remaining.Slice(modIndex);
+                if (!int.TryParse(modSpan, out modifier))
+                {
+                    var ex = new ArgumentException($"Invalid modifier: {modSpan.ToString()}", nameof(notation));
+                    _logger?.LogError(ex, "Invalid modifier in notation: {Notation}", notation);
+                    throw ex;
+                }
+            }
+
+            // Parse keep count
+            if (keepIndex > 0)
+            {
+                keepHighest = true;
+                var keepSpan = remaining.Slice(keepIndex + 1);
+                if (!int.TryParse(keepSpan, out keepCount))
+                    keepCount = 1;
+            }
+
+            // Roll dice
+            var rolls = RollDice(diceCount, sides);
+
+            // Apply keep highest if specified
+            int[] usedRolls = rolls;
+            if (keepHighest && keepCount > 0 && keepCount < rolls.Length)
+            {
+                var sorted = rolls.OrderByDescending(r => r).ToArray();
+                usedRolls = sorted.Take(keepCount).ToArray();
+            }
+
+            var total = usedRolls.Sum() + modifier;
+
+            _logger?.LogDebug("Dice roll: {Notation} = {Total} (rolls: [{Rolls}])", 
+                notation, total, string.Join(", ", rolls));
+
+            return new DiceResult
+            {
+                Notation = notation,
+                Rolls = rolls,
+                UsedRolls = usedRolls,
+                Modifier = modifier,
+                Total = total,
+                Details = FormatResult(rolls, usedRolls, modifier, keepHighest, keepCount)
+            };
         }
-
-        // Parse sides
-        ReadOnlySpan<char> sidesSpan;
-        if (modIndex > 0)
-            sidesSpan = remaining.Slice(0, modIndex);
-        else if (keepIndex > 0)
-            sidesSpan = remaining.Slice(0, keepIndex);
-        else
-            sidesSpan = remaining;
-
-        if (!int.TryParse(sidesSpan, out sides))
-            throw new ArgumentException($"Invalid dice sides: {sidesSpan.ToString()}", nameof(notation));
-
-        // Parse modifier
-        if (modIndex > 0)
+        catch (Exception ex)
         {
-            var modSpan = remaining.Slice(modIndex);
-            if (!int.TryParse(modSpan, out modifier))
-                throw new ArgumentException($"Invalid modifier: {modSpan.ToString()}", nameof(notation));
+            _logger?.LogError(ex, "Error parsing and rolling dice: {Notation}", notation);
+            throw;
         }
-
-        // Parse keep count
-        if (keepIndex > 0)
-        {
-            keepHighest = true;
-            var keepSpan = remaining.Slice(keepIndex + 1);
-            if (!int.TryParse(keepSpan, out keepCount))
-                keepCount = 1;
-        }
-
-        // Roll dice
-        var rolls = RollDice(diceCount, sides);
-
-        // Apply keep highest if specified
-        int[] usedRolls = rolls;
-        if (keepHighest && keepCount > 0 && keepCount < rolls.Length)
-        {
-            var sorted = rolls.OrderByDescending(r => r).ToArray();
-            usedRolls = sorted.Take(keepCount).ToArray();
-        }
-
-        var total = usedRolls.Sum() + modifier;
-
-        return new DiceResult
-        {
-            Notation = notation,
-            Rolls = rolls,
-            UsedRolls = usedRolls,
-            Modifier = modifier,
-            Total = total,
-            Details = FormatResult(rolls, usedRolls, modifier, keepHighest, keepCount)
-        };
     }
 
     /// <summary>
@@ -181,39 +215,59 @@ public sealed class DiceService : IDisposable
     /// </summary>
     public ShadowrunDiceResult RollShadowrun(int poolSize, int targetNumber = 4)
     {
-        if (poolSize < 0)
-            throw new ArgumentException("Pool size must be non-negative", nameof(poolSize));
+        try
+        {
+            if (poolSize < 0)
+            {
+                var ex = new ArgumentException("Pool size must be non-negative", nameof(poolSize));
+                _logger?.LogError(ex, "Invalid pool size: {PoolSize}", poolSize);
+                throw ex;
+            }
 
-        if (poolSize == 0)
+            if (targetNumber < 2 || targetNumber > 6)
+            {
+                _logger?.LogWarning("Unusual target number: {TargetNumber}. Standard Shadowrun uses 2-6.", targetNumber);
+            }
+
+            if (poolSize == 0)
+                return new ShadowrunDiceResult
+                {
+                    PoolSize = 0,
+                    TargetNumber = targetNumber,
+                    Successes = 0,
+                    Rolls = Array.Empty<int>(),
+                    Glitch = false,
+                    CriticalGlitch = false,
+                    Details = "No dice rolled"
+                };
+
+            var rolls = RollDice(poolSize, 6);
+            var successes = rolls.Count(r => r >= targetNumber);
+            var ones = rolls.Count(r => r == 1);
+
+            // Glitch detection: more than half the dice show 1s
+            var isGlitch = ones > (poolSize / 2.0);
+            var isCriticalGlitch = isGlitch && successes == 0;
+
+            _logger?.LogDebug("Shadowrun roll: pool={Pool}, target={Target}, successes={Successes}, glitch={Glitch}", 
+                poolSize, targetNumber, successes, isGlitch);
+
             return new ShadowrunDiceResult
             {
-                PoolSize = 0,
+                PoolSize = poolSize,
                 TargetNumber = targetNumber,
-                Successes = 0,
-                Rolls = Array.Empty<int>(),
-                Glitch = false,
-                CriticalGlitch = false,
-                Details = "No dice rolled"
+                Successes = successes,
+                Rolls = rolls,
+                Glitch = isGlitch,
+                CriticalGlitch = isCriticalGlitch,
+                Details = FormatShadowrunResult(rolls, successes, targetNumber, isGlitch, isCriticalGlitch)
             };
-
-        var rolls = RollDice(poolSize, 6);
-        var successes = rolls.Count(r => r >= targetNumber);
-        var ones = rolls.Count(r => r == 1);
-
-        // Glitch detection: more than half the dice show 1s
-        var isGlitch = ones > (poolSize / 2.0);
-        var isCriticalGlitch = isGlitch && successes == 0;
-
-        return new ShadowrunDiceResult
+        }
+        catch (Exception ex)
         {
-            PoolSize = poolSize,
-            TargetNumber = targetNumber,
-            Successes = successes,
-            Rolls = rolls,
-            Glitch = isGlitch,
-            CriticalGlitch = isCriticalGlitch,
-            Details = FormatShadowrunResult(rolls, successes, targetNumber, isGlitch, isCriticalGlitch)
-        };
+            _logger?.LogError(ex, "Error rolling Shadowrun dice: pool={Pool}, target={Target}", poolSize, targetNumber);
+            throw;
+        }
     }
 
     /// <summary>
@@ -245,6 +299,61 @@ public sealed class DiceService : IDisposable
             Total = total,
             Passes = passes,
             Details = $"{reaction} + [{string.Join(" + ", rolls)}] = **{total}** ({passes} pass{(passes > 1 ? "es" : "")})"
+        };
+    }
+
+    /// <summary>
+    /// Roll with Edge (exploding sixes) - counts successes and rerolls sixes
+    /// </summary>
+    public ShadowrunDiceResult RollEdge(int poolSize, int targetNumber = 5)
+    {
+        if (poolSize <= 0)
+            return new ShadowrunDiceResult
+            {
+                PoolSize = 0,
+                TargetNumber = targetNumber,
+                Successes = 0,
+                Rolls = Array.Empty<int>(),
+                Glitch = false,
+                CriticalGlitch = false,
+                Sixes = 0,
+                Details = "No dice rolled"
+            };
+
+        var allRolls = new List<int>();
+        var currentPool = poolSize;
+        var iterations = 0;
+        const int maxIterations = 100;
+
+        while (currentPool > 0 && iterations < maxIterations)
+        {
+            iterations++;
+            var rolls = RollDice(currentPool, 6);
+            allRolls.AddRange(rolls);
+
+            var sixes = rolls.Count(r => r == 6);
+            if (sixes == 0)
+                break;
+            
+            currentPool = sixes; // Roll again for each 6
+        }
+
+        var successes = allRolls.Count(r => r >= targetNumber);
+        var ones = allRolls.Take(poolSize).Count(r => r == 1); // Only count ones from initial roll for glitch
+        var isGlitch = ones > (poolSize / 2.0);
+        var isCriticalGlitch = isGlitch && successes == 0;
+        var sixCount = allRolls.Count(r => r == 6);
+
+        return new ShadowrunDiceResult
+        {
+            PoolSize = poolSize,
+            TargetNumber = targetNumber,
+            Successes = successes,
+            Rolls = allRolls.ToArray(),
+            Glitch = isGlitch,
+            CriticalGlitch = isCriticalGlitch,
+            Sixes = sixCount,
+            Details = FormatEdgeResult(allRolls, successes, targetNumber, sixCount)
         };
     }
 
@@ -354,6 +463,15 @@ public sealed class DiceService : IDisposable
         return sb.ToString();
     }
 
+    private static string FormatEdgeResult(List<int> allRolls, int successes, int targetNumber, int sixes)
+    {
+        var sb = new StringBuilder();
+        sb.Append($"[{string.Join(", ", allRolls)}] → {successes} success{(successes != 1 ? "es" : "")} (≥{targetNumber})");
+        sb.Append($" | {sixes} six{(sixes != 1 ? "es" : "")} exploded");
+
+        return sb.ToString();
+    }
+
     public void Dispose()
     {
         if (_disposed) return;
@@ -389,6 +507,7 @@ public record ShadowrunDiceResult
     public int[] Rolls { get; init; } = Array.Empty<int>();
     public bool Glitch { get; init; }
     public bool CriticalGlitch { get; init; }
+    public int Sixes { get; init; }
     public string Details { get; init; } = string.Empty;
 }
 

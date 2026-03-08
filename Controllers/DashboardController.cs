@@ -1,0 +1,951 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using ShadowrunDiscordBot.Services;
+
+namespace ShadowrunDiscordBot.Controllers;
+
+/// <summary>
+/// API controller for the GM Dashboard UI
+/// </summary>
+[ApiController]
+public class DashboardController : ControllerBase
+{
+    private readonly ShadowrunDbContext _dbContext;
+    private readonly ILogger<DashboardController> _logger;
+
+    public DashboardController(ShadowrunDbContext dbContext, ILogger<DashboardController> logger)
+    {
+        _dbContext = dbContext;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Get dashboard summary data
+    /// </summary>
+    [HttpGet("api/dashboard")]
+    public async Task<IActionResult> GetDashboard()
+    {
+        try
+        {
+            var totalCharacters = await _dbContext.Characters.CountAsync();
+            var activeCombats = await _dbContext.CombatSessions.CountAsync(c => c.IsActive);
+            var recentActions = await _dbContext.CombatActions
+                .OrderByDescending(a => a.Timestamp)
+                .Take(10)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                success = true,
+                dashboard = new
+                {
+                    totalCharacters,
+                    activeCombats,
+                    recentActions = recentActions.Select(a => new
+                    {
+                        a.Id,
+                        a.ActorName,
+                        a.ActionType,
+                        a.TargetName,
+                        a.Description,
+                        a.Timestamp
+                    }),
+                    serverTime = DateTime.UtcNow
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get dashboard data");
+            return StatusCode(500, new { success = false, error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Serve the GM Dashboard HTML page
+    /// </summary>
+    [HttpGet("/")]
+    public IActionResult GetDashboardPage()
+    {
+        var html = GetDashboardHtml();
+        return Content(html, "text/html");
+    }
+
+    private string GetDashboardHtml()
+    {
+        return @"<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Shadowrun GM Dashboard</title>
+    <style>
+        :root {
+            --bg-dark: #0d0d1a;
+            --bg-card: #1a1a2e;
+            --bg-section: #16213e;
+            --accent: #e94560;
+            --accent-hover: #c13547;
+            --text: #eee;
+            --text-muted: #888;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--bg-section), var(--bg-card));
+            padding: 20px;
+            border-bottom: 2px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: var(--accent);
+            font-size: 1.8em;
+        }
+        
+        .header .subtitle {
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .section {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .section h2 {
+            color: var(--accent);
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 1px solid var(--bg-section);
+            padding-bottom: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-card {
+            background: var(--bg-section);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.85em;
+        }
+        
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 0.95em;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: var(--accent-hover);
+        }
+        
+        button:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+        }
+        
+        button.secondary {
+            background: var(--bg-section);
+            border: 1px solid var(--accent);
+        }
+        
+        button.secondary:hover {
+            background: var(--accent);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        
+        input, select, textarea {
+            background: var(--bg-section);
+            color: var(--text);
+            border: 1px solid var(--bg-section);
+            padding: 10px;
+            border-radius: 5px;
+            width: 100%;
+            margin: 5px 0;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .character-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .character-card {
+            background: var(--bg-section);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .character-card:hover {
+            transform: translateX(5px);
+        }
+        
+        .character-card h3 {
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+        
+        .character-card .metatype {
+            color: var(--text-muted);
+            font-size: 0.85em;
+        }
+        
+        .character-card .attributes {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .attribute {
+            background: var(--bg-card);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+        
+        .combat-participant {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: var(--bg-section);
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        
+        .combat-participant.acted {
+            opacity: 0.5;
+        }
+        
+        .combat-participant.current {
+            border-left: 3px solid var(--success);
+        }
+        
+        .initiative {
+            font-weight: bold;
+            color: var(--accent);
+            font-size: 1.2em;
+            min-width: 40px;
+        }
+        
+        .action-log {
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 0.9em;
+        }
+        
+        .action-item {
+            padding: 8px;
+            border-bottom: 1px solid var(--bg-section);
+        }
+        
+        .action-item .time {
+            color: var(--text-muted);
+            font-size: 0.8em;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h2 {
+            color: var(--accent);
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: var(--bg-section);
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .tab.active {
+            background: var(--accent);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-indicator.active {
+            background: var(--success);
+        }
+        
+        .status-indicator.inactive {
+            background: var(--text-muted);
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class='header'>
+        <div>
+            <h1>🪓 Shadowrun GM Dashboard</h1>
+            <div class='subtitle'>Game Master Control Panel</div>
+        </div>
+        <div>
+            <button onclick='refreshDashboard()' class='secondary'>🔄 Refresh</button>
+            <a href='/api-docs' target='_blank'><button class='secondary'>📚 API Docs</button></a>
+        </div>
+    </header>
+
+    <div class='container'>
+        <!-- Stats Overview -->
+        <div class='grid'>
+            <div class='section'>
+                <h2>📊 Overview</h2>
+                <div class='stats-grid'>
+                    <div class='stat-card'>
+                        <div class='stat-value' id='stat-characters'>0</div>
+                        <div class='stat-label'>Characters</div>
+                    </div>
+                    <div class='stat-card'>
+                        <div class='stat-value' id='stat-combats'>0</div>
+                        <div class='stat-label'>Active Combats</div>
+                    </div>
+                    <div class='stat-card'>
+                        <div class='stat-value' id='stat-round'>-</div>
+                        <div class='stat-label'>Current Round</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class='grid'>
+            <!-- Characters Section -->
+            <div class='section'>
+                <h2>👤 Characters</h2>
+                <div class='btn-group'>
+                    <button onclick='loadCharacters()'>📋 List All</button>
+                    <button onclick='showCreateCharacterModal()' class='secondary'>➕ New</button>
+                </div>
+                <div id='character-list' class='character-list'>
+                    <p style='color: var(--text-muted);'>Click 'List All' to load characters</p>
+                </div>
+            </div>
+
+            <!-- Combat Section -->
+            <div class='section'>
+                <h2>⚔️ Combat</h2>
+                <div class='btn-group'>
+                    <button onclick='startCombat()' id='btn-start-combat'>🎯 Start Combat</button>
+                    <button onclick='endCombat()' id='btn-end-combat' class='secondary' disabled>🛑 End Combat</button>
+                </div>
+                <div class='btn-group'>
+                    <button onclick='showAddCombatantModal()' id='btn-add-combatant' class='secondary' disabled>➕ Add Combatant</button>
+                    <button onclick='nextTurn()' id='btn-next-turn' class='secondary' disabled>➡️ Next Turn</button>
+                </div>
+                <div id='combat-status'>
+                    <p style='color: var(--text-muted);'>No active combat session</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tools Section -->
+        <div class='grid'>
+            <!-- Dice Roller -->
+            <div class='section'>
+                <h2>🎲 Dice Roller</h2>
+                <div class='form-group'>
+                    <label>Shadowrun Pool</label>
+                    <input type='number' id='dice-pool' value='6' min='1' max='100'>
+                </div>
+                <div class='btn-group'>
+                    <button onclick='rollShadowrun()'>Roll Pool</button>
+                    <button onclick='rollEdge()' class='secondary'>Roll Edge</button>
+                </div>
+                <div id='dice-result' style='margin-top: 15px; padding: 10px; background: var(--bg-section); border-radius: 5px;'>
+                    <span style='color: var(--text-muted);'>Results will appear here</span>
+                </div>
+            </div>
+
+            <!-- Action Log -->
+            <div class='section'>
+                <h2>📜 Recent Actions</h2>
+                <div id='action-log' class='action-log'>
+                    <p style='color: var(--text-muted);'>No recent actions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id='character-modal' class='modal'>
+        <div class='modal-content'>
+            <div class='modal-header'>
+                <h2 id='character-modal-title'>Character</h2>
+                <button class='close-btn' onclick='closeModal(""character-modal"")'>&times;</button>
+            </div>
+            <div id='character-modal-body'></div>
+        </div>
+    </div>
+
+    <div id='combatant-modal' class='modal'>
+        <div class='modal-content'>
+            <div class='modal-header'>
+                <h2>Add Combatant</h2>
+                <button class='close-btn' onclick='closeModal(""combatant-modal"")'>&times;</button>
+            </div>
+            <div class='form-group'>
+                <label>Name</label>
+                <input type='text' id='combatant-name' placeholder='Enter name'>
+            </div>
+            <div class='form-group'>
+                <label>Type</label>
+                <select id='combatant-type'>
+                    <option value='PC'>Player Character</option>
+                    <option value='NPC' selected>Non-Player Character</option>
+                    <option value='Enemy'>Enemy</option>
+                </select>
+            </div>
+            <div class='form-group'>
+                <label>Initiative Dice</label>
+                <input type='number' id='combatant-init-dice' value='1' min='1' max='5'>
+            </div>
+            <button onclick='addCombatant()'>Add to Combat</button>
+        </div>
+    </div>
+
+    <script>
+        // API Base URL
+        const API_BASE = '/api';
+        
+        // State
+        let activeCombat = null;
+        let characters = [];
+        
+        // Dashboard
+        async function refreshDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/dashboard`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('stat-characters').textContent = data.dashboard.totalCharacters;
+                    document.getElementById('stat-combats').textContent = data.dashboard.activeCombats;
+                    
+                    if (data.dashboard.recentActions.length > 0) {
+                        const logHtml = data.dashboard.recentActions.map(a => `
+                            <div class='action-item'>
+                                <strong>${a.actorName || 'Unknown'}</strong> ${a.actionType}
+                                ${a.targetName ? ` → <strong>${a.targetName}</strong>` : ''}
+                                ${a.description ? ` - ${a.description}` : ''}
+                                <div class='time'>${new Date(a.timestamp).toLocaleTimeString()}</div>
+                            </div>
+                        `).join('');
+                        document.getElementById('action-log').innerHTML = logHtml;
+                    }
+                }
+                
+                await checkActiveCombat();
+            } catch (error) {
+                console.error('Failed to refresh dashboard:', error);
+            }
+        }
+        
+        // Characters
+        async function loadCharacters() {
+            try {
+                const response = await fetch(`${API_BASE}/character/all`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    characters = data.characters;
+                    renderCharacters();
+                }
+            } catch (error) {
+                console.error('Failed to load characters:', error);
+            }
+        }
+        
+        function renderCharacters() {
+            const container = document.getElementById('character-list');
+            
+            if (characters.length === 0) {
+                container.innerHTML = '<p style=\"color: var(--text-muted);\">No characters found</p>';
+                return;
+            }
+            
+            container.innerHTML = characters.map(c => `
+                <div class='character-card' onclick='viewCharacter(${c.id})'>
+                    <h3>${c.name}</h3>
+                    <div class='metatype'>${c.metatype || 'Unknown'}</div>
+                    <div class='attributes'>
+                        <span class='attribute'>BOD ${c.body}</span>
+                        <span class='attribute'>AGI ${c.agility}</span>
+                        <span class='attribute'>REA ${c.reaction}</span>
+                        <span class='attribute'>STR ${c.strength}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function viewCharacter(id) {
+            try {
+                const response = await fetch(`${API_BASE}/character/${id}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const c = data.character;
+                    document.getElementById('character-modal-title').textContent = c.name;
+                    document.getElementById('character-modal-body').innerHTML = `
+                        <div class='stats-grid'>
+                            <div class='stat-card'><div class='stat-value'>${c.body}</div><div class='stat-label'>Body</div></div>
+                            <div class='stat-card'><div class='stat-value'>${c.agility}</div><div class='stat-label'>Agility</div></div>
+                            <div class='stat-card'><div class='stat-value'>${c.reaction}</div><div class='stat-label'>Reaction</div></div>
+                            <div class='stat-card'><div class='stat-value'>${c.strength}</div><div class='stat-label'>Strength</div></div>
+                            <div class='stat-card'><div class='stat-value'>${c.charisma}</div><div class='stat-label'>Charisma</div></div>
+                            <div class='stat-card'><div class='stat-value'>${c.intuition}</div><div class='stat-label'>Intuition</div></div>
+                            <div class='stat-card'><div class='stat-value'>${c.logic}</div><div class='stat-label'>Logic</div></div>
+                            <div class='stat-card'><div class='stat-value'>${c.willpower}</div><div class='stat-label'>Willpower</div></div>
+                            <div class='stat-card'><div class='stat-value'>${c.edge}</div><div class='stat-label'>Edge</div></div>
+                            <div class='stat-card'><div class='stat-value'>${c.magic || '-'}</div><div class='stat-label'>Magic</div></div>
+                            <div class='stat-card'><div class='stat-value'>${c.essence || '-'}</div><div class='stat-label'>Essence</div></div>
+                        </div>
+                        <p style='margin-top: 15px; color: var(--text-muted);'>
+                            Skills: ${c.skills?.length || 0} | Cyberware: ${c.cyberware?.length || 0} | Spells: ${c.spells?.length || 0}
+                        </p>
+                    `;
+                    document.getElementById('character-modal').classList.add('active');
+                }
+            } catch (error) {
+                console.error('Failed to load character:', error);
+            }
+        }
+        
+        function showCreateCharacterModal() {
+            document.getElementById('character-modal-title').textContent = 'Create Character';
+            document.getElementById('character-modal-body').innerHTML = `
+                <div class='form-group'>
+                    <label>Discord User ID</label>
+                    <input type='text' id='new-char-user-id' placeholder='Enter Discord User ID'>
+                </div>
+                <div class='form-group'>
+                    <label>Character Name</label>
+                    <input type='text' id='new-char-name' placeholder='Enter character name'>
+                </div>
+                <div class='form-group'>
+                    <label>Metatype</label>
+                    <select id='new-char-metatype'>
+                        <option value='Human'>Human</option>
+                        <option value='Elf'>Elf</option>
+                        <option value='Dwarf'>Dwarf</option>
+                        <option value='Ork'>Ork</option>
+                        <option value='Troll'>Troll</option>
+                    </select>
+                </div>
+                <button onclick='createCharacter()'>Create Character</button>
+            `;
+            document.getElementById('character-modal').classList.add('active');
+        }
+        
+        async function createCharacter() {
+            const userId = document.getElementById('new-char-user-id').value;
+            const name = document.getElementById('new-char-name').value;
+            const metatype = document.getElementById('new-char-metatype').value;
+            
+            if (!userId || !name) {
+                alert('User ID and Name are required');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/character`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        discordUserId: userId,
+                        name: name,
+                        metatype: metatype
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeModal('character-modal');
+                    loadCharacters();
+                } else {
+                    alert('Failed to create character: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Failed to create character:', error);
+            }
+        }
+        
+        // Combat
+        async function checkActiveCombat() {
+            try {
+                const response = await fetch(`${API_BASE}/combat/active`);
+                const data = await response.json();
+                
+                if (data.success && data.active) {
+                    activeCombat = data.combat;
+                    updateCombatUI();
+                } else {
+                    activeCombat = null;
+                    resetCombatUI();
+                }
+            } catch (error) {
+                console.error('Failed to check combat:', error);
+            }
+        }
+        
+        async function startCombat() {
+            try {
+                const response = await fetch(`${API_BASE}/combat/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        channelId: 0,
+                        guildId: 0
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    activeCombat = data.combat;
+                    updateCombatUI();
+                } else {
+                    alert('Failed to start combat: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Failed to start combat:', error);
+            }
+        }
+        
+        async function endCombat() {
+            if (!activeCombat) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/combat/${activeCombat.id}/end`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    activeCombat = null;
+                    resetCombatUI();
+                }
+            } catch (error) {
+                console.error('Failed to end combat:', error);
+            }
+        }
+        
+        function showAddCombatantModal() {
+            document.getElementById('combatant-modal').classList.add('active');
+        }
+        
+        async function addCombatant() {
+            if (!activeCombat) return;
+            
+            const name = document.getElementById('combatant-name').value;
+            const type = document.getElementById('combatant-type').value;
+            const initDice = parseInt(document.getElementById('combatant-init-dice').value);
+            
+            if (!name) {
+                alert('Name is required');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/combat/${activeCombat.id}/add-participant`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        type: type,
+                        initiativeDice: initDice
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeModal('combatant-modal');
+                    document.getElementById('combatant-name').value = '';
+                    await checkActiveCombat();
+                } else {
+                    alert('Failed to add combatant: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Failed to add combatant:', error);
+            }
+        }
+        
+        async function nextTurn() {
+            if (!activeCombat) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/combat/${activeCombat.id}/next-turn`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await checkActiveCombat();
+                }
+            } catch (error) {
+                console.error('Failed to advance turn:', error);
+            }
+        }
+        
+        function updateCombatUI() {
+            if (!activeCombat) return;
+            
+            document.getElementById('stat-round').textContent = activeCombat.round;
+            document.getElementById('btn-start-combat').disabled = true;
+            document.getElementById('btn-end-combat').disabled = false;
+            document.getElementById('btn-add-combatant').disabled = false;
+            document.getElementById('btn-next-turn').disabled = false;
+            
+            const participants = activeCombat.participants || [];
+            const statusHtml = participants.length > 0 
+                ? participants.map((p, i) => `
+                    <div class='combat-participant ${p.hasActed ? 'acted' : ''} ${i === activeCombat.currentTurn ? 'current' : ''}'>
+                        <span class='initiative'>${p.initiative}</span>
+                        <span>${p.name} <small style='color: var(--text-muted)'>(${p.type})</small></span>
+                    </div>
+                `).join('')
+                : '<p style=\"color: var(--text-muted);\">No combatants yet. Add some!</p>';
+            
+            document.getElementById('combat-status').innerHTML = `
+                <div style='margin-bottom: 10px;'>
+                    <strong>Round ${activeCombat.round}</strong> | Turn ${activeCombat.currentTurn + 1}
+                </div>
+                ${statusHtml}
+            `;
+        }
+        
+        function resetCombatUI() {
+            document.getElementById('stat-round').textContent = '-';
+            document.getElementById('btn-start-combat').disabled = false;
+            document.getElementById('btn-end-combat').disabled = true;
+            document.getElementById('btn-add-combatant').disabled = true;
+            document.getElementById('btn-next-turn').disabled = true;
+            document.getElementById('combat-status').innerHTML = '<p style=\"color: var(--text-muted);\">No active combat session</p>';
+        }
+        
+        // Dice
+        async function rollShadowrun() {
+            const pool = parseInt(document.getElementById('dice-pool').value);
+            
+            try {
+                const response = await fetch(`${API_BASE}/dice/shadowrun`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ poolSize: pool })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const r = data.result;
+                    document.getElementById('dice-result').innerHTML = `
+                        <div style='font-size: 1.5em; margin-bottom: 10px;'>
+                            <strong>${r.hits}</strong> hits
+                            ${r.isCriticalGlitch ? '<span style=\"color: var(--danger);\"> - CRITICAL GLITCH!</span>' : ''}
+                        </div>
+                        <div style='color: var(--text-muted); font-size: 0.9em;'>
+                            Rolls: [${r.rolls.join(', ')}] | Glitches: ${r.glitches}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Failed to roll dice:', error);
+            }
+        }
+        
+        async function rollEdge() {
+            const pool = parseInt(document.getElementById('dice-pool').value);
+            
+            try {
+                const response = await fetch(`${API_BASE}/dice/edge`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ poolSize: pool })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const r = data.result;
+                    document.getElementById('dice-result').innerHTML = `
+                        <div style='font-size: 1.5em; margin-bottom: 10px;'>
+                            <strong>${r.hits}</strong> hits (Edge roll - sixes explode!)
+                        </div>
+                        <div style='color: var(--text-muted); font-size: 0.9em;'>
+                            Rolls: [${r.rolls.join(', ')}] | Sixes: ${r.sixes}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Failed to roll edge:', error);
+            }
+        }
+        
+        // Modal helpers
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        // Close modals on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+        
+        // Initialize
+        refreshDashboard();
+        setInterval(refreshDashboard, 30000); // Auto-refresh every 30s
+    </script>
+</body>
+</html>";
+    }
+}

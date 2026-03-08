@@ -137,11 +137,37 @@ public class DatabaseService : IAsyncDisposable
         return session;
     }
 
+    public async Task<CombatSession> AddCombatSessionAsync(CombatSession session)
+    {
+        _context.CombatSessions.Add(session);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Added combat session {SessionId} in channel {ChannelId}",
+            session.Id, session.DiscordChannelId);
+
+        return session;
+    }
+
     public async Task<CombatSession?> GetActiveCombatSessionAsync(ulong channelId)
     {
         return await _context.CombatSessions
             .Include(s => s.Participants)
+                .ThenInclude(p => p.Character)
             .FirstOrDefaultAsync(s => s.DiscordChannelId == channelId && s.IsActive);
+    }
+
+    public async Task<CombatSession?> GetCombatSessionAsync(int sessionId)
+    {
+        return await _context.CombatSessions
+            .Include(s => s.Participants)
+                .ThenInclude(p => p.Character)
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+    }
+
+    public async Task UpdateCombatSessionAsync(CombatSession session)
+    {
+        _context.CombatSessions.Update(session);
+        await _context.SaveChangesAsync();
     }
 
     public async Task EndCombatSessionAsync(int sessionId)
@@ -155,6 +181,53 @@ public class DatabaseService : IAsyncDisposable
 
             _logger.LogInformation("Ended combat session {SessionId}", sessionId);
         }
+    }
+
+    public async Task<CombatParticipant> AddCombatParticipantAsync(CombatParticipant participant)
+    {
+        _context.CombatParticipants.Add(participant);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Added combat participant {ParticipantName} to session {SessionId}",
+            participant.Name, participant.CombatSessionId);
+
+        return participant;
+    }
+
+    public async Task UpdateCombatParticipantAsync(CombatParticipant participant)
+    {
+        _context.CombatParticipants.Update(participant);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task RemoveCombatParticipantAsync(CombatParticipant participant)
+    {
+        _context.CombatParticipants.Remove(participant);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Removed combat participant {ParticipantName}", participant.Name);
+    }
+
+    public async Task<CombatAction> AddCombatActionAsync(CombatAction action)
+    {
+        _context.CombatActions.Add(action);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Logged combat action: {ActionType} by actor {ActorId}",
+            action.ActionType, action.ActorId);
+
+        return action;
+    }
+
+    public async Task<ShadowrunCharacter?> GetCharacterByIdAsync(int characterId)
+    {
+        return await _context.Characters
+            .Include(c => c.Skills)
+            .Include(c => c.Cyberware)
+            .Include(c => c.Spells)
+            .Include(c => c.Spirits)
+            .Include(c => c.Gear)
+            .FirstOrDefaultAsync(c => c.Id == characterId);
     }
 
     #endregion

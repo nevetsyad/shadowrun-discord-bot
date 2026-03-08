@@ -13,6 +13,7 @@ namespace ShadowrunDiscordBot.Services;
 
 /// <summary>
 /// Web UI service for GM tools with authentication and rate limiting
+/// Hosts the dashboard and API endpoints
 /// </summary>
 public class WebUIService : IHostedService
 {
@@ -56,7 +57,10 @@ public class WebUIService : IHostedService
             // Start the web server
             await _app.StartAsync(cancellationToken);
 
-            _logger.LogInformation("Web UI service started successfully on port {Port}", _config.WebUI.Port);
+            _logger.LogInformation("==========================================");
+            _logger.LogInformation("🌐 Web UI Running at http://localhost:{Port}", _config.WebUI.Port);
+            _logger.LogInformation("📚 API Docs at http://localhost:{Port}/api-docs", _config.WebUI.Port);
+            _logger.LogInformation("==========================================");
         }
         catch (Exception ex)
         {
@@ -131,12 +135,27 @@ public class WebUIService : IHostedService
             });
         });
 
-        // Controllers
+        // Controllers - scan assembly for all controllers
         services.AddControllers()
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.PropertyNamingPolicy = null;
             });
+
+        // Add required services for controllers
+        services.AddScoped<ShadowrunDbContext>(sp => 
+        {
+            var dbService = _services.GetRequiredService<DatabaseService>();
+            // We need to get the internal context - use reflection or expose it
+            // For now, create a new context with the same config
+            var config = sp.GetRequiredService<BotConfig>();
+            var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<ShadowrunDbContext>()
+                .UseSqlite(config.Database.ConnectionString)
+                .Options;
+            return new ShadowrunDbContext(options);
+        });
+        
+        services.AddScoped<DiceService>(sp => _services.GetRequiredService<DiceService>());
 
         // Swagger
         if (_config.WebUI.EnableSwagger)
@@ -148,8 +167,16 @@ public class WebUIService : IHostedService
                 {
                     Title = "Shadowrun Discord Bot API",
                     Version = "v1",
-                    Description = "API for Shadowrun Discord Bot GM Tools"
+                    Description = "API for Shadowrun Discord Bot GM Tools - Character management, Combat tracking, Dice rolling"
                 });
+                
+                // Include XML comments if available
+                var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                if (File.Exists(xmlPath))
+                {
+                    c.IncludeXmlComments(xmlPath);
+                }
             });
         }
     }
@@ -175,163 +202,17 @@ public class WebUIService : IHostedService
         app.UseAuthentication();
         app.UseAuthorization();
 
+        // Map all controllers
         app.MapControllers();
 
         // Health check endpoint
         app.MapGet("/health", () => Results.Ok(new
         {
             status = "healthy",
-            timestamp = DateTime.UtcNow
+            timestamp = DateTime.UtcNow,
+            version = "1.0.0"
         })).RequireRateLimiting("FixedWindow");
 
-        // Root endpoint
-        app.MapGet("/", () => Results.Redirect("/api-docs"));
+        // Note: Dashboard is served by DashboardController at "/" route
     }
-}
-
-/// <summary>
-/// API Controller base with common functionality
-/// </summary>
-[Microsoft.AspNetCore.Mvc.ApiController]
-[Microsoft.AspNetCore.Mvc.Route("api/[controller]")]
-public abstract class BaseApiController : Microsoft.AspNetCore.Mvc.ControllerBase
-{
-    protected IActionResult Success(object data)
-    {
-        return Ok(new { success = true, data });
-    }
-
-    protected IActionResult Error(string message, int statusCode = 400)
-    {
-        return StatusCode(statusCode, new { success = false, error = message });
-    }
-}
-
-/// <summary>
-/// Characters API Controller
-/// </summary>
-[Microsoft.AspNetCore.Mvc.Route("api/characters")]
-public class CharactersController : BaseApiController
-{
-    private readonly DatabaseService _db;
-
-    public CharactersController(DatabaseService db)
-    {
-        _db = db;
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> List([FromQuery] ulong? userId)
-    {
-        try
-        {
-            if (!userId.HasValue)
-                return Error("User ID is required");
-
-            var characters = await _db.GetUserCharactersAsync(userId.Value);
-            return Success(characters);
-        }
-        catch (Exception ex)
-        {
-            return Error($"Failed to list characters: {ex.Message}", 500);
-        }
-    }
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> Get(int id)
-    {
-        try
-        {
-            var character = await _db.GetCharacterAsync(id);
-            if (character == null)
-                return Error("Character not found", 404);
-
-            return Success(character);
-        }
-        catch (Exception ex)
-        {
-            return Error($"Failed to get character: {ex.Message}", 500);
-        }
-    }
-}
-
-/// <summary>
-/// Combat API Controller
-/// </summary>
-[Microsoft.AspNetCore.Mvc.Route("api/combat")]
-public class CombatController : BaseApiController
-{
-    private readonly DatabaseService _db;
-
-    public CombatController(DatabaseService db)
-    {
-        _db = db;
-    }
-
-    [HttpGet("active")]
-    public async Task<IActionResult> GetActive([FromQuery] ulong channelId)
-    {
-        try
-        {
-            var session = await _db.GetActiveCombatSessionAsync(channelId);
-            return Success(session ?? new { active = false });
-        }
-        catch (Exception ex)
-        {
-            return Error($"Failed to get active combat: {ex.Message}", 500);
-        }
-    }
-}
-
-/// <summary>
-/// Dice API Controller
-/// </summary>
-[Microsoft.AspNetCore.Mvc.Route("api/dice")]
-public class DiceController : BaseApiController
-{
-    private readonly DiceService _dice;
-
-    public DiceController(DiceService dice)
-    {
-        _dice = dice;
-    }
-
-    [HttpPost("roll")]
-    public IActionResult Roll([FromBody] DiceRollRequest request)
-    {
-        try
-        {
-            var result = _dice.ParseAndRoll(request.Notation);
-            return Success(result);
-        }
-        catch (Exception ex)
-        {
-            return Error($"Failed to roll dice: {ex.Message}");
-        }
-    }
-
-    [HttpPost("shadowrun")]
-    public IActionResult ShadowrunRoll([FromBody] ShadowrunRollRequest request)
-    {
-        try
-        {
-            var result = _dice.RollShadowrun(request.PoolSize, request.TargetNumber);
-            return Success(result);
-        }
-        catch (Exception ex)
-        {
-            return Error($"Failed to roll Shadowrun dice: {ex.Message}");
-        }
-    }
-}
-
-public record DiceRollRequest
-{
-    public string Notation { get; init; } = "1d6";
-}
-
-public record ShadowrunRollRequest
-{
-    public int PoolSize { get; init; }
-    public int TargetNumber { get; init; } = 4;
 }
