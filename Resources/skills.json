@@ -1,0 +1,114 @@
+# Shadowrun 3rd Edition - Skills Database
+
+{
+  "activeSkills": [
+    {
+      "name": "Athletics",
+      "category": "Physical",
+      "linkedAttribute": "Quickness",
+      "description": "Running, jumping, climbing, swimming"
+    },
+    {
+      "name": "Unarmed Combat",
+      "category": "Combat",
+      "linkedAttribute": "Quickness",
+      "description": "Brawling, martial arts, cyber-implant combat"
+    },
+    {
+      "name": "Edged Weapons",
+      "category": "Combat",
+      "linkedAttribute": "Quickness",
+      "description": "Swords, knives, axes, etc."
+    },
+    {
+      "name": "Pistols",
+      "category": "Combat",
+      "linkedAttribute": "Quickness",
+      "description": "All types of pistols"
+    },
+    {
+      "name": "Rifles",
+      "category": "Combat",
+      "linkedAttribute": "Quickness",
+      "description": "Assault rifles, shotguns, sporting rifles"
+    },
+    {
+      "name": "Sorcery",
+      "category": "Magic",
+      "linkedAttribute": "Intelligence",
+      "description": "Spellcasting, ritual magic"
+    },
+    {
+      "name": "Conjuring",
+      "category": "Magic",
+      "linkedAttribute": "Charisma",
+      "description": "Summoning and binding spirits"
+    },
+    {
+      "name": "Computer",
+      "category": "Technical",
+      "linkedAttribute": "Intelligence",
+      "description": "Matrix operations, decking"
+    },
+    {
+      "name": "Electronics",
+      "category": "Technical",
+      "linkedAttribute": "Intelligence",
+      "description": "Building, repairing electronics"
+    },
+    {
+      "name": "Vehicle Operation",
+      "category": "Technical",
+      "linkedAttribute": "Quickness",
+      "description": "Driving ground vehicles"
+    },
+    {
+      "name": "Gunnery",
+      "category": "Combat",
+      "linkedAttribute": "Intelligence",
+      "description": "Vehicle-mounted weapons"
+    },
+    {
+      "name": "Stealth",
+      "category": "Physical",
+      "linkedAttribute": "Quickness",
+      "description": "Sneaking, hiding, camouflage"
+    },
+    {
+      "name": "Negotiation",
+      "category": "Social",
+      "linkedAttribute": "Charisma",
+      "description": "Deals, bargaining, diplomacy"
+    },
+    {
+      "name": "Etiquette",
+      "category": "Social",
+      "linkedAttribute": "Charisma",
+      "description": "Street, corporate, social norms"
+    },
+    {
+      "name": "Armed Combat",
+      "category": "Combat",
+      "linkedAttribute": "Quickness",
+      "description": "Melee weapons"
+    }
+  ],
+  "knowledgeSkills": [
+    {
+      "category": "Academic",
+      "examples": ["History", "Science", "Literature", "Philosophy"]
+    },
+    {
+      "category": "Interests",
+      "examples": ["Sports", "Music", "Art", "Hobbies"]
+    },
+    {
+      "category": "Street",
+      "examples": ["Gang Turf", "Black Market", "Urban Survival"]
+    },
+    {
+      "category": "Professional",
+      "examples": ["Corporate Procedures", "Legal Knowledge", "Medical"]
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+# Shadowrun 3rd Edition - Metatypes
+
+{
+  "metatypes": [
+    {
+      "name": "Human",
+      "bodyModifier": 0,
+      "quicknessModifier": 0,
+      "strengthModifier": 0,
+      "charismaModifier": 0,
+      "intelligenceModifier": 0,
+      "willpowerModifier": 0,
+      "essenceBase": 6.0,
+      "description": "Baseline metatype, most common",
+      "lifespan": "Normal"
+    },
+    {
+      "name": "Elf",
+      "bodyModifier": 0,
+      "quicknessModifier": 1,
+      "strengthModifier": 0,
+      "charismaModifier": 2,
+      "intelligenceModifier": 0,
+      "willpowerModifier": 0,
+      "essenceBase": 6.0,
+      "description": "Graceful, charismatic, long-lived",
+      "lifespan": "200+ years"
+    },
+    {
+      "name": "Dwarf",
+      "bodyModifier": 2,
+      "quicknessModifier": 0,
+      "strengthModifier": 2,
+      "charismaModifier": -1,
+      "intelligenceModifier": 0,
+      "willpowerModifier": 0,
+      "essenceBase": 6.0,
+      "description": "Stocky, strong, resistant to disease",
+      "lifespan": "100+ years"
+    },
+    {
+      "name": "Ork",
+      "bodyModifier": 3,
+      "quicknessModifier": 0,
+      "strengthModifier": 2,
+      "charismaModifier": -1,
+      "intelligenceModifier": -1,
+      "willpowerModifier": 0,
+      "essenceBase": 6.0,
+      "description": "Large, strong, distinctive tusks",
+      "lifespan": "40-50 years"
+    },
+    {
+      "name": "Troll",
+      "bodyModifier": 5,
+      "quicknessModifier": -1,
+      "strengthModifier": 4,
+      "charismaModifier": -2,
+      "intelligenceModifier": -2,
+      "willpowerModifier": 0,
+      "essenceBase": 6.0,
+      "description": "Massive, extremely strong, dermal armor",
+      "lifespan": "50-60 years"
+    }
+  ]
+}

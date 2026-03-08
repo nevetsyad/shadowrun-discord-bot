@@ -1,0 +1,150 @@
+# Shadowrun 3rd Edition - Cyberware Database
+
+{
+  "categories": [
+    {
+      "name": "Cyberlimbs",
+      "type": "Cyberware",
+      "items": [
+        {
+          "name": "Obvious Cyberarm",
+          "essenceCost": 0.6,
+          "nuyenCost": 15000,
+          "availability": 3,
+          "description": "Full arm replacement, obvious chrome"
+        },
+        {
+          "name": "Obvious Cyberleg",
+          "essenceCost": 0.6,
+          "nuyenCost": 15000,
+          "availability": 3,
+          "description": "Full leg replacement, obvious chrome"
+        },
+        {
+          "name": "Synthetic Cyberarm",
+          "essenceCost": 0.8,
+          "nuyenCost": 25000,
+          "availability": 5,
+          "description": "Realistic arm replacement"
+        }
+      ]
+    },
+    {
+      "name": "Cybereyes",
+      "type": "Cyberware",
+      "items": [
+        {
+          "name": "Cybereyes",
+          "essenceCost": 0.2,
+          "nuyenCost": 5000,
+          "availability": 2,
+          "description": "Basic cyber eye replacement",
+          "features": ["Low-light vision", "Image link"]
+        },
+        {
+          "name": "Cybereyes with Flare Compensation",
+          "essenceCost": 0.25,
+          "nuyenCost": 8000,
+          "availability": 3,
+          "description": "Enhanced cyber eyes",
+          "features": ["Low-light", "Image link", "Flare comp"]
+        }
+      ]
+    },
+    {
+      "name": "Neural",
+      "type": "Cyberware",
+      "items": [
+        {
+          "name": "Datajack",
+          "essenceCost": 0.2,
+          "nuyenCost": 3000,
+          "availability": 2,
+          "description": "Direct neural interface for decking"
+        },
+        {
+          "name": "Chipjack",
+          "essenceCost": 0.2,
+          "nuyenCost": 5000,
+          "availability": 3,
+          "description": "Slot for skillsofts"
+        },
+        {
+          "name": "Boosted Reflexes",
+          "essenceCost": 1.5,
+          "nuyenCost": 50000,
+          "availability": 6,
+          "description": "+1D6 initiative, +2 Reaction"
+        },
+        {
+          "name": "Wired Reflexes",
+          "essenceCost": 2.0,
+          "nuyenCost": 100000,
+          "availability": 8,
+          "description": "+2D6 initiative, +4 Reaction"
+        }
+      ]
+    },
+    {
+      "name": "Bodyware",
+      "type": "Cyberware",
+      "items": [
+        {
+          "name": "Dermal Plating",
+          "essenceCost": 0.5,
+          "nuyenCost": 7500,
+          "availability": 4,
+          "description": "+1 Body for damage resistance"
+        },
+        {
+          "name": "Bone Lacing",
+          "essenceCost": 0.4,
+          "nuyenCost": 6000,
+          "availability": 5,
+          "description": "Reinforced bones, +1 Body"
+        },
+        {
+          "name": "Smartlink",
+          "essenceCost": 0.5,
+          "nuyenCost": 2500,
+          "availability": 3,
+          "description": "-1 TN with smartlinked weapons"
+        }
+      ]
+    },
+    {
+      "name": "Bioware",
+      "type": "Bioware",
+      "items": [
+        {
+          "name": "Muscle Augmentation",
+          "essenceCost": 0.3,
+          "nuyenCost": 20000,
+          "availability": 5,
+          "description": "+1 Strength"
+        },
+        {
+          "name": "Muscle Toner",
+          "essenceCost": 0.3,
+          "nuyenCost": 20000,
+          "availability": 5,
+          "description": "+1 Quickness"
+        },
+        {
+          "name": "Cerebral Booster",
+          "essenceCost": 0.2,
+          "nuyenCost": 15000,
+          "availability": 6,
+          "description": "+1 Intelligence"
+        },
+        {
+          "name": "Suprathyroid Gland",
+          "essenceCost": 0.5,
+          "nuyenCost": 40000,
+          "availability": 7,
+          "description": "+1 Body, Quickness, Strength"
+        }
+      ]
+    }
+  ]
+}
