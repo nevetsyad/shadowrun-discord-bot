@@ -13,13 +13,17 @@ A comprehensive Shadowrun 3rd Edition Discord bot built with .NET 8, Discord.Net
 - ✅ Priority-based character creation
 - ✅ All 5 metatypes: Human, Elf, Dwarf, Ork, Troll
 - ✅ 6 archetypes: Mage, Street Samurai, Shaman, Rigger, Decker, Physical Adept
+- ✅ Karma system for advancement and rerolls
+- ✅ Contact management and legwork
+- ✅ Damage/healing with condition monitors
 
 ### Magic System
 - ✅ Spell casting with Shadowrun dice
-- ✅ Focus management
+- ✅ Focus management with bonding and astral signatures
 - ✅ Spirit summoning (Hermetic and Shamanic traditions)
-- ✅ Astral projection tracking
-- ✅ Drain calculation
+- ✅ Astral projection and perception
+- ✅ Astral combat mechanics
+- ✅ Drain calculation with Force vs Magic thresholds
 - ✅ Spell categories: Combat, Detection, Health, Illusion, Manipulation
 
 ### Matrix System
@@ -31,6 +35,9 @@ A comprehensive Shadowrun 3rd Edition Discord bot built with .NET 8, Discord.Net
 - ✅ ICE cracking and bypass (Probe, Killer, Black, Tar)
 - ✅ Complex Forms
 - ✅ Security tally tracking
+- ✅ Full System ratings (Access, Control, Index, Files, Slave)
+- ✅ Alert escalation (None → Passive → Active → Shutdown)
+- ✅ Multiple IC types (White, Gray, Black) with specific behaviors
 
 ### Combat System
 - ✅ Turn-based combat
@@ -39,8 +46,11 @@ A comprehensive Shadowrun 3rd Edition Discord bot built with .NET 8, Discord.Net
 - ✅ Defense with armor
 - ✅ Glitch and critical glitch detection
 - ✅ Round management
-- ✅ Damage tracking (physical and stun)
+- ✅ Damage tracking (physical and stun) with staging
 - ✅ Wound modifiers
+- ✅ Combat Pool management (Quickness + Intelligence + Willpower) / 2
+- ✅ Pool allocation (attack, defense, damage, other)
+- ✅ Vehicle combat and drone control
 
 ### GM Toolkit
 - ✅ **NPC Generator**: Generate NPCs with roles, stats, motivations, and backstories
@@ -63,6 +73,10 @@ A comprehensive Shadowrun 3rd Edition Discord bot built with .NET 8, Discord.Net
 - ✅ Initiative calculation
 - ✅ Cryptographically secure RNG
 - ✅ Edge rolls with explosion
+- ✅ Hacking Pool (Intelligence + Magic) / 2
+- ✅ Magic Pool (Magic + Charisma) / 2
+- ✅ Astral Combat Pool (Astral Quickness) / 2
+- ✅ Task Pool for specialized activities
 
 ### Web UI
 - ✅ GM Dashboard for character management
@@ -72,6 +86,7 @@ A comprehensive Shadowrun 3rd Edition Discord bot built with .NET 8, Discord.Net
 - ✅ Swagger/OpenAPI documentation
 - ✅ JWT authentication
 - ✅ Rate limiting
+- ✅ Comprehensive documentation of all features
 
 ## 🚀 Installation
 
@@ -440,7 +455,57 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - `/random-event` - Get a random event
 - `/equipment [type]` - Generate equipment (types: weapon, armor, cyberware, general)
 
+### Enhanced Systems (SR3 Rulebook Complete)
+
+**Astral Space:**
+- `/astral project` - Begin astral projection
+- `/astral perception` - Toggle astral sight
+- `/astral combat` - Perform astral combat actions
+- `/magic foci bond` - Bond a magical focus
+- `/magic foci activate` - Activate a focus
+
+**Matrix Depth:**
+- `/matrix system-stats` - View system ratings
+- `/matrix security tally` - Check current security level
+- `/matrix alert-level` - See current alert status
+- `/matrix ice [type]` - Deploy or view IC by type
+
+**Combat Pool:**
+- `/combat pool [character]` - View combat pool allocation
+- `/combat assign-pool [character] [attack/defense/damage/other] [amount]` - Allocate pool
+
+**Vehicle Combat:**
+- `/vehicle maneuver [character] [score]` - Set maneuver score
+- `/vehicle sensors [character] [range]` - Check sensor range
+- `/vehicle control-mode [mode]` - Set drone control mode
+
+**Contacts & Legwork:**
+- `/contacts list` - View all contacts
+- `/contacts [name] [level]` - Add or update contact
+- `/legwork [type]` - Perform legwork actions
+- `/johnson meet` - Initiate Johnson negotiation
+
+**Karma System:**
+- `/karma status` - View karma points
+- `/karma improve [attribute/skill] [name]` - Improve attribute or skill
+- `/karma pool` - View karma pool for rerolls
+
+**Damage & Healing:**
+- `/damage [type] [value]` - Apply damage with staging
+- `/heal [method] [character]` - Perform healing
+- `/check [stat]` - Check condition monitor status
+
 ## 📋 Changelog
+
+### Version 1.2.0 (2026-03-09)
+- ✅ **Astral Space**: Full projection, perception, combat, and foci system
+- ✅ **Matrix Depth**: System ratings, security tally, alert escalation, multiple IC types
+- ✅ **Combat Pool**: Formula-based pool calculation with allocation system
+- ✅ **Vehicle Combat**: Maneuver scores, sensor tests, drone control modes
+- ✅ **Contacts/Legwork**: Contact levels, etiquette tests, Johnson meetings, fixers
+- ✅ **Karma System**: Advancement tracking, skill/attribute improvements, reroll pool
+- ✅ **Damage/Healing**: Condition monitors, staging, healing times, biotech/first aid
+- ✅ Comprehensive documentation and command reference
 
 ### Version 1.0.0 (2025-03-08)
 - Complete .NET 8 rewrite
