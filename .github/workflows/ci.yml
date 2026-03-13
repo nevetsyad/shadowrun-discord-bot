@@ -10,12 +10,72 @@ env:
   DOTNET_VERSION: '8.0.x'
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_NOLOGO: true
+  SOLUTION_FILE: 'ShadowrunDiscordBot.sln'
 
 jobs:
-  build:
-    name: Build & Test
+  # Pre-flight check to validate project structure
+  preflight:
+    name: Pre-flight Checks
     runs-on: ubuntu-latest
+    outputs:
+      has_solution: ${{ steps.check_files.outputs.has_solution }}
+      has_editorconfig: ${{ steps.check_files.outputs.has_editorconfig }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
+    - name: Check required files
+      id: check_files
+      run: |
+        echo "Checking for required project files..."
+        
+        # Check for solution file
+        if [ -f "$SOLUTION_FILE" ]; then
+          echo "✅ Solution file found: $SOLUTION_FILE"
+          echo "has_solution=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ ERROR: Solution file not found: $SOLUTION_FILE"
+          echo "has_solution=false" >> $GITHUB_OUTPUT
+          echo ""
+          echo "Please ensure the solution file exists in the repository root."
+          exit 1
+        fi
+        
+        # Check for .editorconfig
+        if [ -f ".editorconfig" ]; then
+          echo "✅ .editorconfig found"
+          echo "has_editorconfig=true" >> $GITHUB_OUTPUT
+        else
+          echo "⚠️ WARNING: .editorconfig not found - code style checks may use defaults"
+          echo "has_editorconfig=false" >> $GITHUB_OUTPUT
+        fi
+        
+        # List all project files for debugging
+        echo ""
+        echo "📋 Project files found:"
+        find . -name "*.csproj" -not -path "./obj/*" -not -path "./.git/*" | sort
+
+    - name: Validate solution structure
+      run: |
+        echo "Validating solution structure..."
+        
+        # Check that all projects referenced in the solution exist
+        dotnet sln list | while read project; do
+          if [ -f "$project" ]; then
+            echo "  ✅ $project"
+          else
+            echo "  ❌ MISSING: $project"
+            exit 1
+          fi
+        done
+
+  # EditorConfig validation job
+  editorconfig-check:
+    name: EditorConfig Validation
+    runs-on: ubuntu-latest
+    needs: [preflight]
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -25,45 +85,173 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Restore dependencies
-      run: dotnet restore
+    - name: Validate .editorconfig exists
+      run: |
+        if [ ! -f ".editorconfig" ]; then
+          echo "::error::Missing .editorconfig file. Please create one to enforce code style rules."
+          exit 1
+        fi
+        echo "✅ .editorconfig file found"
 
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
+    - name: Install dotnet-format
+      run: dotnet tool install -g dotnet-format
+
+    - name: Check code formatting
+      id: format_check
+      run: |
+        echo "Checking code style against .editorconfig rules..."
+        echo ""
+        
+        # Run format check and capture output
+        if dotnet-format --check --verbosity diagnostic 2>&1 | tee format-output.txt; then
+          echo "✅ All files pass editorconfig validation"
+          echo "format_result=success" >> $GITHUB_OUTPUT
+        else
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "❌ CODE STYLE VIOLATIONS DETECTED"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "The following files have style violations that need to be fixed:"
+          echo ""
+          # Extract file names from the output
+          grep -oE 'Formatting [^ ]+' format-output.txt || true
+          echo ""
+          echo "🔧 TO FIX: Run one of these commands locally:"
+          echo "   dotnet-format --fix"
+          echo "   OR run: ./scripts/fix-code-style.sh"
+          echo ""
+          echo "📋 Style rules are defined in .editorconfig"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "format_result=failure" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+    - name: Upload format check results
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: format-violations
+        path: format-output.txt
+        retention-days: 7
+
+  # Build and test job
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    needs: [preflight]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Verify solution file
+      run: |
+        if [ ! -f "$SOLUTION_FILE" ]; then
+          echo "::error::Solution file not found: $SOLUTION_FILE"
+          echo ""
+          echo "Expected solution file at: $(pwd)/$SOLUTION_FILE"
+          echo ""
+          echo "Files in current directory:"
+          ls -la
+          exit 1
+        fi
+        echo "✅ Solution file verified: $SOLUTION_FILE"
+
+    - name: Restore dependencies
+      run: |
+        echo "📦 Restoring NuGet packages..."
+        dotnet restore "$SOLUTION_FILE"
+
+    - name: Build solution
+      id: build
+      run: |
+        echo "🔨 Building solution..."
+        echo ""
+        
+        if dotnet build "$SOLUTION_FILE" --configuration Release --no-restore 2>&1 | tee build-output.txt; then
+          echo ""
+          echo "✅ Build succeeded!"
+          echo "build_result=success" >> $GITHUB_OUTPUT
+        else
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "❌ BUILD FAILED"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Build errors detected. Please fix the following issues:"
+          echo ""
+          # Extract error lines
+          grep -i "error" build-output.txt || true
+          echo ""
+          echo "🔧 TO FIX:"
+          echo "   1. Review the compilation errors above"
+          echo "   2. Fix the errors in the indicated files"
+          echo "   3. Run 'dotnet build' locally to verify"
+          echo ""
+          echo "💡 TIP: Run './scripts/check-build.sh' locally before pushing"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "build_result=failure" >> $GITHUB_OUTPUT
+          exit 1
+        fi
 
     - name: Run tests
-      run: dotnet test --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+      id: test
+      run: |
+        echo "🧪 Running tests..."
+        echo ""
+        
+        if dotnet test "$SOLUTION_FILE" --configuration Release --no-build --verbosity normal \
+            --collect:"XPlat Code Coverage" --results-directory ./coverage \
+            --logger:"console;verbosity=detailed" 2>&1 | tee test-output.txt; then
+          echo ""
+          echo "✅ All tests passed!"
+          echo "test_result=success" >> $GITHUB_OUTPUT
+        else
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "❌ TESTS FAILED"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Some tests failed. Please review the test output above."
+          echo ""
+          echo "🔧 TO FIX:"
+          echo "   1. Run 'dotnet test' locally to see detailed failures"
+          echo "   2. Fix the failing tests or update test expectations"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "test_result=failure" >> $GITHUB_OUTPUT
+          exit 1
+        fi
 
     - name: Upload coverage reports
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: coverage
         path: coverage/
         retention-days: 7
 
-  lint:
-    name: Code Style Check
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - name: Upload build logs
+      if: failure()
+      uses: actions/upload-artifact@v4
       with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+        name: build-logs
+        path: |
+          build-output.txt
+          test-output.txt
+        retention-days: 7
 
-    - name: Install dotnet-format
-      run: dotnet tool install -g dotnet-format
-
-    - name: Check code style
-      run: dotnet-format --check --verbosity diagnostic
-
+  # Security scan - informational only, won't fail the build
   security:
-    name: Security Scan
+    name: Security Scan (Info)
     runs-on: ubuntu-latest
-
+    needs: [preflight]
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -74,25 +262,78 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore "$SOLUTION_FILE"
 
-    - name: Run security analysis
-      run: dotnet list package --vulnerable --include-transitive
-      continue-on-error: true
+    - name: Check for vulnerable packages
+      id: security_check
+      run: |
+        echo "🔒 Checking for vulnerable packages..."
+        echo ""
+        
+        # Run the vulnerability check
+        VULN_OUTPUT=$(dotnet list package --vulnerable --include-transitive 2>&1)
+        echo "$VULN_OUTPUT"
+        
+        # Check if any vulnerabilities were found
+        if echo "$VULN_OUTPUT" | grep -q "has no vulnerable packages"; then
+          echo ""
+          echo "✅ No vulnerable packages found"
+          echo "security_status=clean" >> $GITHUB_OUTPUT
+        else
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "⚠️  SECURITY ADVISORY: Vulnerable packages detected"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "The following packages have known vulnerabilities:"
+          echo "$VULN_OUTPUT" | grep -A 5 "vulnerable" || true
+          echo ""
+          echo "📋 RECOMMENDED ACTIONS:"
+          echo "   1. Review the vulnerabilities listed above"
+          echo "   2. Update affected packages to patched versions"
+          echo "   3. Run 'dotnet list package --vulnerable --include-transitive' locally"
+          echo ""
+          echo "⚠️  NOTE: This is an ADVISORY check. It will not fail the build,"
+          echo "   but you should address these vulnerabilities before deploying."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "security_status=warning" >> $GITHUB_OUTPUT
+        fi
 
+    - name: Check for deprecated packages
+      run: |
+        echo ""
+        echo "📦 Checking for deprecated packages..."
+        dotnet list package --deprecated --include-transitive || true
+
+  # Docker build - only runs after successful build
   docker:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: [build]
-
+    needs: [build, editorconfig-check]
+    # Only build Docker on main branch or release tags
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Check for Dockerfile
+      id: check_dockerfile
+      run: |
+        if [ -f "Dockerfile" ]; then
+          echo "✅ Dockerfile found"
+          echo "has_dockerfile=true" >> $GITHUB_OUTPUT
+        else
+          echo "⚠️ No Dockerfile found - skipping Docker build"
+          echo "has_dockerfile=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Set up Docker Buildx
+      if: steps.check_dockerfile.outputs.has_dockerfile == 'true'
       uses: docker/setup-buildx-action@v3
 
     - name: Build Docker image
+      if: steps.check_dockerfile.outputs.has_dockerfile == 'true'
       uses: docker/build-push-action@v5
       with:
         context: .
@@ -100,3 +341,43 @@ jobs:
         tags: shadowrun-discord-bot:${{ github.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+
+  # Summary job for branch protection rules
+  ci-status:
+    name: CI Status Check
+    runs-on: ubuntu-latest
+    needs: [preflight, editorconfig-check, build, security]
+    if: always()
+    
+    steps:
+    - name: Check CI status
+      run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "CI Pipeline Summary"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+        
+        # Check each job status
+        PREFLIGHT="${{ needs.preflight.result }}"
+        EDITORCONFIG="${{ needs.editorconfig-check.result }}"
+        BUILD="${{ needs.build.result }}"
+        SECURITY="${{ needs.security.result }}"
+        
+        echo "Pre-flight Checks:    $PREFLIGHT"
+        echo "EditorConfig Check:   $EDITORCONFIG"
+        echo "Build & Test:         $BUILD"
+        echo "Security Scan:        $SECURITY (advisory only)"
+        echo ""
+        
+        # Fail if any required job failed
+        if [ "$PREFLIGHT" != "success" ] || [ "$EDITORCONFIG" != "success" ] || [ "$BUILD" != "success" ]; then
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "❌ CI FAILED - Review the failed job(s) above"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          exit 1
+        else
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ CI PASSED - All required checks succeeded"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          exit 0
+        fi
