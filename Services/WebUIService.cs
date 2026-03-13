@@ -1,13 +1,17 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Threading.RateLimiting;
+using ShadowrunDiscordBot.HealthChecks;
+using HealthChecks.UI.Client;
 
 namespace ShadowrunDiscordBot.Services;
 
@@ -156,6 +160,11 @@ public class WebUIService : IHostedService
         });
         
         services.AddScoped<DiceService>(sp => _services.GetRequiredService<DiceService>());
+        services.AddScoped<DatabaseService>(sp => _services.GetRequiredService<DatabaseService>());
+        services.AddScoped<CharacterService>();
+        services.AddScoped<CombatService>();
+        services.AddScoped<MatrixService>();
+        services.AddScoped<DashboardService>();
 
         // Swagger
         if (_config.WebUI.EnableSwagger)
@@ -179,6 +188,18 @@ public class WebUIService : IHostedService
                 }
             });
         }
+
+        // Health Checks
+        services.AddHealthChecks()
+            .AddSqlite(_config.Database.ConnectionString, name: "database", tags: new[] { "db", "sqlite" })
+            .AddCheck<DiscordHealthCheck>("discord", tags: new[] { "discord", "api" });
+
+        // Health Checks UI
+        services.AddHealthChecksUI(settings =>
+        {
+            settings.SetEvaluationTimeInSeconds(30);
+            settings.MaximumHistoryEntriesPerEndpoint(50);
+        }).AddInMemoryStorage();
     }
 
     private void ConfigureMiddleware(WebApplication app)
@@ -205,13 +226,38 @@ public class WebUIService : IHostedService
         // Map all controllers
         app.MapControllers();
 
-        // Health check endpoint
-        app.MapGet("/health", () => Results.Ok(new
+        // Health check endpoints
+        // Main health check with detailed response (for monitoring)
+        app.MapHealthChecks("/health", new HealthCheckOptions
         {
-            status = "healthy",
-            timestamp = DateTime.UtcNow,
-            version = "1.0.0"
-        })).RequireRateLimiting("FixedWindow");
+            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+        }).RequireRateLimiting("FixedWindow");
+
+        // Readiness probe (K8s-style) - checks all dependencies
+        app.MapHealthChecks("/health/ready", new HealthCheckOptions
+        {
+            Predicate = check => check.Tags.Contains("db") || check.Tags.Contains("discord"),
+            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+        }).RequireRateLimiting("FixedWindow");
+
+        // Liveness probe (K8s-style) - basic "is the app running" check
+        app.MapHealthChecks("/health/live", new HealthCheckOptions
+        {
+            Predicate = _ => false // Skip all checks, just return healthy if app is running
+        }).RequireRateLimiting("FixedWindow");
+
+        // K8s-style liveness endpoint
+        app.MapHealthChecks("/healthz", new HealthCheckOptions
+        {
+            Predicate = _ => false
+        }).RequireRateLimiting("FixedWindow");
+
+        // Health Checks UI dashboard
+        app.MapHealthChecksUI(options =>
+        {
+            options.UIPath = "/health-ui";
+            options.ApiPath = "/health-ui-api";
+        });
 
         // Note: Dashboard is served by DashboardController at "/" route
     }

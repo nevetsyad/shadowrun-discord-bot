@@ -88,6 +88,27 @@ A comprehensive Shadowrun 3rd Edition Discord bot built with .NET 8, Discord.Net
 - ✅ Rate limiting
 - ✅ Comprehensive documentation of all features
 
+## 📈 Recent Improvements (March 2026)
+
+**Code Quality & Stability**
+
+The bot has undergone a comprehensive code review and quality improvements focused on:
+- ✅ FluentValidation for robust input validation
+- ✅ Domain-specific exception hierarchy with rich context
+- ✅ Pagination support for better performance
+- ✅ Removed dead code and optimized async patterns
+- ✅ Database constraint for unique character names
+- ✅ Improved error handling and user messaging
+
+**Key Features**
+- **Input Validation**: Comprehensive validation of all character attributes, metatypes, and archetypes
+- **Error Handling**: Domain-specific exceptions with actionable error messages
+- **Performance**: Pagination, AsNoTracking, optimized queries
+- **Maintainability**: Clean architecture, XML documentation, CQRS patterns
+
+See [VERIFICATION.md](VERIFICATION.md) for testing checklist.
+See [CHANGES_SUMMARY.md](CHANGES_SUMMARY.md) for detailed changelog.
+
 ## 🚀 Installation
 
 ### Prerequisites
@@ -315,6 +336,61 @@ dotnet ef migrations add MigrationName
 dotnet ef database update
 ```
 
+## 🏗️ Architecture & Code Quality
+
+### Recent Improvements (v1.3.0)
+
+This codebase has been enhanced with modern best practices:
+
+**Validation Layer:**
+- FluentValidation integration for robust input validation
+- Validators in `/Commands/Validators/` for all command objects
+- Comprehensive attribute range checking and metatype/archetype validation
+- Reusable validation rules across create and update operations
+
+**Error Handling:**
+- Domain-specific exception types in `/Exceptions/DomainExceptions.cs`
+- Actionable error messages with guidance for users
+- Proper exception hierarchy with `ShadowrunException` base class
+- Specific exceptions for character, combat, matrix, and magic operations
+
+**Performance Optimizations:**
+- Pagination support on `GetAllCharactersAsync()` (default: 50, max: 100)
+- N+1 query prevention with proper EF Core Include() statements
+- Eliminated dead code (`await Task.CompletedTask` patterns)
+- Async/await patterns throughout with ConfigureAwait(false)
+
+**Code Quality:**
+- XML documentation on all public methods and classes
+- Clear separation of concerns with CQRS pattern (Commands/Handlers)
+- Repository pattern with proper abstraction layers
+- Dependency injection throughout the application
+
+**Project Structure:**
+```
+shadowrun-discord-bot/
+├── Commands/
+│   ├── Characters/           # Character commands and handlers
+│   ├── Combat/               # Combat system commands
+│   └── Validators/           # FluentValidation validators
+├── Exceptions/               # Domain-specific exceptions
+├── Services/                 # Business logic services
+│   ├── DatabaseService.cs    # Data access with pagination
+│   ├── DiceService.cs        # Dice rolling logic
+│   └── ErrorHandlingService.cs
+├── Infrastructure/
+│   └── Repositories/         # Repository implementations
+└── Models/                   # Domain entities
+```
+
+### Design Patterns Used
+
+- **CQRS**: Command Query Responsibility Segregation with MediatR
+- **Repository Pattern**: Abstracted data access layer
+- **Dependency Injection**: Loose coupling and testability
+- **Domain-Driven Design**: Rich domain models with encapsulated logic
+- **Async/Await**: Non-blocking I/O operations throughout
+
 ## 🔒 Security
 
 The bot implements several security measures:
@@ -496,6 +572,20 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - `/check [stat]` - Check condition monitor status
 
 ## 📋 Changelog
+
+### Version 1.3.0 (2026-03-13)
+- ✅ **Code Quality Improvements**: Major refactoring for maintainability and performance
+  - **Dead Code Removal**: Eliminated `await Task.CompletedTask` patterns across repositories and services
+  - **Pagination Support**: Added skip/take parameters to `GetAllCharactersAsync()` with sensible defaults (50 records, max 100)
+  - **FluentValidation Integration**: Created comprehensive validators for `CreateCharacterCommand` and `UpdateCharacterCommand`
+  - **Enhanced Error Handling**: Introduced domain-specific exception types with actionable error messages:
+    - `CharacterNotFoundException`, `CharacterValidationException`, `CharacterAlreadyExistsException`
+    - `CombatSessionException`, `ActiveCombatSessionExistsException`, `NoActiveCombatSessionException`
+    - `DiceRollException`, `MatrixOperationException`, `MagicOperationException`
+    - `DatabaseOperationException`, `UnauthorizedOperationException`
+  - **Documentation**: Added XML comments to all public methods in repositories and command handlers
+  - **Performance**: Fixed N+1 query problems with proper Include() statements
+  - **Architecture**: All changes maintain backward compatibility
 
 ### Version 1.2.0 (2026-03-09)
 - ✅ **Astral Space**: Full projection, perception, combat, and foci system

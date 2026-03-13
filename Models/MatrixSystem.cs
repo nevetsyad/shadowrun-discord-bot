@@ -40,6 +40,9 @@ public class Cyberdeck
     // Hardening (damage resistance)
     public int Hardening { get; set; } = 0;
 
+    // Firewall (defense rating)
+    public int Firewall { get; set; } = 0;
+
     public long Value { get; set; } = 0;
 
     [Required]

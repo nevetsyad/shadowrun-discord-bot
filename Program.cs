@@ -1,9 +1,18 @@
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using ShadowrunDiscordBot.Commands.Characters;
+using ShadowrunDiscordBot.Commands.Combat;
 using ShadowrunDiscordBot.Core;
+using ShadowrunDiscordBot.Queries.Characters;
+using ShadowrunDiscordBot.Queries.Combat;
+using ShadowrunDiscordBot.Repositories;
 using ShadowrunDiscordBot.Services;
+using Serilog;
 
 namespace ShadowrunDiscordBot;
 
@@ -16,34 +25,44 @@ class Program
 
     static async Task<int> Main(string[] args)
     {
-        Console.WriteLine("==========================================");
-        Console.WriteLine("Shadowrun Discord Bot - Setup");
-        Console.WriteLine("==========================================");
-        Console.WriteLine();
+        // Configure Serilog early
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .Enrich.FromLogContext()
+            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .WriteTo.File("logs/shadowrun-.log", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30)
+            .CreateLogger();
 
-        // Check if token is provided via command line or environment
-        var tokenFromArgs = args.FirstOrDefault(a => a.StartsWith("--token="))?.Substring(8);
-        var tokenFromEnv = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
-        
-        string? discordToken = tokenFromArgs ?? tokenFromEnv;
-
-        // If no token provided, prompt interactively
-        if (string.IsNullOrWhiteSpace(discordToken))
+        try
         {
-            Console.Write("Enter your Discord Bot Token: ");
-            discordToken = Console.ReadLine();
-        }
+            Console.WriteLine("==========================================");
+            Console.WriteLine("Shadowrun Discord Bot - Setup");
+            Console.WriteLine("==========================================");
+            Console.WriteLine();
 
-        if (string.IsNullOrWhiteSpace(discordToken))
-        {
-            Console.WriteLine("Error: Discord Token cannot be empty.");
-            Console.WriteLine("Set DISCORD_TOKEN environment variable, use --token=YOUR_TOKEN, or enter interactively.");
-            return 1;
-        }
+            // Check if token is provided via command line or environment
+            var tokenFromArgs = args.FirstOrDefault(a => a.StartsWith("--token="))?.Substring(8);
+            var tokenFromEnv = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
+            
+            string? discordToken = tokenFromArgs ?? tokenFromEnv;
 
-        Console.WriteLine();
-        Console.WriteLine("Token received. Starting bot...");
-        Console.WriteLine();
+            // If no token provided, prompt interactively
+            if (string.IsNullOrWhiteSpace(discordToken))
+            {
+                Console.Write("Enter your Discord Bot Token: ");
+                discordToken = Console.ReadLine();
+            }
+
+            if (string.IsNullOrWhiteSpace(discordToken))
+            {
+                Console.WriteLine("Error: Discord Token cannot be empty.");
+                Console.WriteLine("Set DISCORD_TOKEN environment variable, use --token=YOUR_TOKEN, or enter interactively.");
+                return 1;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("Token received. Starting bot...");
+            Console.WriteLine();
 
         try
         {
@@ -103,13 +122,19 @@ class Program
         }
         catch (Exception ex)
         {
+            Log.Fatal(ex, "Fatal error occurred");
             Console.Error.WriteLine($"Fatal error: {ex}");
             return 1;
+        }
+        finally
+        {
+            Log.CloseAndFlush();
         }
     }
 
     private static IHostBuilder CreateHostBuilder(string[] args, string discordToken) =>
         Host.CreateDefaultBuilder(args)
+            .UseSerilog() // Use Serilog for logging
             .ConfigureAppConfiguration((context, config) =>
             {
                 config.SetBasePath(Directory.GetCurrentDirectory());
@@ -135,6 +160,61 @@ class Program
                 }
                 
                 services.AddSingleton(botConfig);
+
+                #region Caching Configuration
+
+                // Configure Redis caching (with fallback to in-memory)
+                var cacheEnabled = context.Configuration.GetValue<bool>("Cache:Enabled", true);
+                var redisConnectionString = context.Configuration.GetValue<string>("Cache:ConnectionString") ?? "localhost:6379";
+                var cacheInstanceName = context.Configuration.GetValue<string>("Cache:InstanceName") ?? "Shadowrun:";
+
+                if (cacheEnabled && !string.IsNullOrEmpty(redisConnectionString))
+                {
+                    try
+                    {
+                        services.AddStackExchangeRedisCache(options =>
+                        {
+                            options.Configuration = redisConnectionString;
+                            options.InstanceName = cacheInstanceName;
+                        });
+                        services.AddSingleton<ICacheService, CacheService>();
+                    }
+                    catch (Exception)
+                    {
+                        // Fallback to in-memory cache if Redis is unavailable
+                        services.AddDistributedMemoryCache();
+                        services.AddSingleton<ICacheService, CacheService>();
+                    }
+                }
+                else
+                {
+                    // Use in-memory cache as fallback
+                    services.AddDistributedMemoryCache();
+                    services.AddSingleton<ICacheService, CacheService>();
+                }
+
+                #endregion
+
+                #region MediatR Configuration
+
+                // Register MediatR for CQRS pattern
+                services.AddMediatR(cfg => 
+                {
+                    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+                });
+
+                #endregion
+
+                #region Repository Pattern Configuration
+
+                // Register repositories
+                services.AddScoped<ICharacterRepository, CharacterRepository>();
+                services.AddScoped<ICombatSessionRepository, CombatSessionRepository>();
+                services.AddScoped<ICombatParticipantRepository, CombatParticipantRepository>();
+                services.AddScoped<IGameSessionRepository, GameSessionRepository>();
+                services.AddScoped<IMatrixSessionRepository, MatrixSessionRepository>();
+
+                #endregion
 
                 // Core services
                 services.AddSingleton<BotService>();
@@ -168,20 +248,5 @@ class Program
 
                 // Main bot service (hosted)
                 services.AddHostedService(provider => provider.GetRequiredService<BotService>());
-            })
-            .ConfigureLogging((context, logging) =>
-            {
-                logging.ClearProviders();
-                logging.AddConsole();
-                logging.AddDebug();
-
-                if (context.HostingEnvironment.IsDevelopment())
-                {
-                    logging.SetMinimumLevel(LogLevel.Debug);
-                }
-                else
-                {
-                    logging.SetMinimumLevel(LogLevel.Information);
-                }
             });
 }

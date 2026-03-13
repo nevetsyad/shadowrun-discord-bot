@@ -1,0 +1,33 @@
+{
+  "chat.character.created": "¡Personaje **{0}** creado exitosamente!",
+  "chat.character.updated": "¡Personaje **{0}** actualizado exitosamente!",
+  "chat.character.deleted": "Personaje **{0}** eliminado exitosamente.",
+  "chat.character.not_found": "Personaje no encontrado.",
+  "chat.character.already_exists": "Ya tienes un personaje llamado **{0}**.",
+  "chat.character.display": "**{0}** ({1} {2})\nCuerpo: {3}, Rapidez: {4}, Fuerza: {5}\nCarisma: {6}, Inteligencia: {7}, Voluntad: {8}\nReacción: {9}, Esencia: {10:F2}",
+  
+  "chat.combat.started": "⚔️ ¡Combate iniciado! Ronda 1, Paso 1",
+  "chat.combat.ended": "⚔️ Combate terminado.",
+  "chat.combat.joined": "**{0}** se unió al combate con iniciativa {1}.",
+  "chat.combat.turn": "Turno de **{0}** (Iniciativa: {1})",
+  "chat.combat.next_pass": "Paso {0} de la Ronda {1}",
+  "chat.combat.next_round": "Ronda {0}",
+  
+  "chat.dice.roll": "🎲 Tirando {0} dados vs TN {1}: **{2}** éxitos",
+  "chat.dice.glitch": "💀 ¡Fallo! {0} unos tirados.",
+  "chat.dice.critical_glitch": "💀 ¡FALLO CRÍTICO!",
+  "chat.dice.success": "✅ ¡Éxito! {0} aciertos (necesitaba {1})",
+  "chat.dice.failure": "❌ Falló. {0} aciertos (necesitaba {1})",
+  
+  "errors.invalid_parameter": "Parámetro inválido: {0}",
+  "errors.command_failed": "Comando falló: {0}",
+  "errors.not_authorized": "No estás autorizado para realizar esta acción.",
+  "errors.character_not_found": "Personaje no encontrado: {0}",
+  "errors.combat_not_active": "No hay combate activo en este canal.",
+  "errors.database_error": "Ocurrió un error de base de datos.",
+  
+  "general.success": "✅ ¡Éxito!",
+  "general.error": "❌ Ocurrió un error.",
+  "general.not_implemented": "🚧 Esta característica aún no está implementada.",
+  "general.help": "Escribe `/help` para una lista de comandos."
+}

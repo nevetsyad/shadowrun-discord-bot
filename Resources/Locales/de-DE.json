@@ -1,0 +1,33 @@
+{
+  "chat.character.created": "Charakter **{0}** erfolgreich erstellt!",
+  "chat.character.updated": "Charakter **{0}** erfolgreich aktualisiert!",
+  "chat.character.deleted": "Charakter **{0}** erfolgreich gelöscht.",
+  "chat.character.not_found": "Charakter nicht gefunden.",
+  "chat.character.already_exists": "Sie haben bereits einen Charakter namens **{0}**.",
+  "chat.character.display": "**{0}** ({1} {2})\nKonstitution: {3}, Geschicklichkeit: {4}, Stärke: {5}\nCharisma: {6}, Intelligenz: {7}, Willenskraft: {8}\nReaktion: {9}, Essenz: {10:F2}",
+  
+  "chat.combat.started": "⚔️ Kampf begonnen! Runde 1, Durchgang 1",
+  "chat.combat.ended": "⚔️ Kampf beendet.",
+  "chat.combat.joined": "**{0}** ist dem Kampf beigetreten mit Initiative {1}.",
+  "chat.combat.turn": "**{0}**'s Zug (Initiative: {1})",
+  "chat.combat.next_pass": "Durchgang {0} von Runde {1}",
+  "chat.combat.next_round": "Runde {0}",
+  
+  "chat.dice.roll": "🎲 Würfle {0} Würfel gegen ZN {1}: **{2}** Erfolge",
+  "chat.dice.glitch": "💀 Patzer! {0} Einsen gewürfelt.",
+  "chat.dice.critical_glitch": "💀 KRITISCHER PATZER!",
+  "chat.dice.success": "✅ Erfolg! {0} Treffer (benötigte {1})",
+  "chat.dice.failure": "❌ Fehlgeschlagen. {0} Treffer (benötigte {1})",
+  
+  "errors.invalid_parameter": "Ungültiger Parameter: {0}",
+  "errors.command_failed": "Befehl fehlgeschlagen: {0}",
+  "errors.not_authorized": "Sie sind nicht berechtigt, diese Aktion durchzuführen.",
+  "errors.character_not_found": "Charakter nicht gefunden: {0}",
+  "errors.combat_not_active": "Kein aktiver Kampf in diesem Kanal.",
+  "errors.database_error": "Datenbankfehler aufgetreten.",
+  
+  "general.success": "✅ Erfolg!",
+  "general.error": "❌ Ein Fehler ist aufgetreten.",
+  "general.not_implemented": "🚧 Diese Funktion ist noch nicht implementiert.",
+  "general.help": "Geben Sie `/help` für eine Liste der Befehle ein."
+}

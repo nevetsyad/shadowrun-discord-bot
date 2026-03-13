@@ -1,8 +1,8 @@
+using System.Text;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using ShadowrunDiscordBot.Models;
-using System.Text.Json;
 
 namespace ShadowrunDiscordBot.Commands;
 
@@ -11,6 +11,29 @@ namespace ShadowrunDiscordBot.Commands;
 /// </summary>
 public class CharacterCommands : BaseCommandModule
 {
+    // Constants for character creation
+    private const int StartingKarma = 5;
+    private const int StartingNuyen = 5000;
+    private const int DeckerBonusNuyen = 100000;
+    private const int RiggerBonusNuyen = 50000;
+    private const int DefaultAttribute = 3;
+    private const int DefaultMagic = 6;
+
+    // FIX: MED-002 - Define valid metatypes and archetypes for validation
+    private static readonly HashSet<string> ValidMetatypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Human", "Elf", "Dwarf", "Ork", "Troll"
+    };
+
+    private static readonly HashSet<string> ValidArchetypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Mage", "Shaman", "Physical Adept", "Street Samurai", "Decker", "Rigger", "Face", "Samurai"
+    };
+
+    // FIX: MED-002 - Attribute bounds
+    private const int MinAttributeValue = 1;
+    private const int MaxAttributeValue = 10;
+
     public CharacterCommands(
         ILogger<CharacterCommands> logger,
         BotConfig config,
@@ -29,6 +52,37 @@ public class CharacterCommands : BaseCommandModule
             var name = options.First(o => o.Name == "name").Value.ToString();
             var metatype = options.First(o => o.Name == "metatype").Value.ToString();
             var archetype = options.First(o => o.Name == "archetype").Value.ToString();
+
+            // FIX: MED-002 - Validate character name
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                await command.RespondAsync("⚠️ Character name cannot be empty.", ephemeral: true);
+                return;
+            }
+
+            if (name.Length > 50)
+            {
+                await command.RespondAsync("⚠️ Character name cannot exceed 50 characters.", ephemeral: true);
+                return;
+            }
+
+            // FIX: MED-002 - Validate metatype
+            if (!ValidMetatypes.Contains(metatype!))
+            {
+                await command.RespondAsync(
+                    $"⚠️ Invalid metatype '{metatype}'. Valid options are: {string.Join(", ", ValidMetatypes)}",
+                    ephemeral: true);
+                return;
+            }
+
+            // FIX: MED-002 - Validate archetype
+            if (!ValidArchetypes.Contains(archetype!))
+            {
+                await command.RespondAsync(
+                    $"⚠️ Invalid archetype '{archetype}'. Valid options are: {string.Join(", ", ValidArchetypes)}",
+                    ephemeral: true);
+                return;
+            }
 
             // Check if user already has too many characters
             var existingChars = await Database.GetUserCharactersAsync(command.User.Id);
@@ -69,7 +123,8 @@ public class CharacterCommands : BaseCommandModule
 
         try
         {
-            var characters = await Database.GetUserCharactersAsync(command.User.Id);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            var characters = await Database.GetUserCharactersAsync(command.User.Id).ConfigureAwait(false);
 
             if (characters.Count == 0)
             {
@@ -107,7 +162,8 @@ public class CharacterCommands : BaseCommandModule
         try
         {
             var name = command.Data.Options.First().Options.First(o => o.Name == "name").Value.ToString();
-            var character = await Database.GetCharacterByNameAsync(command.User.Id, name!);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            var character = await Database.GetCharacterByNameAsync(command.User.Id, name!).ConfigureAwait(false);
 
             if (character == null)
             {
@@ -131,7 +187,8 @@ public class CharacterCommands : BaseCommandModule
         try
         {
             var name = command.Data.Options.First().Options.First(o => o.Name == "name").Value.ToString();
-            var character = await Database.GetCharacterByNameAsync(command.User.Id, name!);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            var character = await Database.GetCharacterByNameAsync(command.User.Id, name!).ConfigureAwait(false);
 
             if (character == null)
             {
@@ -141,7 +198,8 @@ public class CharacterCommands : BaseCommandModule
 
             // TODO: Add confirmation dialog
 
-            await Database.DeleteCharacterAsync(character.Id);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            await Database.DeleteCharacterAsync(character.Id).ConfigureAwait(false);
 
             await command.RespondAsync($"🗑️ Character '{character.Name}' has been deleted.");
         }
@@ -159,8 +217,8 @@ public class CharacterCommands : BaseCommandModule
             Name = name,
             Metatype = metatype,
             Archetype = archetype,
-            Karma = 5, // Starting karma
-            Nuyen = 5000 // Starting nuyen
+            Karma = StartingKarma,
+            Nuyen = StartingNuyen
         };
 
         // Apply metatype attribute modifiers
@@ -174,7 +232,7 @@ public class CharacterCommands : BaseCommandModule
 
     private void ApplyMetatypeAttributes(ShadowrunCharacter character, string metatype)
     {
-        // Base attributes are already set to 3
+        // Base attributes are already set to DefaultAttribute (3)
         switch (metatype.ToLowerInvariant())
         {
             case "elf":
@@ -205,37 +263,41 @@ public class CharacterCommands : BaseCommandModule
 
     private void ApplyArchetypeDefaults(ShadowrunCharacter character, string archetype)
     {
-        switch (archetype.ToLowerInvariant())
+        var arch = archetype.ToLowerInvariant();
+        
+        if (arch is "mage" or "shaman" or "physical adept")
+        {
+            character.Magic = DefaultMagic;
+        }
+
+        switch (arch)
         {
             case "mage":
-                character.Magic = 6;
-                character.Skills.Add(new CharacterSkill { SkillName = "Sorcery", Rating = 6 });
+                character.Skills.Add(new CharacterSkill { SkillName = "Sorcery", Rating = DefaultMagic });
                 character.Skills.Add(new CharacterSkill { SkillName = "Conjuring", Rating = 4 });
                 break;
             case "shaman":
-                character.Magic = 6;
                 character.Skills.Add(new CharacterSkill { SkillName = "Sorcery", Rating = 5 });
-                character.Skills.Add(new CharacterSkill { SkillName = "Conjuring", Rating = 6 });
+                character.Skills.Add(new CharacterSkill { SkillName = "Conjuring", Rating = DefaultMagic });
                 break;
             case "physical adept":
-                character.Magic = 6;
-                character.Skills.Add(new CharacterSkill { SkillName = "Unarmed Combat", Rating = 6 });
+                character.Skills.Add(new CharacterSkill { SkillName = "Unarmed Combat", Rating = DefaultMagic });
                 character.Skills.Add(new CharacterSkill { SkillName = "Athletics", Rating = 5 });
                 break;
             case "street samurai":
-                character.Skills.Add(new CharacterSkill { SkillName = "Pistols", Rating = 6 });
+                character.Skills.Add(new CharacterSkill { SkillName = "Pistols", Rating = DefaultMagic });
                 character.Skills.Add(new CharacterSkill { SkillName = "Edged Weapons", Rating = 5 });
                 character.Skills.Add(new CharacterSkill { SkillName = "Athletics", Rating = 4 });
                 break;
             case "decker":
-                character.Skills.Add(new CharacterSkill { SkillName = "Computer", Rating = 6 });
+                character.Skills.Add(new CharacterSkill { SkillName = "Computer", Rating = DefaultMagic });
                 character.Skills.Add(new CharacterSkill { SkillName = "Electronics", Rating = 5 });
-                character.Nuyen += 100000; // Extra for cyberdeck
+                character.Nuyen += DeckerBonusNuyen;
                 break;
             case "rigger":
-                character.Skills.Add(new CharacterSkill { SkillName = "Vehicle Operation", Rating = 6 });
+                character.Skills.Add(new CharacterSkill { SkillName = "Vehicle Operation", Rating = DefaultMagic });
                 character.Skills.Add(new CharacterSkill { SkillName = "Gunnery", Rating = 5 });
-                character.Nuyen += 50000; // Extra for vehicle/drone
+                character.Nuyen += RiggerBonusNuyen;
                 break;
         }
     }
@@ -268,45 +330,88 @@ public class CharacterCommands : BaseCommandModule
             .WithColor(Config.Bot.DefaultColor)
             .WithDescription($"**{character.Metatype} {character.Archetype}**")
             .AddField("PHYSICAL ATTRIBUTES",
-                $"💪 Body: {character.Body}\n" +
-                $"🏃 Quickness: {character.Quickness}\n" +
-                $"🏋️ Strength: {character.Strength}",
+                FormatAttributes("💪 Body", character.Body, "🏃 Quickness", character.Quickness, "🏋️ Strength", character.Strength),
                 true)
             .AddField("MENTAL ATTRIBUTES",
-                $"💬 Charisma: {character.Charisma}\n" +
-                $"🧠 Intelligence: {character.Intelligence}\n" +
-                $"💪 Willpower: {character.Willpower}",
+                FormatAttributes("💬 Charisma", character.Charisma, "🧠 Intelligence", character.Intelligence, "💪 Willpower", character.Willpower),
                 true)
             .AddField("DERIVED",
-                $"⚡ Reaction: {character.Reaction}\n" +
-                $"✨ Essence: {character.Essence / 100m:F2}\n" +
-                (character.Magic > 0 ? $"🔮 Magic: {character.Magic}\n" : ""),
+                FormatDerivedStats(character),
                 true)
             .AddField("CONDITION MONITORS",
-                $"❤️ Physical: {new string('□', character.PhysicalConditionMonitor)} ({character.PhysicalDamage}/{character.PhysicalConditionMonitor})\n" +
-                $"💫 Stun: {new string('□', character.StunConditionMonitor)} ({character.StunDamage}/{character.StunConditionMonitor})",
+                FormatConditionMonitors(character),
                 false)
             .AddField("RESOURCES",
-                $"🌟 Karma: {character.Karma}\n" +
-                $"💰 Nuyen: {character.Nuyen:N0}¥",
+                $"🌟 Karma: {character.Karma}\n💰 Nuyen: {character.Nuyen:N0}¥",
                 true);
 
         if (character.Skills?.Count > 0)
         {
-            var skillsText = string.Join("\n", character.Skills.Take(10).Select(s =>
-                $"• {s.SkillName}: {s.Rating}" + (s.Specialization != null ? $" ({s.Specialization})" : "")));
-
-            builder.AddField("SKILLS", skillsText, false);
+            builder.AddField("SKILLS", FormatSkills(character.Skills), false);
         }
 
         if (character.Cyberware?.Count > 0)
         {
-            var cyberwareText = string.Join("\n", character.Cyberware.Select(c =>
-                $"• {c.Name} (Rating {c.Rating}) - {c.EssenceCost:F2} essence"));
-
-            builder.AddField("CYBERWARE/BIOWARE", cyberwareText, false);
+            builder.AddField("CYBERWARE/BIOWARE", FormatCyberware(character.Cyberware), false);
         }
 
         return builder.Build();
+    }
+
+    private static string FormatAttributes(string label1, int value1, string label2, int value2, string label3, int value3)
+    {
+        return $"{label1}: {value1}\n{label2}: {value2}\n{label3}: {value3}";
+    }
+
+    private static string FormatDerivedStats(ShadowrunCharacter character)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"⚡ Reaction: {character.Reaction}");
+        sb.AppendLine($"✨ Essence: {character.Essence / 100m:F2}");
+        
+        if (character.Magic > 0)
+        {
+            sb.AppendLine($"🔮 Magic: {character.Magic}");
+        }
+        
+        return sb.ToString();
+    }
+
+    private static string FormatConditionMonitors(ShadowrunCharacter character)
+    {
+        var physicalBoxes = new string('□', character.PhysicalConditionMonitor);
+        var stunBoxes = new string('□', character.StunConditionMonitor);
+        
+        return $"❤️ Physical: {physicalBoxes} ({character.PhysicalDamage}/{character.PhysicalConditionMonitor})\n" +
+               $"💫 Stun: {stunBoxes} ({character.StunDamage}/{character.StunConditionMonitor})";
+    }
+
+    private static string FormatSkills(ICollection<CharacterSkill> skills)
+    {
+        var sb = new StringBuilder();
+        
+        foreach (var s in skills.Take(10))
+        {
+            sb.Append($"• {s.SkillName}: {s.Rating}");
+            if (s.Specialization != null)
+            {
+                sb.Append($" ({s.Specialization})");
+            }
+            sb.AppendLine();
+        }
+
+        return sb.ToString();
+    }
+
+    private static string FormatCyberware(ICollection<CharacterCyberware> cyberware)
+    {
+        var sb = new StringBuilder();
+        
+        foreach (var c in cyberware)
+        {
+            sb.AppendLine($"• {c.Name} (Rating {c.Rating}) - {c.EssenceCost:F2} essence");
+        }
+
+        return sb.ToString();
     }
 }

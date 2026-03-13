@@ -205,7 +205,7 @@ public class MatrixRun
     public int ShutdownThreshold { get; set; } = 30;
 
     // Active IC encounters
-    public virtual ICollection<ActiveICEncounter> ICEncounters { get; set; } = new List<ActiveIcencounter>();
+    public virtual ICollection<ActiveICEncounter> ICEncounters { get; set; } = new List<ActiveICEncounter>();
 
     // Decker's deck
     public int CyberdeckId { get; set; }
@@ -224,7 +224,7 @@ public class MatrixRun
 /// <summary>
 /// Active IC encounter during a Matrix run
 /// </summary>
-public class ActiveIcEncounter
+public class ActiveICEncounter
 {
     [Key]
     public int Id { get; set; }

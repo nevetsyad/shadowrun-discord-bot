@@ -1,0 +1,33 @@
+{
+  "chat.character.created": "Personnage **{0}** créé avec succès !",
+  "chat.character.updated": "Personnage **{0}** mis à jour avec succès !",
+  "chat.character.deleted": "Personnage **{0}** supprimé avec succès.",
+  "chat.character.not_found": "Personnage non trouvé.",
+  "chat.character.already_exists": "Vous avez déjà un personnage nommé **{0}**.",
+  "chat.character.display": "**{0}** ({1} {2})\nCorps: {3}, Vivacité: {4}, Force: {5}\nCharisme: {6}, Intelligence: {7}, Volonté: {8}\nRéaction: {9}, Essence: {10:F2}",
+  
+  "chat.combat.started": "⚔️ Combat commencé ! Tour 1, Passe 1",
+  "chat.combat.ended": "⚔️ Combat terminé.",
+  "chat.combat.joined": "**{0}** a rejoint le combat avec initiative {1}.",
+  "chat.combat.turn": "Tour de **{0}** (Initiative: {1})",
+  "chat.combat.next_pass": "Passe {0} du Tour {1}",
+  "chat.combat.next_round": "Tour {0}",
+  
+  "chat.dice.roll": "🎲 Lancement de {0} dés vs TN {1}: **{2}** succès",
+  "chat.dice.glitch": "💀 Glitch ! {0} uns lancés.",
+  "chat.dice.critical_glitch": "💀 GLITCH CRITIQUE !",
+  "chat.dice.success": "✅ Succès ! {0} réussites (nécessitait {1})",
+  "chat.dice.failure": "❌ Échec. {0} réussites (nécessitait {1})",
+  
+  "errors.invalid_parameter": "Paramètre invalide : {0}",
+  "errors.command_failed": "La commande a échoué : {0}",
+  "errors.not_authorized": "Vous n'êtes pas autorisé à effectuer cette action.",
+  "errors.character_not_found": "Personnage non trouvé : {0}",
+  "errors.combat_not_active": "Aucun combat actif dans ce canal.",
+  "errors.database_error": "Une erreur de base de données s'est produite.",
+  
+  "general.success": "✅ Succès !",
+  "general.error": "❌ Une erreur s'est produite.",
+  "general.not_implemented": "🚧 Cette fonctionnalité n'est pas encore implémentée.",
+  "general.help": "Tapez `/help` pour une liste de commandes."
+}

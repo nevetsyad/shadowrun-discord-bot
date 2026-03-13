@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using ShadowrunDiscordBot.Models;
 
 namespace ShadowrunDiscordBot.Services
@@ -26,18 +27,20 @@ namespace ShadowrunDiscordBot.Services
         /// </summary>
         public string GetDeckStatus()
         {
-            var status = $"**Cyberdeck Status**\n";
-            status += $"Name: {_cyberdeck.Name}\n";
-            status += $"Type: {_cyberdeck.DeckType}\n";
-            status += $"MPCP Rating: {_cyberdeck.MPCP}\n";
-            status += $"Active Memory: {_cyberdeck.ActiveMemory} Mp\n";
-            status += $"Storage Memory: {_cyberdeck.StorageMemory} Mp\n";
-            status += $"Load Rating: {_cyberdeck.LoadRating}\n";
-            status += $"Response Rating: {_cyberdeck.ResponseRating}\n";
-            status += $"Hardening: {_cyberdeck.Hardening}\n";
-            status += $"Value: {_cyberdeck.Value:N0}¥\n";
+            // FIX: HIGH-002 - Use StringBuilder instead of string concatenation
+            var sb = new StringBuilder();
+            sb.AppendLine("**Cyberdeck Status**");
+            sb.AppendLine($"Name: {_cyberdeck.Name}");
+            sb.AppendLine($"Type: {_cyberdeck.DeckType}");
+            sb.AppendLine($"MPCP Rating: {_cyberdeck.MPCP}");
+            sb.AppendLine($"Active Memory: {_cyberdeck.ActiveMemory} Mp");
+            sb.AppendLine($"Storage Memory: {_cyberdeck.StorageMemory} Mp");
+            sb.AppendLine($"Load Rating: {_cyberdeck.LoadRating}");
+            sb.AppendLine($"Response Rating: {_cyberdeck.ResponseRating}");
+            sb.AppendLine($"Hardening: {_cyberdeck.Hardening}");
+            sb.AppendLine($"Value: {_cyberdeck.Value:N0}¥");
 
-            return status;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -50,18 +53,21 @@ namespace ShadowrunDiscordBot.Services
             if (programs.Count == 0)
                 return "No programs installed on this cyberdeck.";
 
-            var programList = "**Installed Programs:**\n";
+            // FIX: HIGH-002 - Use StringBuilder instead of string concatenation
+            var sb = new StringBuilder();
+            sb.AppendLine("**Installed Programs:**");
             foreach (var program in programs)
             {
                 var loadedStatus = program.IsLoaded ? "✅ [Loaded]" : "⬜ [Stored]";
-                programList += $"- {program.Name} ({program.Type}) - Rating {program.Rating}, {program.MemoryCost} Mp {loadedStatus}\n";
+                sb.AppendLine($"- {program.Name} ({program.Type}) - Rating {program.Rating}, {program.MemoryCost} Mp {loadedStatus}");
             }
 
             var totalMemory = programs.Sum(p => p.MemoryCost);
             var loadedMemory = programs.Where(p => p.IsLoaded).Sum(p => p.MemoryCost);
-            programList += $"\n**Memory Usage:** {loadedMemory}/{_cyberdeck.ActiveMemory} Mp active, {totalMemory}/{_cyberdeck.StorageMemory} Mp stored";
+            sb.AppendLine();
+            sb.Append($"**Memory Usage:** {loadedMemory}/{_cyberdeck.ActiveMemory} Mp active, {totalMemory}/{_cyberdeck.StorageMemory} Mp stored");
 
-            return programList;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -69,17 +75,19 @@ namespace ShadowrunDiscordBot.Services
         /// </summary>
         public string GetSessionStatus()
         {
-            var status = $"**Matrix Session Status**\n";
-            status += $"Mode: {(_session.IsInVR ? "VR (Hot Sim)" : "AR")}\n";
-            status += $"Security Tally: {_session.SecurityTally}\n";
-            status += $"Alert Level: {_session.AlertLevel}\n";
-            status += $"Initiative: {_session.CurrentInitiative}\n";
-            status += $"Initiative Passes: {_session.InitiativePasses}\n";
+            // FIX: HIGH-002 - Use StringBuilder instead of string concatenation
+            var sb = new StringBuilder();
+            sb.AppendLine("**Matrix Session Status**");
+            sb.AppendLine($"Mode: {(_session.IsInVR ? "VR (Hot Sim)" : "AR")}");
+            sb.AppendLine($"Security Tally: {_session.SecurityTally}");
+            sb.AppendLine($"Alert Level: {_session.AlertLevel}");
+            sb.AppendLine($"Initiative: {_session.CurrentInitiative}");
+            sb.AppendLine($"Initiative Passes: {_session.InitiativePasses}");
 
             var activeICE = _session.ActiveICE?.Where(i => i.IsActivated).ToList() ?? new List<ActiveICE>();
-            status += $"Active ICE: {activeICE.Count}\n";
+            sb.AppendLine($"Active ICE: {activeICE.Count}");
 
-            return status;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -92,16 +100,18 @@ namespace ShadowrunDiscordBot.Services
             if (iceList.Count == 0)
                 return "No ICE encountered in current session.";
 
-            var result = "**ICE Status:**\n";
+            // FIX: HIGH-002 - Use StringBuilder instead of string concatenation
+            var sb = new StringBuilder();
+            sb.AppendLine("**ICE Status:**");
             foreach (var ice in iceList)
             {
                 var activationStatus = ice.IsActivated ? "🔴 ACTIVE" : "🟡 Standby";
-                result += $"- {ice.ICEType} ICE (Rating {ice.Rating}) - {activationStatus}\n";
+                sb.AppendLine($"- {ice.ICEType} ICE (Rating {ice.Rating}) - {activationStatus}");
                 if (ice.SecurityTallyThreshold > 0)
-                    result += $"  Triggers at Security Tally: {ice.SecurityTallyThreshold}\n";
+                    sb.AppendLine($"  Triggers at Security Tally: {ice.SecurityTallyThreshold}");
             }
 
-            return result;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -118,13 +128,15 @@ namespace ShadowrunDiscordBot.Services
             _session.CurrentInitiative = result.Total;
             _session.InitiativePasses = result.Passes;
 
-            var output = $"**Matrix Initiative Roll**\n";
-            output += $"MPCP: {baseInit}\n";
-            output += $"Mode: {(_session.IsInVR ? "VR (4D6)" : "AR (2D6)")}\n";
-            output += $"Roll: {result.Details}\n";
-            output += $"Initiative Passes: {result.Passes}\n";
+            // FIX: HIGH-002 - Use StringBuilder instead of string concatenation
+            var sb = new StringBuilder();
+            sb.AppendLine("**Matrix Initiative Roll**");
+            sb.AppendLine($"MPCP: {baseInit}");
+            sb.AppendLine($"Mode: {(_session.IsInVR ? "VR (4D6)" : "AR (2D6)")}");
+            sb.AppendLine($"Roll: {result.Details}");
+            sb.AppendLine($"Initiative Passes: {result.Passes}");
 
-            return output;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -137,21 +149,23 @@ namespace ShadowrunDiscordBot.Services
 
             var result = _diceService.RollShadowrun(pool, 4);
 
-            var output = $"**Cracking ICE: {iceType}**\n";
-            output += $"ICE Rating: {iceRating}\n";
-            output += $"Attack Pool: {pool}\n";
-            output += $"Roll: {result.Details}\n";
-            output += $"Successes: {result.Successes}\n";
+            // FIX: HIGH-002 - Use StringBuilder instead of string concatenation
+            var sb = new StringBuilder();
+            sb.AppendLine($"**Cracking ICE: {iceType}**");
+            sb.AppendLine($"ICE Rating: {iceRating}");
+            sb.AppendLine($"Attack Pool: {pool}");
+            sb.AppendLine($"Roll: {result.Details}");
+            sb.AppendLine($"Successes: {result.Successes}");
 
             if (result.Successes >= iceRating)
             {
-                output += "✅ **ICE CRACKED!** Access granted.\n";
+                sb.AppendLine("✅ **ICE CRACKED!** Access granted.");
                 // Reduce security tally on success
                 _session.SecurityTally = Math.Max(0, _session.SecurityTally - 1);
             }
             else
             {
-                output += "❌ **ICE Resisted!** Access denied.\n";
+                sb.AppendLine("❌ **ICE Resisted!** Access denied.");
                 // Increase security tally on failure
                 _session.SecurityTally += 1;
 
@@ -159,16 +173,16 @@ namespace ShadowrunDiscordBot.Services
                 if (_session.SecurityTally >= 10 && _session.AlertLevel == "None")
                 {
                     _session.AlertLevel = "Passive";
-                    output += "⚠️ **Alert Level increased to Passive!**\n";
+                    sb.AppendLine("⚠️ **Alert Level increased to Passive!**");
                 }
                 else if (_session.SecurityTally >= 20 && _session.AlertLevel == "Passive")
                 {
                     _session.AlertLevel = "Active";
-                    output += "🚨 **Alert Level increased to Active!**\n";
+                    sb.AppendLine("🚨 **Alert Level increased to Active!**");
                 }
             }
 
-            return output;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -180,23 +194,25 @@ namespace ShadowrunDiscordBot.Services
 
             var result = _diceService.RollShadowrun(pool, systemRating);
 
-            var output = $"**Bypassing Security: {systemType}**\n";
-            output += $"System Rating: {systemRating}\n";
-            output += $"Pool: {pool}\n";
-            output += $"Roll: {result.Details}\n";
-            output += $"Successes: {result.Successes}\n";
+            // FIX: HIGH-002 - Use StringBuilder instead of string concatenation
+            var sb = new StringBuilder();
+            sb.AppendLine($"**Bypassing Security: {systemType}**");
+            sb.AppendLine($"System Rating: {systemRating}");
+            sb.AppendLine($"Pool: {pool}");
+            sb.AppendLine($"Roll: {result.Details}");
+            sb.AppendLine($"Successes: {result.Successes}");
 
             if (result.Successes > 0)
             {
-                output += "✅ **Security Bypassed!** Access granted.\n";
+                sb.AppendLine("✅ **Security Bypassed!** Access granted.");
             }
             else
             {
-                output += "❌ **Bypass Failed!** Security alerted.\n";
+                sb.AppendLine("❌ **Bypass Failed!** Security alerted.");
                 _session.SecurityTally += 2;
             }
 
-            return output;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -208,45 +224,25 @@ namespace ShadowrunDiscordBot.Services
 
             var result = _diceService.RollShadowrun(pool, 4);
 
-            var output = $"**Matrix Attack: {targetName}**\n";
-            output += $"Attack Program Rating: {attackProgramRating}\n";
-            output += $"Pool: {pool}\n";
-            output += $"Roll: {result.Details}\n";
-            output += $"Successes: {result.Successes}\n";
+            // FIX: HIGH-002 - Use StringBuilder instead of string concatenation
+            var sb = new StringBuilder();
+            sb.AppendLine($"**Matrix Attack: {targetName}**");
+            sb.AppendLine($"Attack Program Rating: {attackProgramRating}");
+            sb.AppendLine($"Pool: {pool}");
+            sb.AppendLine($"Roll: {result.Details}");
+            sb.AppendLine($"Successes: {result.Successes}");
 
             if (result.Successes > 0)
             {
                 var damage = result.Successes * 2; // Simplified damage calculation
-                output += $"💥 **Attack Successful!** Dealt {damage} Matrix damage.\n";
+                sb.AppendLine($"💥 **Attack Successful!** Dealt {damage} Matrix damage.");
             }
             else
             {
-                output += "❌ **Attack Failed!** Target defended.\n";
+                sb.AppendLine("❌ **Attack Failed!** Target defended.");
             }
 
-            return output;
-        }
-
-        /// <summary>
-        /// Defend against Matrix attack
-        /// </summary>
-        public string MatrixDefense(int incomingDamage)
-        {
-            var pool = _cyberdeck.Hardening + _cyberdeck.Firewall; // Firewall property simulation
-
-            var result = _diceService.RollShadowrun(pool, 4);
-
-            var output = $"**Matrix Defense**\n";
-            output += $"Incoming Damage: {incomingDamage}\n";
-            output += $"Defense Pool: {pool}\n";
-            output += $"Roll: {result.Details}\n";
-            output += $"Successes: {result.Successes}\n";
-
-            var actualDamage = Math.Max(0, incomingDamage - result.Successes);
-            output += $"🛡️ **Damage Soaked:** {result.Successes}\n";
-            output += $"❤️ **Damage Taken:** {actualDamage}\n";
-
-            return output;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -324,15 +320,344 @@ namespace ShadowrunDiscordBot.Services
                 ? "🌐 Switched to VR mode (Hot Sim). +2 Initiative Dice, biofeedback damage possible."
                 : "👓 Switched to AR mode. Normal initiative, no biofeedback risk.";
         }
+    }
+
+    /// <summary>
+    /// API-focused Matrix service for managing matrix runs via database
+    /// </summary>
+    public class MatrixApiService
+    {
+        private readonly DatabaseService _databaseService;
+        private readonly DiceService _diceService;
+        private readonly ILogger<MatrixApiService> _logger;
+
+        public MatrixApiService(
+            DatabaseService databaseService,
+            DiceService diceService,
+            ILogger<MatrixApiService> logger)
+        {
+            _databaseService = databaseService;
+            _diceService = diceService;
+            _logger = logger;
+        }
+
+        #region Matrix Run Operations
 
         /// <summary>
-        /// Check if the character can perform Matrix operations
+        /// Get active matrix run for a character
         /// </summary>
-        public bool CanAccessMatrix()
+        public async Task<MatrixRunDto?> GetActiveRunAsync(int characterId)
         {
-            return _cyberdeck.MPCP >= 3;
+            var run = await _databaseService.GetActiveMatrixRunAsync(characterId);
+            return run != null ? MapToMatrixRunDto(run) : null;
         }
+
+        /// <summary>
+        /// Create a new matrix run
+        /// </summary>
+        public async Task<MatrixRunDto> CreateRunAsync(CreateMatrixRunDto createDto)
+        {
+            var run = new MatrixRun
+            {
+                CharacterId = createDto.CharacterId,
+                HostId = createDto.HostId,
+                CyberdeckId = createDto.CyberdeckId,
+                SecurityTally = 0,
+                AlertStatus = "None",
+                StartedAt = DateTime.UtcNow
+            };
+
+            var created = await _databaseService.CreateMatrixRunAsync(run);
+            _logger.LogInformation("Created matrix run {RunId} for character {CharacterId}",
+                created.Id, createDto.CharacterId);
+
+            return MapToMatrixRunDto(created);
+        }
+
+        /// <summary>
+        /// Update a matrix run
+        /// </summary>
+        public async Task<MatrixRunDto?> UpdateRunAsync(int runId, UpdateMatrixRunDto updateDto)
+        {
+            var run = await _databaseService.GetMatrixRunAsync(runId);
+            if (run == null) return null;
+
+            if (updateDto.SecurityTally.HasValue) run.SecurityTally = updateDto.SecurityTally.Value;
+            if (updateDto.AlertStatus != null) run.AlertStatus = updateDto.AlertStatus;
+
+            var updated = await _databaseService.UpdateMatrixRunAsync(run);
+            return MapToMatrixRunDto(updated);
+        }
+
+        /// <summary>
+        /// End a matrix run
+        /// </summary>
+        public async Task<bool> EndRunAsync(int runId)
+        {
+            var run = await _databaseService.GetMatrixRunAsync(runId);
+            if (run == null) return false;
+
+            run.EndedAt = DateTime.UtcNow;
+            await _databaseService.UpdateMatrixRunAsync(run);
+            
+            _logger.LogInformation("Ended matrix run {RunId}", runId);
+            return true;
+        }
+
+        #endregion
+
+        #region ICE Operations
+
+        /// <summary>
+        /// Get ICE encounters for a matrix run
+        /// </summary>
+        public async Task<List<ICEDto>> GetICEAsync(int runId)
+        {
+            var encounters = await _databaseService.GetICEncountersAsync(runId);
+            return encounters.Select(MapToICEDto).ToList();
+        }
+
+        /// <summary>
+        /// Add ICE encounter to a matrix run
+        /// </summary>
+        public async Task<ICEDto> AddICEAsync(int runId, CreateICEDto createDto)
+        {
+            var encounter = new ActiveICEncounter
+            {
+                MatrixRunId = runId,
+                HostICEId = createDto.HostICEId,
+                IsDefeated = false,
+                DamageToDeck = 0,
+                DamageToCharacter = 0
+            };
+
+            var created = await _databaseService.AddICEncounterAsync(encounter);
+            _logger.LogInformation("Added ICE encounter {EncounterId} to run {RunId}",
+                created.Id, runId);
+
+            return MapToICEDto(created);
+        }
+
+        /// <summary>
+        /// Remove ICE encounter from a matrix run
+        /// </summary>
+        public async Task<bool> RemoveICEAsync(int runId, int encounterId)
+        {
+            var encounter = await _databaseService.GetICEncounterAsync(encounterId);
+            if (encounter == null || encounter.MatrixRunId != runId) return false;
+
+            await _databaseService.RemoveICEncounterAsync(encounter);
+            _logger.LogInformation("Removed ICE encounter {EncounterId} from run {RunId}",
+                encounterId, runId);
+
+            return true;
+        }
+
+        #endregion
+
+        #region Cyberdeck Operations
+
+        /// <summary>
+        /// Get cyberdeck by ID
+        /// </summary>
+        public async Task<CyberdeckDto?> GetDeckAsync(int deckId)
+        {
+            var deck = await _databaseService.GetCyberdeckAsync(deckId);
+            return deck != null ? MapToCyberdeckDto(deck) : null;
+        }
+
+        /// <summary>
+        /// Create a new cyberdeck
+        /// </summary>
+        public async Task<CyberdeckDto> CreateDeckAsync(CreateCyberdeckDto createDto)
+        {
+            var deck = new Cyberdeck
+            {
+                CharacterId = createDto.CharacterId,
+                Name = createDto.Name,
+                DeckType = createDto.DeckType ?? "Custom",
+                MPCP = createDto.MPCP,
+                ActiveMemory = createDto.ActiveMemory,
+                StorageMemory = createDto.StorageMemory,
+                LoadRating = createDto.LoadRating,
+                ResponseRating = createDto.ResponseRating,
+                Hardening = createDto.Hardening,
+                Value = createDto.Value
+            };
+
+            var created = await _databaseService.CreateCyberdeckAsync(deck);
+            _logger.LogInformation("Created cyberdeck {DeckId} for character {CharacterId}",
+                created.Id, createDto.CharacterId);
+
+            return MapToCyberdeckDto(created);
+        }
+
+        /// <summary>
+        /// Update a cyberdeck
+        /// </summary>
+        public async Task<CyberdeckDto?> UpdateDeckAsync(int deckId, UpdateCyberdeckDto updateDto)
+        {
+            var deck = await _databaseService.GetCyberdeckAsync(deckId);
+            if (deck == null) return null;
+
+            if (updateDto.Name != null) deck.Name = updateDto.Name;
+            if (updateDto.MPCP.HasValue) deck.MPCP = updateDto.MPCP.Value;
+            if (updateDto.ActiveMemory.HasValue) deck.ActiveMemory = updateDto.ActiveMemory.Value;
+            if (updateDto.StorageMemory.HasValue) deck.StorageMemory = updateDto.StorageMemory.Value;
+            if (updateDto.LoadRating.HasValue) deck.LoadRating = updateDto.LoadRating.Value;
+            if (updateDto.ResponseRating.HasValue) deck.ResponseRating = updateDto.ResponseRating.Value;
+            if (updateDto.Hardening.HasValue) deck.Hardening = updateDto.Hardening.Value;
+            if (updateDto.Value.HasValue) deck.Value = updateDto.Value.Value;
+
+            var updated = await _databaseService.UpdateCyberdeckAsync(deck);
+            return MapToCyberdeckDto(updated);
+        }
+
+        #endregion
+
+        #region Private Mapping Methods
+
+        private MatrixRunDto MapToMatrixRunDto(MatrixRun run)
+        {
+            return new MatrixRunDto
+            {
+                Id = run.Id,
+                CharacterId = run.CharacterId,
+                HostId = run.HostId,
+                CyberdeckId = run.CyberdeckId,
+                SecurityTally = run.SecurityTally,
+                AlertStatus = run.AlertStatus,
+                PassiveThreshold = run.PassiveThreshold,
+                ActiveThreshold = run.ActiveThreshold,
+                ShutdownThreshold = run.ShutdownThreshold,
+                StartedAt = run.StartedAt,
+                EndedAt = run.EndedAt
+            };
+        }
+
+        private ICEDto MapToICEDto(ActiveICEncounter encounter)
+        {
+            return new ICEDto
+            {
+                Id = encounter.Id,
+                MatrixRunId = encounter.MatrixRunId,
+                HostICEId = encounter.HostICEId,
+                IsDefeated = encounter.IsDefeated,
+                DamageToDeck = encounter.DamageToDeck,
+                DamageToCharacter = encounter.DamageToCharacter,
+                EncounterLog = encounter.EncounterLog
+            };
+        }
+
+        private CyberdeckDto MapToCyberdeckDto(Cyberdeck deck)
+        {
+            return new CyberdeckDto
+            {
+                Id = deck.Id,
+                CharacterId = deck.CharacterId,
+                Name = deck.Name,
+                DeckType = deck.DeckType,
+                MPCP = deck.MPCP,
+                ActiveMemory = deck.ActiveMemory,
+                StorageMemory = deck.StorageMemory,
+                LoadRating = deck.LoadRating,
+                ResponseRating = deck.ResponseRating,
+                Hardening = deck.Hardening,
+                Value = deck.Value
+            };
+        }
+
+        #endregion
     }
+
+    #region Matrix DTOs
+
+    public class MatrixRunDto
+    {
+        public int Id { get; set; }
+        public int CharacterId { get; set; }
+        public int HostId { get; set; }
+        public int CyberdeckId { get; set; }
+        public int SecurityTally { get; set; }
+        public string AlertStatus { get; set; } = "None";
+        public int PassiveThreshold { get; set; }
+        public int ActiveThreshold { get; set; }
+        public int ShutdownThreshold { get; set; }
+        public DateTime StartedAt { get; set; }
+        public DateTime? EndedAt { get; set; }
+    }
+
+    public class CreateMatrixRunDto
+    {
+        public int CharacterId { get; set; }
+        public int HostId { get; set; }
+        public int CyberdeckId { get; set; }
+    }
+
+    public class UpdateMatrixRunDto
+    {
+        public int? SecurityTally { get; set; }
+        public string? AlertStatus { get; set; }
+    }
+
+    public class ICEDto
+    {
+        public int Id { get; set; }
+        public int MatrixRunId { get; set; }
+        public int HostICEId { get; set; }
+        public bool IsDefeated { get; set; }
+        public int DamageToDeck { get; set; }
+        public int DamageToCharacter { get; set; }
+        public string? EncounterLog { get; set; }
+    }
+
+    public class CreateICEDto
+    {
+        public int HostICEId { get; set; }
+    }
+
+    public class CyberdeckDto
+    {
+        public int Id { get; set; }
+        public int CharacterId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string DeckType { get; set; } = string.Empty;
+        public int MPCP { get; set; }
+        public int ActiveMemory { get; set; }
+        public int StorageMemory { get; set; }
+        public int LoadRating { get; set; }
+        public int ResponseRating { get; set; }
+        public int Hardening { get; set; }
+        public int Value { get; set; }
+    }
+
+    public class CreateCyberdeckDto
+    {
+        public int CharacterId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? DeckType { get; set; }
+        public int MPCP { get; set; }
+        public int ActiveMemory { get; set; }
+        public int StorageMemory { get; set; }
+        public int LoadRating { get; set; }
+        public int ResponseRating { get; set; }
+        public int Hardening { get; set; }
+        public int Value { get; set; }
+    }
+
+    public class UpdateCyberdeckDto
+    {
+        public string? Name { get; set; }
+        public int? MPCP { get; set; }
+        public int? ActiveMemory { get; set; }
+        public int? StorageMemory { get; set; }
+        public int? LoadRating { get; set; }
+        public int? ResponseRating { get; set; }
+        public int? Hardening { get; set; }
+        public int? Value { get; set; }
+    }
+
+    #endregion
 
     /// <summary>
     /// Database of common Matrix programs

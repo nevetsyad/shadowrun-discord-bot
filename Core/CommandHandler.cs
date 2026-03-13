@@ -1,5 +1,5 @@
-using System.Buffers;
 using System.Reflection;
+using System.Text;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
@@ -10,14 +10,20 @@ namespace ShadowrunDiscordBot.Core;
 /// <summary>
 /// Command handler with optimized command routing and Span-based parsing
 /// </summary>
-public class CommandHandler
+public partial class CommandHandler
 {
     private readonly DiscordSocketClient _client;
     private readonly ILogger<CommandHandler> _logger;
     private readonly BotConfig _config;
     private readonly IServiceProvider _services;
     private readonly Dictionary<string, Type> _commandTypes = new(StringComparer.OrdinalIgnoreCase);
-    private readonly char[] _separatorBuffer = new char[1] { ' ' };
+
+    // Constants for magic numbers
+    private const int DefaultTargetNumber = 4;
+    private const int DefaultInitiativeDice = 1;
+    private const int MaxSearchResults = 10;
+    private const int MaxNotesDisplayed = 10;
+    private const int MaxHistoryResults = 10;
 
     public CommandHandler(
         DiscordSocketClient client,
@@ -765,17 +771,40 @@ public class CommandHandler
     {
         var subCommand = command.Data.Options.First();
 
-        switch (subCommand.Name)
+        try
         {
-            case "list":
-                await command.RespondAsync("📋 Character list feature coming soon!");
-                break;
-            case "create":
-                await command.RespondAsync("✨ Character creation feature coming soon!");
-                break;
-            default:
-                await command.RespondAsync($"Unknown character subcommand: {subCommand.Name}", ephemeral: true);
-                break;
+            // Get required services
+            var logger = _services.GetRequiredService<ILogger<CharacterCommands>>();
+            var config = _services.GetRequiredService<BotConfig>();
+            var database = _services.GetRequiredService<DatabaseService>();
+            var diceService = _services.GetRequiredService<DiceService>();
+
+            // Create CharacterCommands instance
+            var characterCommands = new CharacterCommands(logger, config, database, diceService);
+
+            switch (subCommand.Name)
+            {
+                case "create":
+                    await characterCommands.CreateCharacterAsync(command);
+                    break;
+                case "list":
+                    await characterCommands.ListCharactersAsync(command);
+                    break;
+                case "view":
+                    await characterCommands.ViewCharacterAsync(command);
+                    break;
+                case "delete":
+                    await characterCommands.DeleteCharacterAsync(command);
+                    break;
+                default:
+                    await command.RespondAsync($"Unknown character subcommand: {subCommand.Name}", ephemeral: true);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling character command");
+            await command.RespondAsync($"Error: {ex.Message}", ephemeral: true);
         }
     }
 
@@ -787,23 +816,45 @@ public class CommandHandler
 
         try
         {
-            // Get character (simplified - in real implementation would get from database)
-            var userId = command.User.Id.ToString();
+            // Get the user's characters to find an awakened one
+            var characters = await dbService.GetUserCharactersAsync(command.User.Id);
+            var awakenedChar = characters.FirstOrDefault(c => c.Magic > 0 || 
+                c.Archetype.Contains("Mage", StringComparison.OrdinalIgnoreCase) || 
+                c.Archetype.Contains("Shaman", StringComparison.OrdinalIgnoreCase) ||
+                c.Archetype.Contains("Adept", StringComparison.OrdinalIgnoreCase));
+
+            if (awakenedChar == null)
+            {
+                await command.RespondAsync("❌ You don't have any awakened characters. Create a Mage, Shaman, or Physical Adept first.", ephemeral: true);
+                return;
+            }
+
+            // Convert ShadowrunCharacter to MagicSystem model
             var magicSystem = new Models.MagicSystem
             {
-                Magic = 6,
-                Magician = true,
-                Awakened = true,
-                Sorcerer = true,
+                Magic = awakenedChar.Magic,
+                Magician = awakenedChar.Archetype.Contains("Mage", StringComparison.OrdinalIgnoreCase) || 
+                          awakenedChar.Archetype.Contains("Shaman", StringComparison.OrdinalIgnoreCase),
+                Awakened = awakenedChar.Magic > 0,
+                Sorcerer = awakenedChar.Archetype.Contains("Mage", StringComparison.OrdinalIgnoreCase),
+                Adept = awakenedChar.Archetype.Contains("Adept", StringComparison.OrdinalIgnoreCase),
                 Criticality = 0,
-                Instinct = 3,
-                Initiative = 8,
-                Wounds = 0,
-                WoundMod = 0,
-                Recovery = 2,
-                MagicalResistance = 4,
-                InitiativePool = 5,
-                ComplexFormPool = 3
+                Instinct = awakenedChar.Intelligence,
+                Initiative = awakenedChar.Reaction,
+                Wounds = awakenedChar.PhysicalDamage + awakenedChar.StunDamage,
+                WoundMod = (awakenedChar.PhysicalDamage + awakenedChar.StunDamage) / 3,
+                Recovery = awakenedChar.Willpower,
+                MagicalResistance = awakenedChar.Willpower,
+                InitiativePool = awakenedChar.Reaction,
+                ComplexFormPool = awakenedChar.Intelligence,
+                Foci = awakenedChar.Spells?.Select(s => new Models.Focus
+                {
+                    Name = s.SpellName,
+                    Type = "Spell Focus",
+                    Count = 1,
+                    EssenceCost = 0,
+                    SkillBonus = 0
+                }).ToList() ?? new List<Models.Focus>()
             };
 
             var magicService = new Services.MagicService(magicSystem, diceService);
@@ -896,49 +947,58 @@ public class CommandHandler
     {
         var subCommand = command.Data.Options.First();
         var diceService = _services.GetRequiredService<DiceService>();
+        var dbService = _services.GetRequiredService<DatabaseService>();
 
         try
         {
-            // Create a default cyberdeck for demo purposes
-            // In real implementation, this would be loaded from database for the user's character
-            var cyberdeck = new Models.Cyberdeck
-            {
-                Id = 1,
-                CharacterId = 1,
-                Name = "Renraku Kraftwerk-8",
-                DeckType = "Standard",
-                MPCP = 6,
-                ActiveMemory = 100,
-                StorageMemory = 500,
-                LoadRating = 10,
-                ResponseRating = 3,
-                Hardening = 2,
-                Value = 850000,
-                InstalledPrograms = new List<Models.DeckProgram>
-                {
-                    new Models.DeckProgram { Id = 1, CyberdeckId = 1, Name = "Attack", Type = "Attack", Rating = 4, MemoryCost = 50, IsLoaded = true },
-                    new Models.DeckProgram { Id = 2, CyberdeckId = 1, Name = "Armor", Type = "Defense", Rating = 4, MemoryCost = 25, IsLoaded = true },
-                    new Models.DeckProgram { Id = 3, CyberdeckId = 1, Name = "Browse", Type = "Utility", Rating = 3, MemoryCost = 20, IsLoaded = false },
-                    new Models.DeckProgram { Id = 4, CyberdeckId = 1, Name = "Decrypt", Type = "Utility", Rating = 4, MemoryCost = 60, IsLoaded = false },
-                    new Models.DeckProgram { Id = 5, CyberdeckId = 1, Name = "Sleaze", Type = "Utility", Rating = 3, MemoryCost = 50, IsLoaded = false }
-                }
-            };
+            // Get the user's characters to find a decker one
+            var characters = await dbService.GetUserCharactersAsync(command.User.Id);
+            var deckerChar = characters.FirstOrDefault(c => 
+                c.Archetype.Contains("Decker", StringComparison.OrdinalIgnoreCase) ||
+                c.Archetype.Contains("Rigger", StringComparison.OrdinalIgnoreCase)) ?? characters.FirstOrDefault();
 
-            var session = new Models.MatrixSession
+            if (deckerChar == null)
             {
-                Id = 1,
-                CharacterId = 1,
-                IsInVR = false,
-                SecurityTally = 0,
-                AlertLevel = "None",
-                CurrentInitiative = 0,
-                InitiativePasses = 1,
-                ActiveICE = new List<Models.ActiveICE>
+                await command.RespondAsync("❌ You don't have any characters. Create a character first using `/character create`.", ephemeral: true);
+                return;
+            }
+
+            // Try to get the character's cyberdeck from database
+            var cyberdeck = await GetCharacterCyberdeckAsync(dbService, deckerChar.Id);
+
+            // If no cyberdeck exists, create a default one for deckers
+            if (cyberdeck == null)
+            {
+                if (deckerChar.Archetype.Contains("Decker", StringComparison.OrdinalIgnoreCase))
                 {
-                    new Models.ActiveICE { Id = 1, MatrixSessionId = 1, ICEType = "Probe", Rating = 4, IsActivated = false, SecurityTallyThreshold = 5 },
-                    new Models.ActiveICE { Id = 2, MatrixSessionId = 1, ICEType = "Killer", Rating = 6, IsActivated = false, SecurityTallyThreshold = 15 }
+                    cyberdeck = new Models.Cyberdeck
+                    {
+                        Id = 0,
+                        CharacterId = deckerChar.Id,
+                        Name = "Novatech Slimcase-10",
+                        DeckType = "Portable",
+                        MPCP = 5,
+                        ActiveMemory = 50,
+                        StorageMemory = 200,
+                        LoadRating = 7,
+                        ResponseRating = 2,
+                        Hardening = 1,
+                        Value = 250000,
+                        InstalledPrograms = new List<Models.DeckProgram>()
+                    };
+
+                    // Save to database
+                    cyberdeck = await dbService.CreateCyberdeckAsync(cyberdeck);
                 }
-            };
+                else
+                {
+                    await command.RespondAsync("❌ This character doesn't have a cyberdeck. Only Deckers can access Matrix commands.", ephemeral: true);
+                    return;
+                }
+            }
+
+            // Get or create matrix session
+            var session = await GetOrCreateMatrixSessionAsync(dbService, deckerChar.Id, cyberdeck.Id);
 
             var matrixService = new Services.MatrixService(cyberdeck, diceService, session);
 
@@ -2459,6 +2519,168 @@ public class CommandHandler
             _logger.LogError(ex, "Error handling dynamic content command: {CommandName}", command.CommandName);
             await command.RespondAsync($"An error occurred: {ex.Message}", ephemeral: true);
         }
+    }
+
+    #endregion
+
+    #region Helper Methods for Database Integration
+
+    /// <summary>
+    /// Get the cyberdeck for a character from the database
+    /// </summary>
+    private static Task<Models.Cyberdeck?> GetCharacterCyberdeckAsync(DatabaseService dbService, int characterId)
+    {
+        // Placeholder - returns null to trigger default deck creation
+        // In production, implement direct database query
+        return Task.FromResult<Models.Cyberdeck?>(null);
+    }
+
+    /// <summary>
+    /// Get or create a matrix session for a character
+    /// </summary>
+    private async Task<Models.MatrixSession> GetOrCreateMatrixSessionAsync(DatabaseService dbService, int characterId, int cyberdeckId)
+    {
+        try
+        {
+            var activeRun = await dbService.GetActiveMatrixRunAsync(characterId).ConfigureAwait(false);
+            
+            return activeRun != null
+                ? MapMatrixRunToSession(activeRun, characterId, cyberdeckId)
+                : CreateDefaultMatrixSession(characterId, cyberdeckId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting/creating matrix session for character {CharacterId}", characterId);
+            return CreateDefaultMatrixSession(characterId, cyberdeckId);
+        }
+    }
+
+    private static Models.MatrixSession MapMatrixRunToSession(Models.MatrixRun activeRun, int characterId, int cyberdeckId)
+    {
+        return new Models.MatrixSession
+        {
+            Id = activeRun.Id,
+            CharacterId = characterId,
+            CyberdeckId = cyberdeckId,
+            IsInVR = false,
+            SecurityTally = activeRun.SecurityTally,
+            AlertLevel = activeRun.AlertStatus ?? "None",
+            CurrentInitiative = 0,
+            InitiativePasses = 1,
+            ActiveICE = new List<Models.ActiveICE>()
+        };
+    }
+
+    private static Models.MatrixSession CreateDefaultMatrixSession(int characterId, int cyberdeckId)
+    {
+        return new Models.MatrixSession
+        {
+            Id = 0,
+            CharacterId = characterId,
+            CyberdeckId = cyberdeckId,
+            IsInVR = false,
+            SecurityTally = 0,
+            AlertLevel = "None",
+            CurrentInitiative = 0,
+            InitiativePasses = 1,
+            ActiveICE = new List<Models.ActiveICE>()
+        };
+    }
+
+    #endregion
+
+    #region Embed Builder Helpers
+
+    /// <summary>
+    /// Creates a basic embed with common settings
+    /// </summary>
+    private EmbedBuilder CreateBaseEmbed(string title, Color? color = null, string? description = null)
+    {
+        var builder = new EmbedBuilder()
+            .WithTitle(title)
+            .WithColor(color ?? _config.Bot.DefaultColor)
+            .WithTimestamp(DateTime.UtcNow);
+
+        if (!string.IsNullOrEmpty(description))
+        {
+            builder.WithDescription(description);
+        }
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Creates an error embed for error responses
+    /// </summary>
+    private static EmbedBuilder CreateErrorEmbed(string title, string description)
+    {
+        return new EmbedBuilder()
+            .WithTitle(title)
+            .WithColor(Color.Red)
+            .WithDescription(description)
+            .WithTimestamp(DateTime.UtcNow);
+    }
+
+    /// <summary>
+    /// Creates a success embed for successful operations
+    /// </summary>
+    private static EmbedBuilder CreateSuccessEmbed(string title, string description)
+    {
+        return new EmbedBuilder()
+            .WithTitle(title)
+            .WithColor(Color.Green)
+            .WithDescription(description)
+            .WithTimestamp(DateTime.UtcNow);
+    }
+
+    /// <summary>
+    /// Safely gets an option value from slash command options
+    /// </summary>
+    private static T? GetOptionValue<T>(SocketSlashCommand command, string optionName, T? defaultValue = default)
+    {
+        var option = command.Data.Options.FirstOrDefault(o => o.Name == optionName);
+        return option != null ? (T?)option.Value : defaultValue;
+    }
+
+    /// <summary>
+    /// Safely gets an option value from subcommand options
+    /// </summary>
+    private static T? GetSubOptionValue<T>(SocketSlashCommandDataOption subCommand, string optionName, T? defaultValue = default)
+    {
+        var option = subCommand.Options.FirstOrDefault(o => o.Name == optionName);
+        return option != null ? (T?)option.Value : defaultValue;
+    }
+
+    /// <summary>
+    /// Builds a formatted list string with consistent formatting
+    /// </summary>
+    private static string BuildListString<T>(IEnumerable<T> items, Func<T, string> formatter, int maxItems = 10)
+    {
+        var sb = new StringBuilder();
+        var itemList = items.Take(maxItems).ToList();
+        
+        foreach (var item in itemList)
+        {
+            sb.AppendLine(formatter(item));
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Safely responds to a command with error message
+    /// </summary>
+    private static async Task RespondWithErrorAsync(SocketSlashCommand command, string message)
+    {
+        await command.RespondAsync($"❌ {message}", ephemeral: true).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Safely responds to a command with success message
+    /// </summary>
+    private static async Task RespondWithSuccessAsync(SocketSlashCommand command, string message)
+    {
+        await command.RespondAsync($"✅ {message}", ephemeral: true).ConfigureAwait(false);
     }
 
     #endregion

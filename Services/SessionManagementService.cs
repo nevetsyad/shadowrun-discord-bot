@@ -45,7 +45,9 @@ public class SessionManagementService
         try
         {
             // Get all active sessions
-            var activeSessions = await _database.GetActiveSessionsAsync();
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            // FIX: MED-003 - Uses GetActiveSessionsAsync which now includes related data
+            var activeSessions = await _database.GetActiveSessionsAsync().ConfigureAwait(false);
 
             foreach (var session in activeSessions)
             {
@@ -60,7 +62,7 @@ public class SessionManagementService
                     var sessionBreak = await StartBreakAsync(
                         session.DiscordChannelId,
                         reason: "Automatic break - no activity detected",
-                        isAutomatic: true);
+                        isAutomatic: true).ConfigureAwait(false);
 
                     autoBreaks.Add(sessionBreak);
                 }
@@ -88,14 +90,16 @@ public class SessionManagementService
         bool isAutomatic = false,
         ulong? initiatedByUserId = null)
     {
-        var session = await _sessionService.GetActiveSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await _sessionService.GetActiveSessionAsync(channelId).ConfigureAwait(false);
         if (session == null)
         {
             throw new InvalidOperationException("No active session found");
         }
 
         // Pause the session
-        await _sessionService.PauseSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _sessionService.PauseSessionAsync(channelId).ConfigureAwait(false);
 
         // Create break record
         var sessionBreak = new SessionBreak
@@ -108,7 +112,8 @@ public class SessionManagementService
             NotificationSent = false
         };
 
-        await _database.AddSessionBreakAsync(sessionBreak);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _database.AddSessionBreakAsync(sessionBreak).ConfigureAwait(false);
 
         _logger.LogInformation("Started {BreakType} break for session {SessionId}: {Reason}",
             isAutomatic ? "automatic" : "manual", session.Id, sessionBreak.Reason);
@@ -121,14 +126,16 @@ public class SessionManagementService
     /// </summary>
     public async Task<SessionBreak> EndBreakAsync(ulong channelId)
     {
-        var session = await _sessionService.GetPausedSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await _sessionService.GetPausedSessionAsync(channelId).ConfigureAwait(false);
         if (session == null)
         {
             throw new InvalidOperationException("No paused session found");
         }
 
         // Get the active break
-        var activeBreak = await _database.GetActiveSessionBreakAsync(session.Id);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var activeBreak = await _database.GetActiveSessionBreakAsync(session.Id).ConfigureAwait(false);
         if (activeBreak == null)
         {
             throw new InvalidOperationException("No active break found for this session");
@@ -138,10 +145,12 @@ public class SessionManagementService
         activeBreak.BreakEndedAt = DateTime.UtcNow;
         activeBreak.DurationMinutes = (int)(activeBreak.BreakEndedAt.Value - activeBreak.BreakStartedAt).TotalMinutes;
 
-        await _database.UpdateSessionBreakAsync(activeBreak);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _database.UpdateSessionBreakAsync(activeBreak).ConfigureAwait(false);
 
         // Resume the session
-        await _sessionService.ResumeSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _sessionService.ResumeSessionAsync(channelId).ConfigureAwait(false);
 
         _logger.LogInformation("Ended break for session {SessionId}, duration: {Minutes} minutes",
             session.Id, activeBreak.DurationMinutes);
@@ -154,7 +163,8 @@ public class SessionManagementService
     /// </summary>
     public async Task<List<SessionBreak>> GetSessionBreaksAsync(int sessionId)
     {
-        return await _database.GetSessionBreaksAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        return await _database.GetSessionBreaksAsync(sessionId).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -162,7 +172,8 @@ public class SessionManagementService
     /// </summary>
     public async Task<SessionBreakStatistics> GetBreakStatisticsAsync(int sessionId)
     {
-        var breaks = await GetSessionBreaksAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var breaks = await GetSessionBreaksAsync(sessionId).ConfigureAwait(false);
 
         var stats = new SessionBreakStatistics
         {
@@ -186,7 +197,8 @@ public class SessionManagementService
     /// </summary>
     public async Task<CompletedSession> ArchiveSessionAsync(int sessionId, string? outcome = null)
     {
-        var session = await _database.GetGameSessionAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await _database.GetGameSessionAsync(sessionId).ConfigureAwait(false);
         if (session == null)
         {
             throw new InvalidOperationException($"Session {sessionId} not found");
@@ -202,7 +214,8 @@ public class SessionManagementService
             ? (session.EndedAt.Value - session.StartedAt) 
             : TimeSpan.Zero;
 
-        var breaks = await GetSessionBreaksAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var breaks = await GetSessionBreaksAsync(sessionId).ConfigureAwait(false);
         var totalBreakMinutes = breaks.Sum(b => b.DurationMinutes ?? 0);
 
         // Create completed session record
@@ -216,7 +229,7 @@ public class SessionManagementService
             StartedAt = session.StartedAt,
             EndedAt = session.EndedAt ?? DateTime.UtcNow,
             DurationMinutes = (int)duration.TotalMinutes,
-            ParticipantCount = session.Participants.Count(p => p.IsActive),
+            ParticipantCount = session.Participants?.Count(p => p.IsActive) ?? 0,
             TotalBreaks = breaks.Count,
             TotalBreakMinutes = totalBreakMinutes,
             Outcome = outcome ?? session.Notes,
@@ -225,7 +238,8 @@ public class SessionManagementService
         };
 
         // Copy tags
-        var sessionTags = await GetSessionTagsAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var sessionTags = await GetSessionTagsAsync(sessionId).ConfigureAwait(false);
         foreach (var tag in sessionTags)
         {
             completedSession.Tags.Add(new CompletedSessionTag
@@ -236,7 +250,8 @@ public class SessionManagementService
         }
 
         // Copy notes
-        var sessionNotes = await GetSessionNotesAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var sessionNotes = await GetSessionNotesAsync(sessionId).ConfigureAwait(false);
         foreach (var note in sessionNotes)
         {
             completedSession.Notes.Add(new CompletedSessionNote
@@ -249,7 +264,8 @@ public class SessionManagementService
         }
 
         // Save to database
-        await _database.AddCompletedSessionAsync(completedSession);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _database.AddCompletedSessionAsync(completedSession).ConfigureAwait(false);
 
         _logger.LogInformation("Archived session {SessionId} as completed session {CompletedId}",
             sessionId, completedSession.Id);
@@ -269,8 +285,9 @@ public class SessionManagementService
         DateTime? endDate = null,
         int limit = 20)
     {
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
         return await _database.SearchCompletedSessionsAsync(
-            guildId, searchTerm, category, tag, startDate, endDate, limit);
+            guildId, searchTerm, category, tag, startDate, endDate, limit).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -278,7 +295,8 @@ public class SessionManagementService
     /// </summary>
     public async Task<CompletedSession?> GetCompletedSessionAsync(int completedSessionId)
     {
-        return await _database.GetCompletedSessionAsync(completedSessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        return await _database.GetCompletedSessionAsync(completedSessionId).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -286,7 +304,8 @@ public class SessionManagementService
     /// </summary>
     public async Task<List<CompletedSession>> GetRecentCompletedSessionsAsync(ulong guildId, int limit = 10)
     {
-        return await _database.GetRecentCompletedSessionsAsync(guildId, limit);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        return await _database.GetRecentCompletedSessionsAsync(guildId, limit).ConfigureAwait(false);
     }
 
     #endregion
@@ -303,7 +322,8 @@ public class SessionManagementService
         ulong addedByUserId = 0)
     {
         // Check if tag already exists
-        var existingTags = await GetSessionTagsAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var existingTags = await GetSessionTagsAsync(sessionId).ConfigureAwait(false);
         if (existingTags.Any(t => t.TagName.Equals(tagName, StringComparison.OrdinalIgnoreCase)))
         {
             throw new InvalidOperationException($"Tag '{tagName}' already exists for this session");
@@ -318,7 +338,8 @@ public class SessionManagementService
             AddedByUserId = addedByUserId
         };
 
-        await _database.AddSessionTagAsync(tag);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _database.AddSessionTagAsync(tag).ConfigureAwait(false);
 
         _logger.LogInformation("Added tag '{TagName}' to session {SessionId}", tagName, sessionId);
 
@@ -330,7 +351,8 @@ public class SessionManagementService
     /// </summary>
     public async Task RemoveSessionTagAsync(int sessionId, string tagName)
     {
-        await _database.RemoveSessionTagAsync(sessionId, tagName);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _database.RemoveSessionTagAsync(sessionId, tagName).ConfigureAwait(false);
 
         _logger.LogInformation("Removed tag '{TagName}' from session {SessionId}", tagName, sessionId);
     }
@@ -340,7 +362,8 @@ public class SessionManagementService
     /// </summary>
     public async Task<List<SessionTag>> GetSessionTagsAsync(int sessionId)
     {
-        return await _database.GetSessionTagsAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        return await _database.GetSessionTagsAsync(sessionId).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -348,7 +371,8 @@ public class SessionManagementService
     /// </summary>
     public async Task SetSessionCategoryAsync(int sessionId, string category)
     {
-        var session = await _database.GetGameSessionAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await _database.GetGameSessionAsync(sessionId).ConfigureAwait(false);
         if (session == null)
         {
             throw new InvalidOperationException($"Session {sessionId} not found");
@@ -363,7 +387,8 @@ public class SessionManagementService
         metadata["Category"] = category;
         session.Metadata = JsonSerializer.Serialize(metadata);
 
-        await _database.UpdateGameSessionAsync(session);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _database.UpdateGameSessionAsync(session).ConfigureAwait(false);
 
         _logger.LogInformation("Set category '{Category}' for session {SessionId}", category, sessionId);
     }
@@ -373,7 +398,8 @@ public class SessionManagementService
     /// </summary>
     public async Task SetParentSessionAsync(int sessionId, int? parentSessionId)
     {
-        var session = await _database.GetGameSessionAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await _database.GetGameSessionAsync(sessionId).ConfigureAwait(false);
         if (session == null)
         {
             throw new InvalidOperationException($"Session {sessionId} not found");
@@ -395,7 +421,8 @@ public class SessionManagementService
         }
 
         session.Metadata = JsonSerializer.Serialize(metadata);
-        await _database.UpdateGameSessionAsync(session);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _database.UpdateGameSessionAsync(session).ConfigureAwait(false);
 
         _logger.LogInformation("Set parent session {ParentId} for session {SessionId}",
             parentSessionId, sessionId);
@@ -406,7 +433,8 @@ public class SessionManagementService
     /// </summary>
     public async Task<List<GameSession>> GetSessionsByTagAsync(ulong guildId, string tagName)
     {
-        return await _database.GetSessionsByTagAsync(guildId, tagName);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        return await _database.GetSessionsByTagAsync(guildId, tagName).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -414,7 +442,8 @@ public class SessionManagementService
     /// </summary>
     public async Task<List<GameSession>> GetSessionsByCategoryAsync(ulong guildId, string category)
     {
-        return await _database.GetSessionsByCategoryAsync(guildId, category);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        return await _database.GetSessionsByCategoryAsync(guildId, category).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -422,7 +451,8 @@ public class SessionManagementService
     /// </summary>
     public async Task<List<GameSession>> GetChildSessionsAsync(int parentSessionId)
     {
-        return await _database.GetChildSessionsAsync(parentSessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        return await _database.GetChildSessionsAsync(parentSessionId).ConfigureAwait(false);
     }
 
     #endregion
@@ -434,13 +464,15 @@ public class SessionManagementService
     /// </summary>
     public async Task<SessionTimeStatistics> GetTimeStatisticsAsync(int sessionId)
     {
-        var session = await _database.GetGameSessionAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await _database.GetGameSessionAsync(sessionId).ConfigureAwait(false);
         if (session == null)
         {
             throw new InvalidOperationException($"Session {sessionId} not found");
         }
 
-        var breaks = await GetSessionBreaksAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var breaks = await GetSessionBreaksAsync(sessionId).ConfigureAwait(false);
         var totalDuration = session.EndedAt.HasValue
             ? (session.EndedAt.Value - session.StartedAt)
             : (DateTime.UtcNow - session.StartedAt);
@@ -473,15 +505,18 @@ public class SessionManagementService
     /// </summary>
     public async Task<GuildTimeStatistics> GetGuildTimeStatisticsAsync(ulong guildId)
     {
-        var sessions = await _database.GetGuildGameSessionsAsync(guildId, 100);
-        var completedSessions = await _database.GetRecentCompletedSessionsAsync(guildId, 100);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var sessions = await _database.GetGuildGameSessionsAsync(guildId, 100).ConfigureAwait(false);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var completedSessions = await _database.GetRecentCompletedSessionsAsync(guildId, 100).ConfigureAwait(false);
 
         var allSessions = new List<(int Id, string? Name, TimeSpan Duration, TimeSpan ActiveTime, int Breaks)>();
 
         // Add active/paused sessions
         foreach (var session in sessions.Where(s => s.Status != SessionStatus.Ended))
         {
-            var stats = await GetTimeStatisticsAsync(session.Id);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            var stats = await GetTimeStatisticsAsync(session.Id).ConfigureAwait(false);
             allSessions.Add((session.Id, session.SessionName, stats.TotalDuration, stats.ActiveTime, stats.TotalBreaks));
         }
 
@@ -545,7 +580,8 @@ public class SessionManagementService
             IsPinned = isPinned
         };
 
-        await _database.AddSessionNoteAsync(note);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _database.AddSessionNoteAsync(note).ConfigureAwait(false);
 
         _logger.LogInformation("Added note to session {SessionId}: {Content}", sessionId, 
             content.Length > 50 ? content.Substring(0, 50) + "..." : content);
@@ -558,7 +594,8 @@ public class SessionManagementService
     /// </summary>
     public async Task<List<SessionNote>> GetSessionNotesAsync(int sessionId, bool pinnedOnly = false)
     {
-        return await _database.GetSessionNotesAsync(sessionId, pinnedOnly);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        return await _database.GetSessionNotesAsync(sessionId, pinnedOnly).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -566,7 +603,8 @@ public class SessionManagementService
     /// </summary>
     public async Task DeleteSessionNoteAsync(int noteId)
     {
-        await _database.DeleteSessionNoteAsync(noteId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _database.DeleteSessionNoteAsync(noteId).ConfigureAwait(false);
 
         _logger.LogInformation("Deleted session note {NoteId}", noteId);
     }
@@ -576,7 +614,8 @@ public class SessionManagementService
     /// </summary>
     public async Task SetSessionMetadataAsync(int sessionId, string key, object value)
     {
-        var session = await _database.GetGameSessionAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await _database.GetGameSessionAsync(sessionId).ConfigureAwait(false);
         if (session == null)
         {
             throw new InvalidOperationException($"Session {sessionId} not found");
@@ -590,7 +629,8 @@ public class SessionManagementService
         metadata[key] = value;
         session.Metadata = JsonSerializer.Serialize(metadata);
 
-        await _database.UpdateGameSessionAsync(session);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _database.UpdateGameSessionAsync(session).ConfigureAwait(false);
 
         _logger.LogInformation("Set metadata '{Key}' for session {SessionId}", key, sessionId);
     }
@@ -600,7 +640,8 @@ public class SessionManagementService
     /// </summary>
     public async Task<T?> GetSessionMetadataAsync<T>(int sessionId, string key)
     {
-        var session = await _database.GetGameSessionAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await _database.GetGameSessionAsync(sessionId).ConfigureAwait(false);
         if (session == null || string.IsNullOrEmpty(session.Metadata))
         {
             return default;
@@ -628,12 +669,14 @@ public class SessionManagementService
         bool autoArchive = true)
     {
         // End the session
-        var session = await _sessionService.EndSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await _sessionService.EndSessionAsync(channelId).ConfigureAwait(false);
 
         // Archive if requested
         if (autoArchive)
         {
-            return await ArchiveSessionAsync(session.Id, outcome);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            return await ArchiveSessionAsync(session.Id, outcome).ConfigureAwait(false);
         }
 
         // Create minimal completed session record
@@ -651,12 +694,13 @@ public class SessionManagementService
             StartedAt = session.StartedAt,
             EndedAt = session.EndedAt ?? DateTime.UtcNow,
             DurationMinutes = (int)duration.TotalMinutes,
-            ParticipantCount = session.Participants.Count(p => p.IsActive),
+            ParticipantCount = session.Participants?.Count(p => p.IsActive) ?? 0,
             Outcome = outcome ?? session.Notes,
             ArchivedAt = DateTime.UtcNow
         };
 
-        await _database.AddCompletedSessionAsync(completedSession);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _database.AddCompletedSessionAsync(completedSession).ConfigureAwait(false);
 
         _logger.LogInformation("Completed session {SessionId} without archiving", session.Id);
 
@@ -668,17 +712,22 @@ public class SessionManagementService
     /// </summary>
     public async Task<SessionSummary> GetSessionSummaryAsync(int sessionId)
     {
-        var session = await _database.GetGameSessionAsync(sessionId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await _database.GetGameSessionAsync(sessionId).ConfigureAwait(false);
         if (session == null)
         {
             throw new InvalidOperationException($"Session {sessionId} not found");
         }
 
-        var timeStats = await GetTimeStatisticsAsync(sessionId);
-        var breakStats = await GetBreakStatisticsAsync(sessionId);
-        var tags = await GetSessionTagsAsync(sessionId);
-        var notes = await GetSessionNotesAsync(sessionId, pinnedOnly: true);
-        var participants = session.Participants.Where(p => p.IsActive).ToList();
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var timeStats = await GetTimeStatisticsAsync(sessionId).ConfigureAwait(false);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var breakStats = await GetBreakStatisticsAsync(sessionId).ConfigureAwait(false);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var tags = await GetSessionTagsAsync(sessionId).ConfigureAwait(false);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var notes = await GetSessionNotesAsync(sessionId, pinnedOnly: true).ConfigureAwait(false);
+        var participants = (session.Participants ?? new List<SessionParticipant>()).Where(p => p.IsActive).ToList();
 
         var summary = new SessionSummary
         {
@@ -703,10 +752,10 @@ public class SessionManagementService
             PinnedNotes = notes.Select(n => n.Content).ToList(),
             TotalBreaks = breakStats.TotalBreaks,
             TotalBreakTime = TimeSpan.FromMinutes(breakStats.TotalBreakMinutes),
-            NarrativeEvents = session.NarrativeEvents.Count,
-            PlayerChoices = session.PlayerChoices.Count,
-            ActiveMissions = session.ActiveMissions.Count(m => m.Status == MissionStatus.InProgress),
-            CompletedMissions = session.ActiveMissions.Count(m => m.Status == MissionStatus.Completed)
+            NarrativeEvents = session.NarrativeEvents?.Count ?? 0,
+            PlayerChoices = session.PlayerChoices?.Count ?? 0,
+            ActiveMissions = (session.ActiveMissions ?? new List<ActiveMission>()).Count(m => m.Status == MissionStatus.InProgress),
+            CompletedMissions = (session.ActiveMissions ?? new List<ActiveMission>()).Count(m => m.Status == MissionStatus.Completed)
         };
 
         return summary;

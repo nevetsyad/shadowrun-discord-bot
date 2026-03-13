@@ -47,8 +47,13 @@ public class CombatParticipant
     [MaxLength(100)]
     public string? Name { get; set; } // For NPCs
 
+    [MaxLength(20)]
+    public string? Type { get; set; } = "NPC"; // PC, NPC, Enemy
+
     [Required]
     public int Initiative { get; set; }
+
+    public int Tiebreaker { get; set; } = 0;
 
     [Required]
     public int InitiativePasses { get; set; } = 1;
@@ -56,6 +61,8 @@ public class CombatParticipant
     public int CurrentPass { get; set; } = 1;
 
     public bool HasActed { get; set; } = false;
+
+    public int Wounds { get; set; } = 0;
 
     public bool IsNPC { get; set; } = false;
 
@@ -79,7 +86,13 @@ public class CombatAction
     [Required]
     public int ActorId { get; set; }
 
+    [MaxLength(100)]
+    public string? ActorName { get; set; }
+
     public int? TargetId { get; set; }
+
+    [MaxLength(100)]
+    public string? TargetName { get; set; }
 
     [Required]
     [MaxLength(50)]

@@ -75,13 +75,18 @@ public partial class DatabaseService
 
     /// <summary>
     /// Get all sessions for a guild
+    /// FIX: MED-003 - Added Includes to prevent N+1 query problems
     /// </summary>
     public async Task<List<GameSession>> GetGuildGameSessionsAsync(ulong guildId, int limit = 10)
     {
         return await _context.GameSessions
+            .Include(s => s.Participants)
+                .ThenInclude(p => p.Character)
+            .Include(s => s.ActiveMissions)
             .Where(s => s.DiscordGuildId == guildId)
             .OrderByDescending(s => s.StartedAt)
             .Take(limit)
+            .AsNoTracking()
             .ToListAsync();
     }
 

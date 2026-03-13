@@ -2,6 +2,8 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using ShadowrunDiscordBot.Core;
+using ShadowrunDiscordBot.Exceptions;
+using ShadowrunDiscordBot.Exceptions; // GPT-5.4 FIX: Added for domain exceptions
 
 namespace ShadowrunDiscordBot.Services;
 
@@ -22,15 +24,15 @@ public class ErrorHandlingService
     /// <summary>
     /// Handle an error with context information
     /// </summary>
-    public async Task HandleErrorAsync(Exception ex, string context)
+    public Task HandleErrorAsync(Exception ex, string context)
     {
         _logger.LogError(ex, "Error in {Context}", context);
-        
+
         // Log to error handler for metrics
         _errorHandler.HandleError(ex, context);
-        
+
         // Could send notification to GM or admin here
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -47,11 +49,27 @@ public class ErrorHandlingService
 
     /// <summary>
     /// Get a user-friendly error message for display to users
+    /// GPT-5.4 FIX: Added handling for domain-specific exceptions
     /// </summary>
     public string GetUserFriendlyMessage(Exception ex)
     {
         return ex switch
         {
+            // GPT-5.4 FIX: Domain-specific exceptions with actionable guidance
+            CharacterNotFoundException => ex.Message, // Already user-friendly
+            CharacterAlreadyExistsException => ex.Message, // Already user-friendly
+            CharacterValidationException => ex.Message, // Already user-friendly
+            CombatSessionException => ex.Message, // Already user-friendly
+            ActiveCombatSessionExistsException => ex.Message, // Already user-friendly
+            NoActiveCombatSessionException => ex.Message, // Already user-friendly
+            CombatParticipantException => ex.Message, // Already user-friendly
+            DiceRollException => ex.Message, // Already user-friendly
+            MatrixOperationException => ex.Message, // Already user-friendly
+            MagicOperationException => ex.Message, // Already user-friendly
+            DatabaseOperationException => ex.Message, // Already user-friendly
+            UnauthorizedOperationException => ex.Message, // Already user-friendly
+
+            // Standard .NET exceptions
             InvalidOperationException => "Invalid operation. Please check your inputs.",
             ArgumentException => "Invalid argument. Please check your command syntax.",
             ArgumentNullException => "A required value was not provided.",

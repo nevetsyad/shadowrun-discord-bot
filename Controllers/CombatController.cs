@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ShadowrunDiscordBot.Models;
 using ShadowrunDiscordBot.Services;
 
 namespace ShadowrunDiscordBot.Controllers;
@@ -12,17 +10,14 @@ namespace ShadowrunDiscordBot.Controllers;
 [Route("api/[controller]")]
 public class CombatController : ControllerBase
 {
-    private readonly ShadowrunDbContext _dbContext;
-    private readonly DiceService _diceService;
+    private readonly CombatService _combatService;
     private readonly ILogger<CombatController> _logger;
 
     public CombatController(
-        ShadowrunDbContext dbContext,
-        DiceService diceService,
+        CombatService combatService,
         ILogger<CombatController> logger)
     {
-        _dbContext = dbContext;
-        _diceService = diceService;
+        _combatService = combatService;
         _logger = logger;
     }
 
@@ -34,52 +29,14 @@ public class CombatController : ControllerBase
     {
         try
         {
-            var query = _dbContext.CombatSessions
-                .Include(c => c.Participants)
-                    .ThenInclude(p => p.Character)
-                .Where(c => c.IsActive);
-
-            if (channelId.HasValue)
-            {
-                query = query.Where(c => c.DiscordChannelId == channelId.Value);
-            }
-
-            var combat = await query.FirstOrDefaultAsync();
+            var combat = await _combatService.GetActiveCombatAsync(channelId);
 
             if (combat == null)
             {
                 return Ok(new { success = true, active = false, message = "No active combat session" });
             }
 
-            return Ok(new
-            {
-                success = true,
-                active = true,
-                combat = new
-                {
-                    combat.Id,
-                    combat.DiscordChannelId,
-                    combat.DiscordGuildId,
-                    combat.StartedAt,
-                    combat.Round,
-                    combat.CurrentTurn,
-                    Participants = combat.Participants
-                        .OrderByDescending(p => p.Initiative)
-                        .ThenBy(p => p.Tiebreaker)
-                        .Select(p => new
-                        {
-                            p.Id,
-                            p.Name,
-                            p.Type,
-                            p.Initiative,
-                            p.Tiebreaker,
-                            p.HasActed,
-                            p.Wounds,
-                            CharacterId = p.Character?.Id,
-                            CharacterName = p.Character?.Name
-                        })
-                }
-            });
+            return Ok(new { success = true, active = true, combat });
         }
         catch (Exception ex)
         {
@@ -96,26 +53,8 @@ public class CombatController : ControllerBase
     {
         try
         {
-            var sessions = await _dbContext.CombatSessions
-                .Include(c => c.Participants)
-                .OrderByDescending(c => c.StartedAt)
-                .Take(limit)
-                .ToListAsync();
-
-            return Ok(new
-            {
-                success = true,
-                sessions = sessions.Select(s => new
-                {
-                    s.Id,
-                    s.DiscordChannelId,
-                    s.IsActive,
-                    s.StartedAt,
-                    s.EndedAt,
-                    s.Round,
-                    ParticipantCount = s.Participants.Count
-                })
-            });
+            var sessions = await _combatService.GetAllCombatSessionsAsync(limit);
+            return Ok(new { success = true, sessions });
         }
         catch (Exception ex)
         {
@@ -132,16 +71,15 @@ public class CombatController : ControllerBase
     {
         try
         {
-            var combat = await _dbContext.CombatSessions
-                .Include(c => c.Participants)
-                    .ThenInclude(p => p.Character)
-                .Include(c => c.Actions)
-                .FirstOrDefaultAsync(c => c.Id == sessionId);
+            var combat = await _combatService.GetCombatSessionByIdAsync(sessionId);
 
             if (combat == null)
             {
                 return NotFound(new { success = false, error = "Combat session not found" });
             }
+
+            // Get actions for this session
+            var actions = await _combatService.GetCombatActionsAsync(sessionId);
 
             return Ok(new
             {
@@ -156,22 +94,8 @@ public class CombatController : ControllerBase
                     combat.EndedAt,
                     combat.Round,
                     combat.CurrentTurn,
-                    Participants = combat.Participants
-                        .OrderByDescending(p => p.Initiative)
-                        .ThenBy(p => p.Tiebreaker)
-                        .Select(p => new
-                        {
-                            p.Id,
-                            p.Name,
-                            p.Type,
-                            p.Initiative,
-                            p.Tiebreaker,
-                            p.HasActed,
-                            p.Wounds,
-                            CharacterId = p.Character?.Id,
-                            CharacterName = p.Character?.Name
-                        }),
-                    Actions = combat.Actions.OrderByDescending(a => a.Timestamp).Take(50)
+                    combat.Participants,
+                    Actions = actions.OrderByDescending(a => a.Timestamp).Take(50)
                 }
             });
         }
@@ -190,45 +114,16 @@ public class CombatController : ControllerBase
     {
         try
         {
-            // Check if there's already an active combat in this channel
-            var existingCombat = await _dbContext.CombatSessions
-                .FirstOrDefaultAsync(c => c.DiscordChannelId == request.ChannelId && c.IsActive);
-
-            if (existingCombat != null)
-            {
-                return BadRequest(new { success = false, error = "Combat already active in this channel" });
-            }
-
-            var combat = new CombatSession
-            {
-                DiscordChannelId = request.ChannelId,
-                DiscordGuildId = request.GuildId,
-                IsActive = true,
-                StartedAt = DateTime.UtcNow,
-                Round = 1,
-                CurrentTurn = 0
-            };
-
-            _dbContext.CombatSessions.Add(combat);
-            await _dbContext.SaveChangesAsync();
+            var combat = await _combatService.StartCombatApiAsync(request.ChannelId, request.GuildId);
 
             _logger.LogInformation("Started combat session {SessionId} in channel {ChannelId}",
                 combat.Id, request.ChannelId);
 
-            return Ok(new
-            {
-                success = true,
-                combat = new
-                {
-                    combat.Id,
-                    combat.DiscordChannelId,
-                    combat.DiscordGuildId,
-                    combat.IsActive,
-                    combat.StartedAt,
-                    combat.Round,
-                    combat.CurrentTurn
-                }
-            });
+            return Ok(new { success = true, combat });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, error = ex.Message });
         }
         catch (Exception ex)
         {
@@ -245,63 +140,23 @@ public class CombatController : ControllerBase
     {
         try
         {
-            var combat = await _dbContext.CombatSessions
-                .Include(c => c.Participants)
-                .FirstOrDefaultAsync(c => c.Id == sessionId);
-
-            if (combat == null)
-            {
-                return NotFound(new { success = false, error = "Combat session not found" });
-            }
-
-            if (!combat.IsActive)
-            {
-                return BadRequest(new { success = false, error = "Combat session is not active" });
-            }
-
-            // Check for duplicate name
-            if (combat.Participants.Any(p => p.Name.Equals(request.Name, StringComparison.OrdinalIgnoreCase)))
-            {
-                return BadRequest(new { success = false, error = "Participant with this name already exists" });
-            }
-
-            // Roll initiative if not provided
-            var initiative = request.Initiative ?? _diceService.RollShadowrun(request.InitiativeDice ?? 1, 4).Hits;
-            var tiebreaker = _diceService.Roll(1, 6).Total;
-
-            var participant = new CombatParticipant
-            {
-                CombatSessionId = sessionId,
-                Name = request.Name,
-                Type = request.Type ?? "NPC",
-                Initiative = initiative,
-                Tiebreaker = tiebreaker,
-                HasActed = false,
-                Wounds = request.Wounds ?? 0,
-                CharacterId = request.CharacterId
-            };
-
-            _dbContext.CombatParticipants.Add(participant);
-            await _dbContext.SaveChangesAsync();
+            var participant = await _combatService.AddParticipantApiAsync(
+                sessionId,
+                request.Name,
+                request.Type,
+                request.Initiative,
+                request.InitiativeDice,
+                request.Wounds,
+                request.CharacterId);
 
             _logger.LogInformation("Added participant {ParticipantName} to combat {SessionId}",
                 participant.Name, sessionId);
 
-            return Ok(new
-            {
-                success = true,
-                participant = new
-                {
-                    participant.Id,
-                    participant.Name,
-                    participant.Type,
-                    participant.Initiative,
-                    participant.Tiebreaker,
-                    participant.HasActed,
-                    participant.Wounds,
-                    participant.CharacterId
-                }
-            });
+            return Ok(new { success = true, participant });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, error = ex.Message });
         }
         catch (Exception ex)
         {
@@ -318,19 +173,15 @@ public class CombatController : ControllerBase
     {
         try
         {
-            var participant = await _dbContext.CombatParticipants
-                .FirstOrDefaultAsync(p => p.Id == participantId && p.CombatSessionId == sessionId);
+            var removed = await _combatService.RemoveParticipantAsync(sessionId, participantId);
 
-            if (participant == null)
+            if (!removed)
             {
                 return NotFound(new { success = false, error = "Participant not found" });
             }
 
-            _dbContext.CombatParticipants.Remove(participant);
-            await _dbContext.SaveChangesAsync();
-
-            _logger.LogInformation("Removed participant {ParticipantName} from combat {SessionId}",
-                participant.Name, sessionId);
+            _logger.LogInformation("Removed participant {ParticipantId} from combat {SessionId}",
+                participantId, sessionId);
 
             return Ok(new { success = true, message = "Participant removed" });
         }
@@ -349,74 +200,12 @@ public class CombatController : ControllerBase
     {
         try
         {
-            var combat = await _dbContext.CombatSessions
-                .Include(c => c.Participants)
-                .FirstOrDefaultAsync(c => c.Id == sessionId);
-
-            if (combat == null)
-            {
-                return NotFound(new { success = false, error = "Combat session not found" });
-            }
-
-            if (!combat.IsActive)
-            {
-                return BadRequest(new { success = false, error = "Combat session is not active" });
-            }
-
-            // Mark current participant as having acted
-            var currentParticipant = combat.Participants
-                .OrderByDescending(p => p.Initiative)
-                .ThenBy(p => p.Tiebreaker)
-                .Skip(combat.CurrentTurn)
-                .FirstOrDefault();
-
-            if (currentParticipant != null)
-            {
-                currentParticipant.HasActed = true;
-            }
-
-            // Advance turn
-            combat.CurrentTurn++;
-
-            // Check if round is complete
-            var remainingActors = combat.Participants
-                .Where(p => !p.HasActed)
-                .OrderByDescending(p => p.Initiative)
-                .ThenBy(p => p.Tiebreaker)
-                .ToList();
-
-            if (remainingActors.Count == 0)
-            {
-                // New round
-                combat.Round++;
-                combat.CurrentTurn = 0;
-                foreach (var p in combat.Participants)
-                {
-                    p.HasActed = false;
-                }
-            }
-
-            await _dbContext.SaveChangesAsync();
-
-            // Get next participant
-            var nextParticipant = combat.Participants
-                .Where(p => !p.HasActed)
-                .OrderByDescending(p => p.Initiative)
-                .ThenBy(p => p.Tiebreaker)
-                .FirstOrDefault();
-
-            return Ok(new
-            {
-                success = true,
-                round = combat.Round,
-                turn = combat.CurrentTurn,
-                nextParticipant = nextParticipant != null ? new
-                {
-                    nextParticipant.Id,
-                    nextParticipant.Name,
-                    nextParticipant.Initiative
-                } : null
-            });
+            var result = await _combatService.NextTurnApiAsync(sessionId);
+            return Ok(new { success = true, result.Round, result.Turn, nextParticipant = result.NextParticipant });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, error = ex.Message });
         }
         catch (Exception ex)
         {
@@ -433,26 +222,20 @@ public class CombatController : ControllerBase
     {
         try
         {
-            var combat = await _dbContext.CombatSessions.FindAsync(sessionId);
-
-            if (combat == null)
-            {
-                return NotFound(new { success = false, error = "Combat session not found" });
-            }
-
-            combat.IsActive = false;
-            combat.EndedAt = DateTime.UtcNow;
-
-            await _dbContext.SaveChangesAsync();
+            var result = await _combatService.EndCombatApiAsync(sessionId);
 
             _logger.LogInformation("Ended combat session {SessionId}", sessionId);
 
             return Ok(new
             {
-                success = true,
-                message = "Combat ended",
-                duration = combat.EndedAt.Value - combat.StartedAt
+                success = result.Success,
+                message = result.Message,
+                duration = result.Duration
             });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, error = ex.Message });
         }
         catch (Exception ex)
         {
@@ -469,30 +252,21 @@ public class CombatController : ControllerBase
     {
         try
         {
-            var combat = await _dbContext.CombatSessions.FindAsync(sessionId);
-
-            if (combat == null)
-            {
-                return NotFound(new { success = false, error = "Combat session not found" });
-            }
-
-            var action = new CombatAction
-            {
-                CombatSessionId = sessionId,
-                ActorId = request.ActorId,
-                ActorName = request.ActorName,
-                ActionType = request.ActionType,
-                TargetId = request.TargetId,
-                TargetName = request.TargetName,
-                Description = request.Description,
-                Damage = request.Damage,
-                Timestamp = DateTime.UtcNow
-            };
-
-            _dbContext.CombatActions.Add(action);
-            await _dbContext.SaveChangesAsync();
+            var action = await _combatService.LogActionAsync(
+                sessionId,
+                request.ActorId,
+                request.ActorName,
+                request.ActionType,
+                request.TargetId,
+                request.TargetName,
+                request.Description,
+                request.Damage);
 
             return Ok(new { success = true, action });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { success = false, error = ex.Message });
         }
         catch (Exception ex)
         {

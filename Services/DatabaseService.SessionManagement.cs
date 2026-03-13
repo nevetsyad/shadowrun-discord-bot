@@ -289,11 +289,16 @@ public partial class DatabaseService
 
     /// <summary>
     /// Get all active sessions (for idle detection)
+    /// FIX: MED-003 - Added Includes to prevent N+1 query problems
     /// </summary>
     public async Task<List<GameSession>> GetActiveSessionsAsync()
     {
         return await _context.GameSessions
+            .Include(s => s.Participants)
+                .ThenInclude(p => p.Character)
+            .Include(s => s.Breaks)
             .Where(s => s.Status == SessionStatus.Active)
+            .AsNoTracking()
             .ToListAsync();
     }
 

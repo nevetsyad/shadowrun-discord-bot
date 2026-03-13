@@ -30,7 +30,8 @@ public class GameSessionService
         try
         {
             // Check if there's already an active session in this channel
-            var existingSession = await GetActiveSessionAsync(channelId);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            var existingSession = await GetActiveSessionAsync(channelId).ConfigureAwait(false);
             if (existingSession != null)
             {
                 throw new InvalidOperationException($"Active session already exists in this channel (Session #{existingSession.Id})");
@@ -48,7 +49,8 @@ public class GameSessionService
                 CurrentLocation = "Seattle Downtown"
             };
 
-            await _database.AddGameSessionAsync(session);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            await _database.AddGameSessionAsync(session).ConfigureAwait(false);
 
             _logger.LogInformation("Started game session {SessionId} in channel {ChannelId} by GM {GMUserId}",
                 session.Id, channelId, gmUserId);
@@ -69,7 +71,8 @@ public class GameSessionService
     {
         try
         {
-            var session = await GetActiveSessionAsync(channelId);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            var session = await GetActiveSessionAsync(channelId).ConfigureAwait(false);
             if (session == null)
             {
                 throw new InvalidOperationException("No active session found in this channel");
@@ -78,7 +81,8 @@ public class GameSessionService
             session.Status = SessionStatus.Ended;
             session.EndedAt = DateTime.UtcNow;
             
-            await _database.UpdateGameSessionAsync(session);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            await _database.UpdateGameSessionAsync(session).ConfigureAwait(false);
 
             _logger.LogInformation("Ended game session {SessionId} in channel {ChannelId}", session.Id, channelId);
 
@@ -98,14 +102,16 @@ public class GameSessionService
     {
         try
         {
-            var session = await GetActiveSessionAsync(channelId);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            var session = await GetActiveSessionAsync(channelId).ConfigureAwait(false);
             if (session == null)
             {
                 throw new InvalidOperationException("No active session found in this channel");
             }
 
             session.Status = SessionStatus.Paused;
-            await _database.UpdateGameSessionAsync(session);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            await _database.UpdateGameSessionAsync(session).ConfigureAwait(false);
 
             _logger.LogInformation("Paused game session {SessionId} in channel {ChannelId}", session.Id, channelId);
 
@@ -125,7 +131,8 @@ public class GameSessionService
     {
         try
         {
-            var session = await GetPausedSessionAsync(channelId);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            var session = await GetPausedSessionAsync(channelId).ConfigureAwait(false);
             if (session == null)
             {
                 throw new InvalidOperationException("No paused session found in this channel");
@@ -133,7 +140,8 @@ public class GameSessionService
 
             session.Status = SessionStatus.Active;
             session.LastActivityAt = DateTime.UtcNow;
-            await _database.UpdateGameSessionAsync(session);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            await _database.UpdateGameSessionAsync(session).ConfigureAwait(false);
 
             _logger.LogInformation("Resumed game session {SessionId} in channel {ChannelId}", session.Id, channelId);
 
@@ -151,7 +159,8 @@ public class GameSessionService
     /// </summary>
     public async Task<GameSession?> GetActiveSessionAsync(ulong channelId)
     {
-        return await _database.GetActiveGameSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        return await _database.GetActiveGameSessionAsync(channelId).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -159,7 +168,8 @@ public class GameSessionService
     /// </summary>
     public async Task<GameSession?> GetPausedSessionAsync(ulong channelId)
     {
-        return await _database.GetPausedGameSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        return await _database.GetPausedGameSessionAsync(channelId).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -167,7 +177,8 @@ public class GameSessionService
     /// </summary>
     public async Task<List<GameSession>> GetGuildSessionsAsync(ulong guildId, int limit = 10)
     {
-        return await _database.GetGuildGameSessionsAsync(guildId, limit);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        return await _database.GetGuildGameSessionsAsync(guildId, limit).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -175,11 +186,13 @@ public class GameSessionService
     /// </summary>
     public async Task UpdateActivityAsync(ulong channelId)
     {
-        var session = await GetActiveSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await GetActiveSessionAsync(channelId).ConfigureAwait(false);
         if (session != null)
         {
             session.LastActivityAt = DateTime.UtcNow;
-            await _database.UpdateGameSessionAsync(session);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            await _database.UpdateGameSessionAsync(session).ConfigureAwait(false);
         }
     }
 
@@ -188,7 +201,8 @@ public class GameSessionService
     /// </summary>
     public async Task<SessionBreakStatus> CheckBreakStatusAsync(ulong channelId)
     {
-        var session = await GetActiveSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await GetActiveSessionAsync(channelId).ConfigureAwait(false);
         if (session == null)
         {
             return new SessionBreakStatus { HasActiveSession = false };
@@ -216,14 +230,18 @@ public class GameSessionService
     /// </summary>
     public async Task<SessionParticipant> AddParticipantAsync(ulong channelId, ulong userId, int? characterId = null)
     {
-        var session = await GetActiveSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await GetActiveSessionAsync(channelId).ConfigureAwait(false);
         if (session == null)
         {
             throw new InvalidOperationException("No active session in this channel");
         }
 
+        // FIX: CRIT-001 - Add null check for Participants
+        var participants = session.Participants ?? new List<SessionParticipant>();
+        
         // Check if already a participant
-        var existing = session.Participants.FirstOrDefault(p => p.DiscordUserId == userId && p.IsActive);
+        var existing = participants.FirstOrDefault(p => p.DiscordUserId == userId && p.IsActive);
         if (existing != null)
         {
             return existing;
@@ -238,7 +256,8 @@ public class GameSessionService
             IsActive = true
         };
 
-        await _database.AddSessionParticipantAsync(participant);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        await _database.AddSessionParticipantAsync(participant).ConfigureAwait(false);
 
         _logger.LogInformation("Added participant {UserId} to session {SessionId}", userId, session.Id);
 
@@ -250,17 +269,22 @@ public class GameSessionService
     /// </summary>
     public async Task RemoveParticipantAsync(ulong channelId, ulong userId)
     {
-        var session = await GetActiveSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await GetActiveSessionAsync(channelId).ConfigureAwait(false);
         if (session == null)
         {
             throw new InvalidOperationException("No active session in this channel");
         }
 
-        var participant = session.Participants.FirstOrDefault(p => p.DiscordUserId == userId && p.IsActive);
+        // FIX: CRIT-001 - Add null check for Participants
+        var participant = (session.Participants ?? new List<SessionParticipant>())
+            .FirstOrDefault(p => p.DiscordUserId == userId && p.IsActive);
+        
         if (participant != null)
         {
             participant.IsActive = false;
-            await _database.UpdateSessionParticipantAsync(participant);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            await _database.UpdateSessionParticipantAsync(participant).ConfigureAwait(false);
 
             _logger.LogInformation("Removed participant {UserId} from session {SessionId}", userId, session.Id);
         }
@@ -271,8 +295,10 @@ public class GameSessionService
     /// </summary>
     public async Task<List<SessionParticipant>> GetActiveParticipantsAsync(ulong channelId)
     {
-        var session = await GetActiveSessionAsync(channelId);
-        return session?.Participants.Where(p => p.IsActive).ToList() ?? new List<SessionParticipant>();
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await GetActiveSessionAsync(channelId).ConfigureAwait(false);
+        // FIX: CRIT-001 - Add null check for Participants
+        return (session?.Participants ?? new List<SessionParticipant>()).Where(p => p.IsActive).ToList();
     }
 
     /// <summary>
@@ -280,15 +306,23 @@ public class GameSessionService
     /// </summary>
     public async Task UpdateParticipantRewardsAsync(ulong channelId, ulong userId, int karmaDelta, long nuyenDelta)
     {
-        var session = await GetActiveSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await GetActiveSessionAsync(channelId).ConfigureAwait(false);
         if (session == null) return;
 
-        var participant = session.Participants.FirstOrDefault(p => p.DiscordUserId == userId && p.IsActive);
+        // FIX: CRIT-001 - Add null check for Participants
+        var participant = (session.Participants ?? new List<SessionParticipant>())
+            .FirstOrDefault(p => p.DiscordUserId == userId && p.IsActive);
+        
         if (participant != null)
         {
-            participant.SessionKarma += karmaDelta;
-            participant.SessionNuyen += nuyenDelta;
-            await _database.UpdateSessionParticipantAsync(participant);
+            // FIX: MED-001 - Wrap multiple database updates in a transaction
+            await _database.ExecuteInTransactionAsync(async () =>
+            {
+                participant.SessionKarma += karmaDelta;
+                participant.SessionNuyen += nuyenDelta;
+                await _database.UpdateSessionParticipantAsync(participant).ConfigureAwait(false);
+            }).ConfigureAwait(false);
         }
     }
 
@@ -301,13 +335,15 @@ public class GameSessionService
     /// </summary>
     public async Task UpdateLocationAsync(ulong channelId, string location, string? description = null)
     {
-        var session = await GetActiveSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await GetActiveSessionAsync(channelId).ConfigureAwait(false);
         if (session != null)
         {
             session.CurrentLocation = location;
             session.LocationDescription = description;
             session.LastActivityAt = DateTime.UtcNow;
-            await _database.UpdateGameSessionAsync(session);
+            // FIX: HIGH-001 - Added ConfigureAwait(false)
+            await _database.UpdateGameSessionAsync(session).ConfigureAwait(false);
 
             _logger.LogDebug("Updated location to {Location} for session {SessionId}", location, session.Id);
         }
@@ -322,18 +358,26 @@ public class GameSessionService
     /// </summary>
     public async Task<SessionProgress> GetSessionProgressAsync(ulong channelId)
     {
-        var session = await GetActiveSessionAsync(channelId);
+        // FIX: HIGH-001 - Added ConfigureAwait(false)
+        var session = await GetActiveSessionAsync(channelId).ConfigureAwait(false);
         if (session == null)
         {
             throw new InvalidOperationException("No active session in this channel");
         }
 
         var duration = DateTime.UtcNow - session.StartedAt;
-        var activeParticipants = session.Participants.Count(p => p.IsActive);
-        var narrativeEvents = session.NarrativeEvents.Count;
-        var playerChoices = session.PlayerChoices.Count;
-        var activeMissions = session.ActiveMissions.Count(m => m.Status == MissionStatus.InProgress || m.Status == MissionStatus.Planning);
-        var completedMissions = session.ActiveMissions.Count(m => m.Status == MissionStatus.Completed);
+        // FIX: CRIT-001 - Add null check for Participants
+        var participants = session.Participants ?? new List<SessionParticipant>();
+        var activeParticipants = participants.Count(p => p.IsActive);
+        // FIX: CRIT-001 - Add null check for NarrativeEvents
+        var narrativeEvents = (session.NarrativeEvents ?? new List<NarrativeEvent>()).Count;
+        // FIX: CRIT-001 - Add null check for PlayerChoices
+        var playerChoices = (session.PlayerChoices ?? new List<PlayerChoice>()).Count;
+        // FIX: CRIT-001 - Add null check for ActiveMissions
+        var activeMissions = (session.ActiveMissions ?? new List<ActiveMission>())
+            .Count(m => m.Status == MissionStatus.InProgress || m.Status == MissionStatus.Planning);
+        var completedMissions = (session.ActiveMissions ?? new List<ActiveMission>())
+            .Count(m => m.Status == MissionStatus.Completed);
 
         return new SessionProgress
         {

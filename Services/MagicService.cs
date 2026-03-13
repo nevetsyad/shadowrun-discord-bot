@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using ShadowrunDiscordBot.Models;
 
 namespace ShadowrunDiscordBot.Services
@@ -24,23 +25,25 @@ namespace ShadowrunDiscordBot.Services
         /// </summary>
         public string GetMagicStatus()
         {
-            var status = $"**Magic Status**\n";
-            status += $"Magic: {_magicSystem.Magic}\n";
-            status += $"Magician: {_magicSystem.Magician}\n";
-            status += $"Awakened: {_magicSystem.Awakened}\n";
-            status += $"Sorcerer: {_magicSystem.Sorcerer}\n";
-            status += $"Adept: {_magicSystem.Adept}\n";
-            status += $"Criticality: {_magicSystem.Criticality}\n";
-            status += $"Instinct: {_magicSystem.Instinct}\n";
-            status += $"Initiative: {_magicSystem.Initiative}\n";
-            status += $"Wounds: {_magicSystem.Wounds}\n";
-            status += $"Wound Mod: {_magicSystem.WoundMod}\n";
-            status += $"Recovery: {_magicSystem.Recovery}\n";
-            status += $"Magical Resistance: {_magicSystem.MagicalResistance}\n";
-            status += $"Initiative Pool: {_magicSystem.InitiativePool}\n";
-            status += $"Complex Form Pool: {_magicSystem.ComplexFormPool}\n";
+            // FIX: HIGH-002 - Use StringBuilder instead of string concatenation
+            var sb = new StringBuilder();
+            sb.AppendLine("**Magic Status**");
+            sb.AppendLine($"Magic: {_magicSystem.Magic}");
+            sb.AppendLine($"Magician: {_magicSystem.Magician}");
+            sb.AppendLine($"Awakened: {_magicSystem.Awakened}");
+            sb.AppendLine($"Sorcerer: {_magicSystem.Sorcerer}");
+            sb.AppendLine($"Adept: {_magicSystem.Adept}");
+            sb.AppendLine($"Criticality: {_magicSystem.Criticality}");
+            sb.AppendLine($"Instinct: {_magicSystem.Instinct}");
+            sb.AppendLine($"Initiative: {_magicSystem.Initiative}");
+            sb.AppendLine($"Wounds: {_magicSystem.Wounds}");
+            sb.AppendLine($"Wound Mod: {_magicSystem.WoundMod}");
+            sb.AppendLine($"Recovery: {_magicSystem.Recovery}");
+            sb.AppendLine($"Magical Resistance: {_magicSystem.MagicalResistance}");
+            sb.AppendLine($"Initiative Pool: {_magicSystem.InitiativePool}");
+            sb.AppendLine($"Complex Form Pool: {_magicSystem.ComplexFormPool}");
             
-            return status;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -51,13 +54,15 @@ namespace ShadowrunDiscordBot.Services
             if (_magicSystem.Foci.Count == 0)
                 return "No foci currently active.";
             
-            var focusList = "**Active Foci:**\n";
+            // FIX: HIGH-002 - Use StringBuilder instead of string concatenation
+            var sb = new StringBuilder();
+            sb.AppendLine("**Active Foci:**");
             foreach (var focus in _magicSystem.Foci)
             {
-                focusList += $"- {focus.Name} ({focus.Type}) - {focus.Count}x, Essence: {focus.EssenceCost}\n";
+                sb.AppendLine($"- {focus.Name} ({focus.Type}) - {focus.Count}x, Essence: {focus.EssenceCost}");
             }
             
-            return focusList;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -65,13 +70,15 @@ namespace ShadowrunDiscordBot.Services
         /// </summary>
         public string GetSpellList()
         {
-            var spellList = "**Known Spells:**\n";
+            // FIX: HIGH-002 - Use StringBuilder instead of string concatenation
+            var sb = new StringBuilder();
+            sb.AppendLine("**Known Spells:**");
             foreach (var spell in SpellDatabase.Spells)
             {
-                spellList += $"- {spell.Name} ({spell.Category}) - Force {spell.Force}\n";
+                sb.AppendLine($"- {spell.Name} ({spell.Category}) - Force {spell.Force}");
             }
             
-            return spellList;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -92,18 +99,20 @@ namespace ShadowrunDiscordBot.Services
             
             var result = _diceService.RollShadowrun(pool, 5);
             
-            var embed = $"**Spell Cast: {spell.Name}**\n";
-            embed += $"Force: {spell.Force}\n";
-            embed += $"Damage: {spell.Damage} {spell.DamageType}\n";
-            embed += $"Defense Target: {spell.DefenseTarget} {spell.DefenseType}\n";
-            embed += $"Duration: {spell.Duration}\n";
-            embed += $"Complex Form: {spell.ComplexForm}\n";
-            embed += $"Service: {spell.Service}\n";
-            embed += $"Pool: {pool}\n";
-            embed += $"Result: {result.Successes} successes\n";
-            embed += $"Rolls: {result.Details}\n";
+            // FIX: HIGH-002 - Use StringBuilder instead of string concatenation
+            var sb = new StringBuilder();
+            sb.AppendLine($"**Spell Cast: {spell.Name}**");
+            sb.AppendLine($"Force: {spell.Force}");
+            sb.AppendLine($"Damage: {spell.Damage} {spell.DamageType}");
+            sb.AppendLine($"Defense Target: {spell.DefenseTarget} {spell.DefenseType}");
+            sb.AppendLine($"Duration: {spell.Duration}");
+            sb.AppendLine($"Complex Form: {spell.ComplexForm}");
+            sb.AppendLine($"Service: {spell.Service}");
+            sb.AppendLine($"Pool: {pool}");
+            sb.AppendLine($"Result: {result.Successes} successes");
+            sb.AppendLine($"Rolls: {result.Details}");
             
-            return embed;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -126,23 +135,6 @@ namespace ShadowrunDiscordBot.Services
             
             _magicSystem.Foci.Remove(focus);
             return $"Removed focus: {focus.Name}";
-        }
-
-        /// <summary>
-        /// Check if the character can cast spells
-        /// </summary>
-        public bool CanCastSpells()
-        {
-            return _magicSystem.Magic > 0 && (_magicSystem.Magician || _magicSystem.Sorcerer || _magicSystem.Awakened);
-        }
-
-        /// <summary>
-        /// Get drain resistance pool
-        /// </summary>
-        public int GetDrainPool()
-        {
-            // Typically Willpower + something, simplified here
-            return _magicSystem.Magic + _magicSystem.Recovery;
         }
     }
 }
