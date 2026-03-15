@@ -2,6 +2,7 @@ namespace ShadowrunDiscordBot.Core.EventSourcing;
 
 using Microsoft.Extensions.Logging;
 using ShadowrunDiscordBot.Domain.Common;
+using ShadowrunDiscordBot.Domain.Interfaces;
 
 /// <summary>
 /// Service for managing event sourcing operations

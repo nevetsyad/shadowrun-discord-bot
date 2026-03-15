@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using ShadowrunDiscordBot.Domain.Common;
+using ShadowrunDiscordBot.Domain.Interfaces;
 
 /// <summary>
 /// In-memory implementation of event store for development/testing

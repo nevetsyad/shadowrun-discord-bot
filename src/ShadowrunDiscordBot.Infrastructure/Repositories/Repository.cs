@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ShadowrunDiscordBot.Services;
 using ShadowrunDiscordBot.Infrastructure.Data;
 
-namespace ShadowrunDiscordBot.Repositories;
+namespace ShadowrunDiscordBot.Infrastructure.Repositories;
 
 /// <summary>
 /// Generic repository implementation for common data access operations

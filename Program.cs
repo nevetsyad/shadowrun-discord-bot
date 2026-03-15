@@ -10,7 +10,7 @@ using ShadowrunDiscordBot.Commands.Combat;
 using ShadowrunDiscordBot.Core;
 using ShadowrunDiscordBot.Queries.Characters;
 using ShadowrunDiscordBot.Queries.Combat;
-using ShadowrunDiscordBot.Repositories;
+using ShadowrunDiscordBot.Infrastructure.Repositories;
 using ShadowrunDiscordBot.Services;
 using Serilog;
 using ShadowrunDiscordBot.Application.Services;

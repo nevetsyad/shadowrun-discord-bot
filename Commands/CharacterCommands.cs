@@ -862,7 +862,7 @@ public class CharacterCommands : BaseCommandModule
         return sb.ToString();
     }
 
-    private static string FormatCyberware(ICollection<CharacterCyberware> cyberware)
+    private static string FormatCyberware(ICollection<Domain.Entities.CharacterCyberware> cyberware)
     {
         var sb = new StringBuilder();
         
@@ -874,7 +874,7 @@ public class CharacterCommands : BaseCommandModule
         return sb.ToString();
     }
 
-    private static string FormatGear(ICollection<CharacterGear> gear)
+    private static string FormatGear(ICollection<Domain.Entities.CharacterGear> gear)
     {
         var sb = new StringBuilder();
         

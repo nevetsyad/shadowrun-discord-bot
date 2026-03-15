@@ -4,6 +4,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ShadowrunDiscordBot.Models;
+using ShadowrunDiscordBot.Infrastructure.Data;
 
 namespace ShadowrunDiscordBot.Services;
 

@@ -3,7 +3,7 @@ using ShadowrunDiscordBot.Models;
 using ShadowrunDiscordBot.Services;
 using ShadowrunDiscordBot.Infrastructure.Data;
 
-namespace ShadowrunDiscordBot.Repositories;
+namespace ShadowrunDiscordBot.Infrastructure.Repositories;
 
 /// <summary>
 /// Repository implementation for game session operations

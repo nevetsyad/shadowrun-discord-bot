@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using ShadowrunDiscordBot.Exceptions; // GPT-5.4 FIX: Added for CharacterAlreadyExistsException
 using ShadowrunDiscordBot.Models;
+using ShadowrunDiscordBot.Infrastructure.Data;
 
 namespace ShadowrunDiscordBot.Services;
 
