@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using ShadowrunDiscordBot.Models;
-using ShadowrunDiscordBot.Services;
-using ShadowrunDiscordBot.Infrastructure.Data;
+using ShadowrunDiscordBot.Domain.Entities;
+using ShadowrunDiscordBot.Domain.Interfaces;
 
 namespace ShadowrunDiscordBot.Infrastructure.Repositories;
 

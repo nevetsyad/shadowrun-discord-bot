@@ -26,10 +26,6 @@
     <Compile Remove="Commands/InteractiveStoryCommands.cs" />
     <!-- Exclude example files with conflicting Program class -->
     <Compile Remove="Examples/Phase5IntegrationExample.cs" />
-    <!-- Compile Services folder -->
-    <Compile Include="Services/**/*.cs" />
-    <!-- Compile Core folder -->
-    <Compile Include="Core/**/*.cs" />
   </ItemGroup>
 
   <!-- Project references to sub-projects -->
