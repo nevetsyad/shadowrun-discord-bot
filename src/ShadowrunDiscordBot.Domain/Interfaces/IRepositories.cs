@@ -24,6 +24,17 @@ public interface ICharacterRepository : IRepository<Character>
     Task<Character?> GetByNameAsync(ulong discordUserId, string name, CancellationToken cancellationToken = default);
     Task<IEnumerable<Character>> GetByDiscordUserIdAsync(ulong discordUserId, CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(ulong discordUserId, string name, CancellationToken cancellationToken = default);
+
+    // GPT-5.4 FIX: Archetype-related methods for backward compatibility
+    /// <summary>
+    /// Gets all characters created before the archetype system was implemented (for backward compatibility)
+    /// </summary>
+    Task<IEnumerable<Character>> GetLegacyCharactersAsync(ulong discordUserId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets characters by archetype
+    /// </summary>
+    Task<IEnumerable<Character>> GetByArchetypeAsync(string archetypeId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

@@ -4,7 +4,8 @@ using MediatR;
 using DTOs;
 
 /// <summary>
-/// Command to create a new character
+/// GPT-5.4 FIX: Command to create a new character with required archetype
+/// Priority System: Supports both archetype-based and priority-based character creation
 /// </summary>
 public class CreateCharacterCommand : IRequest<CharacterDto>
 {
@@ -13,7 +14,42 @@ public class CreateCharacterCommand : IRequest<CharacterDto>
 }
 
 /// <summary>
+/// Priority-based character creation command
+/// </summary>
+public class CreatePriorityCharacterCommand : IRequest<CharacterDto>
+{
+    public ulong DiscordUserId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Metatype { get; set; } = "Human";
+    public string PriorityLevel { get; set; } = "C"; // Default to C
+    public int Body { get; set; } = 1;
+    public int Quickness { get; set; } = 1;
+    public int Strength { get; set; } = 1;
+    public int Charisma { get; set; } = 1;
+    public int Intelligence { get; set; } = 1;
+    public int Willpower { get; set; } = 1;
+}
+
+/// <summary>
+/// GPT-5.4 FIX: Extended command for archetype-based character creation
+/// </summary>
+public class CreateArchetypeCharacterCommand : IRequest<CharacterDto>
+{
+    public ulong DiscordUserId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Metatype { get; set; } = "Human";
+    public string ArchetypeId { get; set; } = string.Empty; // GPT-5.4 FIX: Required archetype ID
+    public int Body { get; set; } = 3;
+    public int Quickness { get; set; } = 3;
+    public int Strength { get; set; } = 3;
+    public int Charisma { get; set; } = 3;
+    public int Intelligence { get; set; } = 3;
+    public int Willpower { get; set; } = 3;
+}
+
+/// <summary>
 /// Command to update character attributes
+/// Priority System: Supports priority-level-based attribute updates
 /// </summary>
 public class UpdateCharacterAttributesCommand : IRequest<CharacterDto>
 {
@@ -24,6 +60,7 @@ public class UpdateCharacterAttributesCommand : IRequest<CharacterDto>
     public int? Charisma { get; set; }
     public int? Intelligence { get; set; }
     public int? Willpower { get; set; }
+    public string? PriorityLevel { get; set; } // For validation purposes
 }
 
 /// <summary>

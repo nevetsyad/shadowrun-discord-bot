@@ -125,3 +125,17 @@ node_modules/
 # Configuration secrets
 secrets.json
 appsettings.Development.json
+
+# Memory files (from parent workspace)
+../memory/*.md
+
+# Large rulebook files
+*.pdf
+SR3_Rulebook.pdf
+
+# Data directory (local data storage)
+data/
+
+# Development config
+appsettings.Local.json
+appsettings.*.json

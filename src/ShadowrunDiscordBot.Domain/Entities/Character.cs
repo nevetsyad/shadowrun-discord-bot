@@ -6,6 +6,7 @@ using ShadowrunDiscordBot.Domain.ValueObjects;
 
 /// <summary>
 /// Shadowrun 3rd Edition Character entity with domain logic and invariants
+/// SR3 COMPLIANCE: Supports base attributes + racial modifiers = final attributes
 /// </summary>
 public class Character : BaseEntity
 {
@@ -15,15 +16,29 @@ public class Character : BaseEntity
     
     // Character Details
     public string Metatype { get; private set; }
-    public string Archetype { get; private set; }
+    public string? Archetype { get; private set; } // GPT-5.4 FIX: Made nullable for optional archetype system
+
+    // GPT-5.4 FIX: Flag to distinguish archetype-based vs custom builds
+    public bool IsCustomBuild { get; private set; }
     
-    // Attributes (1-10 scale)
+    // SR3 COMPLIANCE: BASE Attributes (user input before racial modifiers)
+    public int BaseBody { get; private set; }
+    public int BaseQuickness { get; private set; }
+    public int BaseStrength { get; private set; }
+    public int BaseCharisma { get; private set; }
+    public int BaseIntelligence { get; private set; }
+    public int BaseWillpower { get; private set; }
+    
+    // SR3 COMPLIANCE: FINAL Attributes (base + racial modifiers)
     public int Body { get; private set; }
     public int Quickness { get; private set; }
     public int Strength { get; private set; }
     public int Charisma { get; private set; }
     public int Intelligence { get; private set; }
     public int Willpower { get; private set; }
+    
+    // SR3 COMPLIANCE: Racial modifiers applied (for display)
+    public Dictionary<string, int> AppliedRacialModifiers { get; private set; } = new();
     
     // Derived Attributes
     public int Reaction => (Quickness + Intelligence) / 2;
@@ -71,48 +86,110 @@ public class Character : BaseEntity
     
     // Priority System
     public string? Priorities { get; private set; }
-    
+
+    // GPT-5.4 FIX: Archetype system tracking for backward compatibility
+    /// <summary>
+    /// Indicates if this character was created using the custom build system (pre-archetype)
+    /// Characters created after the archetype system will have this as false
+    /// </summary>
+    public bool IsCustomBuild { get; private set; }
+
+    /// <summary>
+    /// The archetype ID used to create this character (null for legacy characters)
+    /// </summary>
+    public string? ArchetypeId { get; private set; }
+
     // Private constructor for EF Core
     private Character()
     {
         Name = string.Empty;
         Metatype = "Human";
         Archetype = "Street Samurai";
+        IsCustomBuild = true; // Default to true for backward compatibility
     }
     
-    // Factory method for creating a new character
+    // SR3 COMPLIANCE: Factory method with base attributes + automatic racial modifier calculation
+    /// <summary>
+    /// Factory method for creating a new character using SR3 base attribute + racial modifier system
+    /// User provides BASE attributes, system automatically applies racial modifiers to get FINAL attributes
+    /// </summary>
     public static Character Create(
         string name,
         ulong discordUserId,
         string metatype,
-        string archetype,
-        int body,
-        int quickness,
-        int strength,
-        int charisma,
-        int intelligence,
-        int willpower)
+        string? archetype,
+        string? archetypeId,
+        int baseBody,
+        int baseQuickness,
+        int baseStrength,
+        int baseCharisma,
+        int baseIntelligence,
+        int baseWillpower)
     {
         // Validate inputs
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Character name cannot be empty", nameof(name));
-        
-        if (body < 1 || body > 10)
-            throw new ArgumentOutOfRangeException(nameof(body), "Body must be between 1 and 10");
-        
-        // Create character
+
+        // Validate base attributes (1-6 range for base attributes before modifiers)
+        if (baseBody < 1 || baseBody > 6)
+            throw new ArgumentOutOfRangeException(nameof(baseBody), "Base Body must be between 1 and 6");
+        if (baseQuickness < 1 || baseQuickness > 6)
+            throw new ArgumentOutOfRangeException(nameof(baseQuickness), "Base Quickness must be between 1 and 6");
+        if (baseStrength < 1 || baseStrength > 6)
+            throw new ArgumentOutOfRangeException(nameof(baseStrength), "Base Strength must be between 1 and 6");
+        if (baseCharisma < 1 || baseCharisma > 6)
+            throw new ArgumentOutOfRangeException(nameof(baseCharisma), "Base Charisma must be between 1 and 6");
+        if (baseIntelligence < 1 || baseIntelligence > 6)
+            throw new ArgumentOutOfRangeException(nameof(baseIntelligence), "Base Intelligence must be between 1 and 6");
+        if (baseWillpower < 1 || baseWillpower > 6)
+            throw new ArgumentOutOfRangeException(nameof(baseWillpower), "Base Willpower must be between 1 and 6");
+
+        // SR3 COMPLIANCE: Calculate final attributes by applying racial modifiers
+        var finalAttributes = PriorityTable.CalculateFinalAttributes(
+            metatype, baseBody, baseQuickness, baseStrength,
+            baseCharisma, baseIntelligence, baseWillpower);
+
+        // Validate final attributes against racial maximums
+        var (isValid, errors) = PriorityTable.ValidateFinalAttributes(metatype, finalAttributes);
+        if (!isValid)
+        {
+            throw new ArgumentException($"Invalid attributes for {metatype}: {string.Join(", ", errors)}");
+        }
+
+        // Get applied racial modifiers for display
+        var racialModifiers = PriorityTable.RacialModifiers.TryGetValue(metatype, out var mods) 
+            ? mods 
+            : PriorityTable.RacialModifiers["Human"];
+
+        // Create character with both base and final attributes
         var character = new Character
         {
             Name = name,
             DiscordUserId = discordUserId,
             Metatype = metatype,
             Archetype = archetype,
-            Body = body,
-            Quickness = quickness,
-            Strength = strength,
-            Charisma = charisma,
-            Intelligence = intelligence,
-            Willpower = willpower,
+            ArchetypeId = archetypeId,
+            IsCustomBuild = string.IsNullOrWhiteSpace(archetypeId),
+            
+            // Store base attributes
+            BaseBody = baseBody,
+            BaseQuickness = baseQuickness,
+            BaseStrength = baseStrength,
+            BaseCharisma = baseCharisma,
+            BaseIntelligence = baseIntelligence,
+            BaseWillpower = baseWillpower,
+            
+            // Store final attributes (base + racial modifiers)
+            Body = finalAttributes["Body"],
+            Quickness = finalAttributes["Quickness"],
+            Strength = finalAttributes["Strength"],
+            Charisma = finalAttributes["Charisma"],
+            Intelligence = finalAttributes["Intelligence"],
+            Willpower = finalAttributes["Willpower"],
+            
+            // Store applied modifiers for display
+            AppliedRacialModifiers = new Dictionary<string, int>(racialModifiers),
+            
             Essence = 600, // 6.00
             Magic = 0,
             InitiationGrade = 0,
@@ -122,11 +199,35 @@ public class Character : BaseEntity
             PhysicalDamage = 0,
             StunDamage = 0
         };
-        
+
         // Add domain event
         character.AddDomainEvent(new CharacterCreatedEvent(character.Id, character.Name, character.DiscordUserId));
-        
+
         return character;
+    }
+    
+    /// <summary>
+    /// Legacy factory method for backward compatibility (accepts final attributes directly)
+    /// DEPRECATED: Use the base attribute version instead
+    /// </summary>
+    [Obsolete("Use Create with base attributes instead. This method is for backward compatibility only.")]
+    public static Character CreateLegacy(
+        string name,
+        ulong discordUserId,
+        string metatype,
+        string? archetype,
+        string? archetypeId,
+        int body,
+        int quickness,
+        int strength,
+        int charisma,
+        int intelligence,
+        int willpower)
+    {
+        // For legacy support, treat input as base attributes and calculate
+        // This allows old code to work while new code uses proper base attributes
+        return Create(name, discordUserId, metatype, archetype, archetypeId,
+            body, quickness, strength, charisma, intelligence, willpower);
     }
     
     // Business logic methods

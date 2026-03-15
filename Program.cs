@@ -225,6 +225,9 @@ class Program
                 services.AddSingleton<CombatService>();
                 services.AddSingleton<GMService>();
                 
+                // GPT-5.4 FIX: Archetype service for optional archetype-based character creation
+                services.AddSingleton<IArchetypeService, ArchetypeService>();
+                
                 // Game Session Management
                 services.AddSingleton<GameSessionService>();
                 services.AddSingleton<NarrativeContextService>();

@@ -5,6 +5,7 @@ namespace ShadowrunDiscordBot.Models;
 
 /// <summary>
 /// Shadowrun 3rd Edition Character with all attributes and systems
+/// SR3 COMPLIANCE: Supports base attributes + racial modifiers = final attributes
 /// </summary>
 public class ShadowrunCharacter
 {
@@ -26,13 +27,24 @@ public class ShadowrunCharacter
     [MaxLength(50)]
     public string Archetype { get; set; } = "Street Samurai";
 
-    // Attributes (1-10 scale typically)
+    // SR3 COMPLIANCE: BASE Attributes (user input before racial modifiers)
+    public int BaseBody { get; set; } = 3;
+    public int BaseQuickness { get; set; } = 3;
+    public int BaseStrength { get; set; } = 3;
+    public int BaseCharisma { get; set; } = 3;
+    public int BaseIntelligence { get; set; } = 3;
+    public int BaseWillpower { get; set; } = 3;
+    
+    // SR3 COMPLIANCE: FINAL Attributes (base + racial modifiers applied)
     public int Body { get; set; } = 3;
     public int Quickness { get; set; } = 3;
     public int Strength { get; set; } = 3;
     public int Charisma { get; set; } = 3;
     public int Intelligence { get; set; } = 3;
     public int Willpower { get; set; } = 3;
+    
+    // SR3 COMPLIANCE: Racial modifiers that were applied (for display)
+    public Dictionary<string, int> AppliedRacialModifiers { get; set; } = new();
 
     // Derived Attributes
     public int Reaction => (Quickness + Intelligence) / 2;
@@ -67,6 +79,34 @@ public class ShadowrunCharacter
 
     // Priority System (for character creation)
     public string? Priorities { get; set; } // JSON-serialized priority allocation
+
+    /// <summary>
+    /// Priority level used for character creation (A, B, C, D, or E)
+    /// </summary>
+    public string? PriorityLevel { get; set; }
+
+    /// <summary>
+    /// Metatype-specific attribute modifiers from priority allocation
+    /// </summary>
+    public Dictionary<string, int> AttributeModifiers { get; set; } = new();
+
+    /// <summary>
+    /// List of skills allocated with priority system
+    /// </summary>
+    public List<CharacterSkill> PrioritySkills { get; set; } = new()
+
+    // GPT-5.4 FIX: Archetype system tracking for backward compatibility
+    /// <summary>
+    /// Indicates if this character was created using the custom build system (pre-archetype)
+    /// Characters created after the archetype system will have this as false
+    /// </summary>
+    public bool IsCustomBuild { get; set; } = true; // Default to true for backward compatibility
+
+    /// <summary>
+    /// The archetype ID used to create this character (null for legacy characters)
+    /// </summary>
+    [MaxLength(50)]
+    public string? ArchetypeId { get; set; }
 
     /// <summary>
     /// Calculate total essence loss from cyberware and bioware

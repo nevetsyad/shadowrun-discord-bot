@@ -1,48 +1,74 @@
-namespace ShadowrunDiscordBot.Domain.Entities;
-
 using System.ComponentModel.DataAnnotations;
 
+namespace ShadowrunDiscordBot.Domain.Entities;
+
 /// <summary>
-/// Shadowrun 3rd Edition Priority System for character creation
+/// Shadowrun 3rd Edition Priority Allocation Entity
+/// Represents full A-E priority allocation across all 5 categories:
+/// Metatype, Attributes, Magic, Skills, Resources
 /// </summary>
 public class PriorityAllocation
 {
+    [Key]
     public int Id { get; set; }
-    
+
     [Required]
     public int CharacterId { get; set; }
-    
+
     /// <summary>
-    /// Priority level (A, B, C, D, or E)
+    /// Metatype priority (A-E)
     /// </summary>
     [Required]
     [MaxLength(1)]
-    public string Priority { get; set; } = "E";
-    
+    public string MetatypePriority { get; set; } = "E";
+
     /// <summary>
-    /// Category: Attributes, Skills, Resources, Magic, Metatype
+    /// Attributes priority (A-E) - Determines attribute point budget (18-30 points)
     /// </summary>
     [Required]
-    [MaxLength(20)]
-    public string Category { get; set; } = "Attributes";
-    
+    [MaxLength(1)]
+    public string AttributesPriority { get; set; } = "C";
+
     /// <summary>
-    /// Points allocated to this priority
+    /// Magic/Resonance priority (A-E)
     /// </summary>
-    public int PointsAllocated { get; set; } = 0;
-    
+    [Required]
+    [MaxLength(1)]
+    public string MagicPriority { get; set; } = "E";
+
     /// <summary>
-    /// Maximum points available at this priority level
+    /// Skills priority (A-E) - Determines skill point budget (27-50 points)
     /// </summary>
-    public int MaxPoints { get; set; } = 0;
-    
+    [Required]
+    [MaxLength(1)]
+    public string SkillsPriority { get; set; } = "C";
+
     /// <summary>
-    /// Additional data as JSON (for flexibility)
+    /// Resources priority (A-E) - Determines starting nuyen (¥5,000 - ¥1,000,000)
     /// </summary>
-    public string? Metadata { get; set; }
-    
+    [Required]
+    [MaxLength(1)]
+    public string ResourcesPriority { get; set; } = "D";
+
+    /// <summary>
+    /// Priority value (A-E) for quick lookup
+    /// </summary>
+    [Required]
+    [MaxLength(1)]
+    public string Priority { get; set; } = "C";
+
+    /// <summary>
+    /// Date allocated
+    /// </summary>
+    public DateTime AllocatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// JSON-serialized detailed allocation information
+    /// </summary>
+    public string? DetailedAllocation { get; set; }
+
     // Navigation property
-    public virtual Character Character { get; set; } = null!;
+    public virtual ShadowrunCharacter Character { get; set; } = null!;
 }
 
 /// <summary>
@@ -58,7 +84,7 @@ public static class PriorityTable
         public long Nuyen { get; set; }
         public string[] RacialRestrictions { get; set; } = Array.Empty<string>();
     }
-    
+
     public static readonly Dictionary<string, PriorityLevel> Table = new()
     {
         ["A"] = new PriorityLevel
@@ -102,7 +128,7 @@ public static class PriorityTable
             RacialRestrictions = new[] { "Human" }
         }
     };
-    
+
     public static readonly Dictionary<string, Dictionary<string, int>> RacialMaximums = new()
     {
         ["Human"] = new Dictionary<string, int>
@@ -156,44 +182,12 @@ public static class PriorityTable
         ["Ork"] = new Dictionary<string, int>
         {
             ["Body"] = 3, ["Quickness"] = 0, ["Strength"] = 3,
-            ["Charisma"] = -1, ["Intelligence"] = -1, ["Willpower"] = 0
+            ["Charisma"] = -1, ["Intelligence"] = 1, ["Willpower"] = 0
         },
         ["Troll"] = new Dictionary<string, int>
         {
             ["Body"] = 5, ["Quickness"] = -1, ["Strength"] = 5,
             ["Charisma"] = -2, ["Intelligence"] = -2, ["Willpower"] = 0
-        }
-    };
-    
-    /// <summary>
-    /// Racial minimum attributes (base attributes cannot go below these)
-    /// </summary>
-    public static readonly Dictionary<string, Dictionary<string, int>> RacialMinimums = new()
-    {
-        ["Human"] = new Dictionary<string, int>
-        {
-            ["Body"] = 1, ["Quickness"] = 1, ["Strength"] = 1,
-            ["Charisma"] = 1, ["Intelligence"] = 1, ["Willpower"] = 1
-        },
-        ["Elf"] = new Dictionary<string, int>
-        {
-            ["Body"] = 1, ["Quickness"] = 1, ["Strength"] = 1,
-            ["Charisma"] = 1, ["Intelligence"] = 1, ["Willpower"] = 1
-        },
-        ["Dwarf"] = new Dictionary<string, int>
-        {
-            ["Body"] = 1, ["Quickness"] = 1, ["Strength"] = 1,
-            ["Charisma"] = 1, ["Intelligence"] = 1, ["Willpower"] = 1
-        },
-        ["Ork"] = new Dictionary<string, int>
-        {
-            ["Body"] = 1, ["Quickness"] = 1, ["Strength"] = 1,
-            ["Charisma"] = 1, ["Intelligence"] = 1, ["Willpower"] = 1
-        },
-        ["Troll"] = new Dictionary<string, int>
-        {
-            ["Body"] = 1, ["Quickness"] = 1, ["Strength"] = 1,
-            ["Charisma"] = 1, ["Intelligence"] = 1, ["Willpower"] = 1
         }
     };
     
@@ -250,11 +244,7 @@ public static class PriorityTable
         
         return (errors.Count == 0, errors);
     }
-    
-    /// <summary>
-    /// Racial base values for backward compatibility
-    /// NOTE: These are the minimum natural values, not the modifiers
-    /// </summary>
+
     public static readonly Dictionary<string, Dictionary<string, int>> RacialBaseValues = new()
     {
         ["Human"] = new Dictionary<string, int>
@@ -283,7 +273,7 @@ public static class PriorityTable
             ["Charisma"] = 1, ["Intelligence"] = 1, ["Willpower"] = 1
         }
     };
-    
+
     public static readonly Dictionary<string, int> StartingKarma = new()
     {
         ["Human"] = 3,
