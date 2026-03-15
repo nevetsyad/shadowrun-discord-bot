@@ -132,6 +132,12 @@ appsettings.Development.json
 # Large rulebook files
 *.pdf
 SR3_Rulebook.pdf
+SR3_RULEBOOK.txt
+
+# Backup files
+*.bak
+*.backup
+*.old
 
 # Data directory (local data storage)
 data/
