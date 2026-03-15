@@ -16,12 +16,12 @@ public class CreateCharacterCommandHandler : IRequestHandler<CreateCharacterComm
 {
     private readonly ICharacterRepository _characterRepository;
     private readonly IArchetypeService _archetypeService;
-    private readonly ILogger<CreateCharacterCommandHandler> _logger;
+    private readonly ILogger<CreateCharacterCommandHandler>? _logger;
 
     public CreateCharacterCommandHandler(
         ICharacterRepository characterRepository,
         IArchetypeService archetypeService,
-        ILogger<CreateCharacterCommandHandler> logger)
+        ILogger<CreateCharacterCommandHandler>? logger)
     {
         _characterRepository = characterRepository;
         _archetypeService = archetypeService;
@@ -32,7 +32,7 @@ public class CreateCharacterCommandHandler : IRequestHandler<CreateCharacterComm
     {
         var isCustomBuild = string.IsNullOrWhiteSpace(request.Character.ArchetypeId);
         
-        _logger.LogInformation(
+        _logger?.LogInformation(
             "Creating SR3 character {CharacterName} for user {DiscordUserId} - {BuildType}",
             request.Character.Name,
             request.DiscordUserId,
@@ -46,7 +46,7 @@ public class CreateCharacterCommandHandler : IRequestHandler<CreateCharacterComm
         var baseIntelligence = request.Character.BaseIntelligence;
         var baseWillpower = request.Character.BaseWillpower;
         
-        _logger.LogInformation(
+        _logger?.LogInformation(
             "Base attributes for {Metatype}: Body={BaseBody}, Quickness={BaseQuickness}, Strength={BaseStrength}, " +
             "Charisma={BaseCharisma}, Intelligence={BaseIntelligence}, Willpower={BaseWillpower}",
             request.Character.Metatype, baseBody, baseQuickness, baseStrength,
@@ -60,7 +60,7 @@ public class CreateCharacterCommandHandler : IRequestHandler<CreateCharacterComm
         }
         else
         {
-            _logger.LogInformation("Creating character with custom build (no archetype)");
+            _logger?.LogInformation("Creating character with custom build (no archetype)");
         }
 
         // Check if character already exists
@@ -91,7 +91,7 @@ public class CreateCharacterCommandHandler : IRequestHandler<CreateCharacterComm
             baseWillpower);
 
         // Log the applied racial modifiers
-        _logger.LogInformation(
+        _logger?.LogInformation(
             "Applied {Metatype} racial modifiers: Body={BodyMod:+0;-#;+0}, Quickness={QuicknessMod:+0;-#;+0}, " +
             "Strength={StrengthMod:+0;-#;+0}, Charisma={CharismaMod:+0;-#;+0}, " +
             "Intelligence={IntelligenceMod:+0;-#;+0}, Willpower={WillpowerMod:+0;-#;+0}",
@@ -103,7 +103,7 @@ public class CreateCharacterCommandHandler : IRequestHandler<CreateCharacterComm
             character.AppliedRacialModifiers["Intelligence"],
             character.AppliedRacialModifiers["Willpower"]);
         
-        _logger.LogInformation(
+        _logger?.LogInformation(
             "Final attributes: Body={Body}, Quickness={Quickness}, Strength={Strength}, " +
             "Charisma={Charisma}, Intelligence={Intelligence}, Willpower={Willpower}",
             character.Body, character.Quickness, character.Strength,
@@ -118,7 +118,7 @@ public class CreateCharacterCommandHandler : IRequestHandler<CreateCharacterComm
         // Persist character
         await _characterRepository.AddAsync(character, cancellationToken);
 
-        _logger.LogInformation(
+        _logger?.LogInformation(
             "Character {CharacterId} created successfully - {BuildType} with {DomainEventCount} domain events",
             character.Id,
             character.IsCustomBuild ? "Custom Build" : $"Archetype: {request.Character.ArchetypeId}",
@@ -199,13 +199,13 @@ public class CreateCharacterCommandHandler : IRequestHandler<CreateCharacterComm
         foreach (var skillBonus in archetype.SkillBonuses)
         {
             character.AddSkill(
-                skillBonus.SkillName,
-                skillBonus.Bonus,
-                skillBonus.Specialization,
-                skillBonus.IsKnowledgeSkill);
+                skillBonus.Key,
+                skillBonus.Value,
+                null,
+                false);
         }
 
-        _logger.LogInformation(
+        _logger?.LogInformation(
             "Applied archetype bonuses: {Karma} karma, {Nuyen}¥ nuyen, {SkillCount} skills",
             archetype.StartingKarma,
             archetype.StartingNuyen,
@@ -287,16 +287,17 @@ public class CreateArchetypeCharacterCommandHandler : IRequestHandler<CreateArch
                 Name = request.Name,
                 Metatype = request.Metatype,
                 ArchetypeId = request.ArchetypeId,
-                Body = request.Body,
-                Quickness = request.Quickness,
-                Strength = request.Strength,
-                Charisma = request.Charisma,
-                Intelligence = request.Intelligence,
-                Willpower = request.Willpower
+                BaseBody = request.Body,
+                BaseQuickness = request.Quickness,
+                BaseStrength = request.Strength,
+                BaseCharisma = request.Charisma,
+                BaseIntelligence = request.Intelligence,
+                BaseWillpower = request.Willpower
             }
         };
 
-        var handler = new CreateCharacterCommandHandler(_characterRepository, _archetypeService, _logger);
+        // Create handler with null logger for delegation (logging is done by this handler)
+        var handler = new CreateCharacterCommandHandler(_characterRepository, _archetypeService, null!);
         return await handler.Handle(command, cancellationToken);
     }
 }
@@ -329,7 +330,7 @@ public class AddKarmaCommandHandler : IRequestHandler<AddKarmaCommand, Character
         character.AddKarma(request.KarmaAmount);
         await _characterRepository.UpdateAsync(character, cancellationToken);
 
-        _logger.LogInformation(
+        _logger?.LogInformation(
             "Added {KarmaAmount} karma to character {CharacterId}",
             request.KarmaAmount,
             request.CharacterId);

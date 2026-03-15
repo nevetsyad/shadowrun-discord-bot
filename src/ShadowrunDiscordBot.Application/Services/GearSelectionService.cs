@@ -1,6 +1,8 @@
 using ShadowrunDiscordBot.Domain.Entities;
 using ShadowrunDiscordBot.Models;
 using System.Text.Json;
+// Use alias to resolve CharacterGear ambiguity - prefer Models version for compatibility
+using CharacterGear = ShadowrunDiscordBot.Models.CharacterGear;
 
 namespace ShadowrunDiscordBot.Application.Services;
 

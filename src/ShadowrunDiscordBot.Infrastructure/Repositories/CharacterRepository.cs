@@ -123,4 +123,26 @@ public class CharacterRepository : ICharacterRepository
         return await _context.Characters
             .AnyAsync(c => c.DiscordUserId == discordUserId && c.Name == name, cancellationToken);
     }
+
+    /// <summary>
+    /// Gets all characters created before the archetype system was implemented (for backward compatibility)
+    /// </summary>
+    public async Task<IEnumerable<Character>> GetLegacyCharactersAsync(ulong discordUserId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Characters
+            .Where(c => c.DiscordUserId == discordUserId && string.IsNullOrEmpty(c.Archetype))
+            .Include(c => c.Skills)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Gets characters by archetype
+    /// </summary>
+    public async Task<IEnumerable<Character>> GetByArchetypeAsync(string archetypeId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Characters
+            .Where(c => c.Archetype == archetypeId)
+            .Include(c => c.Skills)
+            .ToListAsync(cancellationToken);
+    }
 }

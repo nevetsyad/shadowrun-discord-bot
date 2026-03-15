@@ -9,6 +9,11 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
+  <!-- Exclude file with circular dependency on main project -->
+  <ItemGroup>
+    <Compile Remove="Services/GearSelectionService.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\ShadowrunDiscordBot.Domain\ShadowrunDiscordBot.Domain.csproj" />
   </ItemGroup>

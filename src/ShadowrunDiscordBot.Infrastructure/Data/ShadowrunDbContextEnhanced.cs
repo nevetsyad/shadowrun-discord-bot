@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ShadowrunDiscordBot.Domain.Entities;
+using ShadowrunDiscordBot.Domain.Interfaces;
 
 namespace ShadowrunDiscordBot.Infrastructure.Data;
 
@@ -115,10 +116,6 @@ public class ShadowrunDbContext : DbContext
             entity.HasIndex(e => e.CharacterId)
                 .HasDatabaseName("IX_PriorityAllocations_CharacterId");
             
-            entity.HasIndex(e => new { e.CharacterId, e.Category })
-                .IsUnique()
-                .HasDatabaseName("IX_PriorityAllocations_CharacterId_Category");
-            
             entity.HasIndex(e => e.Priority)
                 .HasDatabaseName("IX_PriorityAllocations_Priority");
             
@@ -126,10 +123,6 @@ public class ShadowrunDbContext : DbContext
             entity.Property(e => e.Priority)
                 .IsRequired()
                 .HasMaxLength(1);
-            
-            entity.Property(e => e.Category)
-                .IsRequired()
-                .HasMaxLength(20);
             
             // Relationships
             entity.HasOne(e => e.Character)
@@ -486,8 +479,8 @@ public class ShadowrunDbContext : DbContext
             entity.HasIndex(e => e.IsActive)
                 .HasDatabaseName("IX_CombatSessions_IsActive");
             
-            entity.HasIndex(e => e.StartedAt)
-                .HasDatabaseName("IX_CombatSessions_StartedAt");
+            entity.HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_CombatSessions_CreatedAt");
             
             // Properties
             entity.Property(e => e.IsActive)

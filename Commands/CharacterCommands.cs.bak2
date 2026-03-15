@@ -6,7 +6,6 @@ using ModelEntities = ShadowrunDiscordBot.Models;
 using ShadowrunDiscordBot.Domain.Entities;
 using ShadowrunDiscordBot.Application.Services;
 using ShadowrunDiscordBot.Services;
-using ShadowrunDiscordBot.Models;
 
 using CharacterSkill = ShadowrunDiscordBot.Models.CharacterSkill;
 

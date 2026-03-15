@@ -106,37 +106,8 @@ public partial class DatabaseService
         await _context.SaveChangesAsync();
     }
 
-    public async Task AddMatrixRunAsync(MatrixRun run)
-    {
-        _context.MatrixRuns.Add(run);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task<MatrixRun?> GetMatrixRunAsync(int runId)
-    {
-        return await _context.MatrixRuns
-            .Include(r => r.Host)
-            .FirstOrDefaultAsync(r => r.Id == runId);
-    }
-
-    public async Task UpdateMatrixRunAsync(MatrixRun run)
-    {
-        _context.MatrixRuns.Update(run);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task AddICEncounterAsync(ActiveICEncounter encounter)
-    {
-        _context.ActiveICEncounters.Add(encounter);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task<Cyberdeck?> GetCyberdeckAsync(int cyberdeckId)
-    {
-        return await _context.Cyberdecks
-            .Include(d => d.InstalledPrograms)
-            .FirstOrDefaultAsync(d => d.Id == cyberdeckId);
-    }
+    // Matrix operations (GetMatrixRunAsync, UpdateMatrixRunAsync, AddICEncounterAsync, GetCyberdeckAsync)
+    // are defined in DatabaseService.cs - removed duplicates from this file
 
     #endregion
 
