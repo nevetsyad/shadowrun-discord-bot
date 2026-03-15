@@ -22,10 +22,6 @@
     <Compile Remove="src/**/*.cs" />
     <Compile Remove="ShadowrunDiscordBot.Tests/**/*.cs" />
     <Compile Remove="Tests/**/*.cs" />
-    <!-- Exclude files using DSharpPlus (incompatible with Discord.Net) -->
-    <Compile Remove="Commands/InteractiveStoryCommands.cs" />
-    <!-- Exclude example files with conflicting Program class -->
-    <Compile Remove="Examples/Phase5IntegrationExample.cs" />
   </ItemGroup>
 
   <!-- Project references to sub-projects -->
