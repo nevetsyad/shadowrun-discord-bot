@@ -61,7 +61,7 @@ jobs:
         echo "Validating solution structure..."
         
         # Check that all projects referenced in the solution exist
-        dotnet sln list | while read project; do
+        dotnet sln list | grep -v "Project(s)" | grep -v "^$" | while read project; do
           if [ -f "$project" ]; then
             echo "  ✅ $project"
           else
