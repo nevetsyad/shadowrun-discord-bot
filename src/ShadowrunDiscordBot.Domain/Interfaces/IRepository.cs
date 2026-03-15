@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using ShadowrunDiscordBot.Domain.Entities;
 
 namespace ShadowrunDiscordBot.Domain.Interfaces;
