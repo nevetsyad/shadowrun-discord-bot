@@ -186,7 +186,9 @@ public static class SkillCostCalculator
             var linkedAttr = GetLinkedAttribute(skill.Key);
             var attrValue = attributes.TryGetValue(linkedAttr, out var val) ? val : 3; // Default to 3 if not found
             var hasSpecialization = HasSpecialization(skill.Key);
-            var cost = CalculateSkillCost(skill.Value, attrValue, hasSpecialization);
+            var cost = hasSpecialization 
+                ? CalculateSkillWithSpecialization(skill.Value, attrValue)
+                : CalculateSkillCost(skill.Value, attrValue);
             totalCost += cost;
         }
 

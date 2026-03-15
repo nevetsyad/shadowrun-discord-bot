@@ -17,9 +17,6 @@ public class Character : BaseEntity
     // Character Details
     public string Metatype { get; private set; }
     public string? Archetype { get; private set; } // GPT-5.4 FIX: Made nullable for optional archetype system
-
-    // GPT-5.4 FIX: Flag to distinguish archetype-based vs custom builds
-    public bool IsCustomBuild { get; private set; }
     
     // SR3 COMPLIANCE: BASE Attributes (user input before racial modifiers)
     public int BaseBody { get; private set; }
@@ -368,17 +365,17 @@ public class Character : BaseEntity
     
     public bool IsAwakened()
     {
-        return Magic > 0 || Archetype.Contains("Mage") || Archetype.Contains("Shaman") || Archetype.Contains("Adept");
+        return Magic > 0 || (Archetype?.Contains("Mage") == true || Archetype?.Contains("Shaman") == true || Archetype?.Contains("Adept") == true);
     }
     
     public bool IsDecker()
     {
-        return Archetype.Contains("Decker");
+        return Archetype?.Contains("Decker") == true;
     }
     
     public bool IsRigger()
     {
-        return Archetype.Contains("Rigger");
+        return Archetype?.Contains("Rigger") == true;
     }
     
     public int GetWoundModifier()

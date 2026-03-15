@@ -208,7 +208,7 @@ namespace ShadowrunDiscordBot.Services
 **Backstory:** {npc.Backstory}
 
 ---
-🎲 Difficulty: {_diceService.ParseAndRoll(""1d6"").Total}";
+🎲 Difficulty: {_diceService.ParseAndRoll("1d6").Total}";
         }
 
         public class NPC

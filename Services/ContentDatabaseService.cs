@@ -941,18 +941,4 @@ public class ContentStatistics
     public int Regenerations { get; set; }
 }
 
-/// <summary>
-/// Story preferences model
-/// </summary>
-public class StoryPreferences
-{
-    public double CombatPreference { get; set; } = 5.0;
-    public double SocialPreference { get; set; } = 5.0;
-    public double StealthPreference { get; set; } = 5.0;
-    public double TechPreference { get; set; } = 5.0;
-    public double RiskTolerance { get; set; } = 5.0;
-    public double HeroicTendency { get; set; } = 5.0;
-    public int TotalChoicesRecorded { get; set; }
-}
-
 #endregion

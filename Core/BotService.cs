@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
+using System.Text;
 using Discord;
 using Discord.Net;
 using Discord.WebSocket;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 

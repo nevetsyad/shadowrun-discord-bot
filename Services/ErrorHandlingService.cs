@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using ShadowrunDiscordBot.Core;
 using ShadowrunDiscordBot.Exceptions;
-using ShadowrunDiscordBot.Exceptions; // GPT-5.4 FIX: Added for domain exceptions
 
 namespace ShadowrunDiscordBot.Services;
 

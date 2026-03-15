@@ -2,7 +2,7 @@ using System.Text;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
-using ShadowrunDiscordBot.Models;
+using ModelEntities = ShadowrunDiscordBot.Models;
 using ShadowrunDiscordBot.Domain.Entities;
 using ShadowrunDiscordBot.Application.Services;
 using ShadowrunDiscordBot.Services;
@@ -271,7 +271,7 @@ public class CharacterCommands : BaseCommandModule
     }
 
     // SR3 COMPLIANCE: Create character with base attributes and apply racial modifiers
-    private ShadowrunCharacter CreateCharacterWithArchetype(ulong userId, string name, string metatype, string archetype)
+    private ModelEntities.ShadowrunCharacter CreateCharacterWithArchetype(ulong userId, string name, string metatype, string archetype)
     {
         // SR3 COMPLIANCE: Start with base attributes (default 3 for all)
         var baseBody = _defaultAttribute;

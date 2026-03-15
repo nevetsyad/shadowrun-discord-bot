@@ -68,7 +68,7 @@ public class PriorityAllocation
     public string? DetailedAllocation { get; set; }
 
     // Navigation property
-    public virtual ShadowrunCharacter Character { get; set; } = null!;
+    public virtual Character Character { get; set; } = null!;
 }
 
 /// <summary>
