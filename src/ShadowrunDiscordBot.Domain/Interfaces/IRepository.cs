@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using ShadowrunDiscordBot.Domain.Entities;
 
-namespace ShadowrunDiscordBot.Repositories;
+namespace ShadowrunDiscordBot.Domain.Interfaces;
 
 /// <summary>
 /// Generic repository interface for data access operations
