@@ -37,4 +37,10 @@ public interface IRepository<T> where T : class
     /// Check if entity exists by ID
     /// </summary>
     Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default);
+
+    // Specialized overloads for commonly used queries
+    /// <summary>
+    /// Check if entity exists with custom condition
+    /// </summary>
+    Task<bool> ExistsAsync(Func<T, bool> predicate, CancellationToken cancellationToken = default);
 }

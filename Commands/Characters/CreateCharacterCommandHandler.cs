@@ -6,6 +6,9 @@ using ShadowrunDiscordBot.Services;
 using ShadowrunDiscordBot.Application.Services;
 using ShadowrunDiscordBot.Domain.Entities;
 using ShadowrunDiscordBot.Commands.Validators;
+using CharacterSkill = ShadowrunDiscordBot.Models.CharacterSkill;
+using CharacterCyberware = ShadowrunDiscordBot.Models.CharacterCyberware;
+using CharacterGear = ShadowrunDiscordBot.Models.CharacterGear;
 
 namespace ShadowrunDiscordBot.Commands.Characters;
 

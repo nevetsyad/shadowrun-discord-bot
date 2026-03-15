@@ -7,14 +7,14 @@ namespace ShadowrunDiscordBot.Infrastructure.Repositories;
 /// <summary>
 /// Repository implementation for character-specific operations
 /// </summary>
-public class CharacterRepository : Repository<ShadowrunCharacter>, ICharacterRepository
+public class CharacterRepository : Repository<Character>, ICharacterRepository
 {
     public CharacterRepository(ShadowrunDbContext context) : base(context)
     {
     }
 
     /// <inheritdoc/>
-    public async Task<ShadowrunCharacter?> GetByUserIdAndNameAsync(ulong userId, string name)
+    public async Task<Character?> GetByUserIdAndNameAsync(ulong userId, string name)
     {
         // FIX: Removed eager loading to avoid N+1 queries.
         // Call GetByUserIdAndNameWithDetailsAsync() if you need full data.
@@ -24,7 +24,7 @@ public class CharacterRepository : Repository<ShadowrunCharacter>, ICharacterRep
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<ShadowrunCharacter>> GetByUserIdAsync(ulong userId)
+    public async Task<IEnumerable<Character>> GetByUserIdAsync(ulong userId)
     {
         // FIX: Removed eager loading to avoid N+1 queries
         return await _dbSet
@@ -35,7 +35,7 @@ public class CharacterRepository : Repository<ShadowrunCharacter>, ICharacterRep
     }
 
     /// <inheritdoc/>
-    public async Task<ShadowrunCharacter?> GetWithDetailsAsync(int characterId)
+    public async Task<Character?> GetWithDetailsAsync(int characterId)
     {
         // FIX: Removed eager loading to avoid N+1 queries
         return await _dbSet
@@ -48,7 +48,7 @@ public class CharacterRepository : Repository<ShadowrunCharacter>, ICharacterRep
     /// WARNING: This triggers multiple database queries (N+1 problem).
     /// For performance, use GetByUserIdAndNameAsync() instead.
     /// </summary>
-    public async Task<ShadowrunCharacter> GetByUserIdAndNameWithDetailsAsync(ulong userId, string name, CancellationToken cancellationToken = default)
+    public async Task<Character> GetByUserIdAndNameWithDetailsAsync(ulong userId, string name, CancellationToken cancellationToken = default)
     {
         var character = await _dbSet
             .FirstOrDefaultAsync(c => c.DiscordUserId == userId && c.Name == name, cancellationToken)

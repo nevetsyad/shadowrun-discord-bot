@@ -20,47 +20,57 @@ public class Repository<T> : IRepository<T> where T : class
     }
 
     /// <inheritdoc/>
-    public virtual async Task<IEnumerable<T>> GetAllAsync()
+    public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _dbSet.ToListAsync().ConfigureAwait(false);
+        return await _dbSet.ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public virtual async Task<T?> GetByIdAsync(int id)
+    public virtual async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _dbSet.FindAsync(id).ConfigureAwait(false);
+        return await _dbSet.FindAsync(new object[] { id }, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public virtual async Task AddAsync(T entity)
+    public virtual async Task AddAsync(T entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
         
-        await _dbSet.AddAsync(entity).ConfigureAwait(false);
-        await _context.SaveChangesAsync().ConfigureAwait(false);
+        await _dbSet.AddAsync(entity, cancellationToken).ConfigureAwait(false);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public virtual async Task UpdateAsync(T entity)
+    public virtual async Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
         
         _dbSet.Update(entity);
-        await _context.SaveChangesAsync().ConfigureAwait(false);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public virtual async Task DeleteAsync(T entity)
+    public virtual async Task DeleteAsync(T entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
         
         _dbSet.Remove(entity);
-        await _context.SaveChangesAsync().ConfigureAwait(false);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public virtual async Task<bool> ExistsAsync(int id)
+    public virtual async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _dbSet.AnyAsync(e => EF.Property<int>(e, "Id") == id).ConfigureAwait(false);
+        return await _dbSet.AnyAsync(e => EF.Property<int>(e, "Id") == id, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public virtual async Task<bool> ExistsAsync(Func<T, bool> predicate, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+        
+        // Note: Func<T, bool> must be evaluated in memory, so we need to load data first
+        var allEntities = await _dbSet.ToListAsync(cancellationToken).ConfigureAwait(false);
+        return allEntities.Any(predicate);
     }
 }

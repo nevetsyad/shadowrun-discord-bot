@@ -1,6 +1,9 @@
 using ShadowrunDiscordBot.Domain.Entities;
 using ShadowrunDiscordBot.Models;
 using System.Text.Json;
+using CharacterSkill = ShadowrunDiscordBot.Models.CharacterSkill;
+using CharacterCyberware = ShadowrunDiscordBot.Models.CharacterCyberware;
+using CharacterGear = ShadowrunDiscordBot.Models.CharacterGear;
 
 namespace ShadowrunDiscordBot.Application.Services;
 
