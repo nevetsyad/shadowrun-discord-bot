@@ -12,11 +12,17 @@ services:
       - Redis__ConnectionString=redis:6379
       - Redis__InstanceName=Shadowrun:
       - Discord__Token=${DISCORD_TOKEN}
+      - Cache__Enabled=true
+      - Cache__ConnectionString=redis:6379
+      - Cache__InstanceName=Shadowrun:
+      - WebUI__Port=5000
+      - WebUI__EnableSwagger=true
     volumes:
       - shadowrun_data:/data
       - ./logs:/app/logs
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - shadowrun_network
@@ -25,7 +31,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 15s
 
   # Redis cache
   redis:

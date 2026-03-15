@@ -21,14 +21,20 @@ RUN dotnet publish ShadowrunDiscordBot.csproj -c Release -o /app/publish /p:UseA
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
+# Install curl for health checks
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' appuser
 
 # Copy published application
 COPY --from=build /app/publish .
 
-# Create logs directory
-RUN mkdir -p /app/logs && chown -R appuser:appuser /app
+# Create required directories with proper permissions
+RUN mkdir -p /app/logs /app/data && \
+    chown -R appuser:appuser /app
 
 # Switch to non-root user
 USER appuser
@@ -41,7 +47,7 @@ ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
 # Entry point
