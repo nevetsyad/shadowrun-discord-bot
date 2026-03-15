@@ -127,17 +127,18 @@ class Program
                 Console.Error.WriteLine($"Fatal error: {ex}");
                 return 1;
             }
-            finally {
+            finally
+            {
                 Log.CloseAndFlush();
             }
-        } Catch(Exception e) {
-
         }
-        Finally {
-
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Fatal error in bot startup");
+            Console.Error.WriteLine($"Fatal error: {ex}");
+            return 1;
         }
     }
-
 
     private static IHostBuilder CreateHostBuilder(string[] args, string discordToken) =>
         Host.CreateDefaultBuilder(args)
