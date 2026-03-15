@@ -2,13 +2,19 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy solution files
-COPY *.csproj ./
-RUN dotnet restore
+# Copy project files
+COPY ShadowrunDiscordBot.csproj ./
+COPY src/ShadowrunDiscordBot.Domain/ShadowrunDiscordBot.Domain.csproj ./src/ShadowrunDiscordBot.Domain/
+COPY src/ShadowrunDiscordBot.Application/ShadowrunDiscordBot.Application.csproj ./src/ShadowrunDiscordBot.Application/
+COPY src/ShadowrunDiscordBot.Infrastructure/ShadowrunDiscordBot.Infrastructure.csproj ./src/ShadowrunDiscordBot.Infrastructure/
+COPY src/ShadowrunDiscordBot.Presentation/ShadowrunDiscordBot.Presentation.csproj ./src/ShadowrunDiscordBot.Presentation/
+
+# Restore dependencies
+RUN dotnet restore ShadowrunDiscordBot.csproj
 
 # Copy everything else and build
 COPY . .
-RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish ShadowrunDiscordBot.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
