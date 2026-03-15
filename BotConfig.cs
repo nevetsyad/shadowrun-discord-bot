@@ -1,3 +1,4 @@
+using Discord;
 using Microsoft.Extensions.Configuration;
 
 namespace ShadowrunDiscordBot;
@@ -80,7 +81,8 @@ public class DatabaseConfig
 public class BotSettings
 {
     public string Prefix { get; set; } = "!";
-    public int DefaultColor { get; set; } = 5814783;
+    public uint DefaultColorInt { get; set; } = 5814783;
+    public Color DefaultColor { get { return new Color(DefaultColorInt); }  }
     public int MaxCharactersPerUser { get; set; } = 5;
     public int MaxDiceRolls { get; set; } = 10;
 }

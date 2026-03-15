@@ -1,4 +1,6 @@
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using ShadowrunDiscordBot.Services;
 
 namespace ShadowrunDiscordBot.Commands;
 

@@ -93,7 +93,7 @@ public class ShadowrunCharacter
     /// <summary>
     /// List of skills allocated with priority system
     /// </summary>
-    public List<CharacterSkill> PrioritySkills { get; set; } = new()
+    public List<CharacterSkill> PrioritySkills { get; set; } = new List<CharacterSkill>();
 
     // GPT-5.4 FIX: Archetype system tracking for backward compatibility
     /// <summary>

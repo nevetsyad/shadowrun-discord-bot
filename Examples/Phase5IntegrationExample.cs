@@ -6,6 +6,8 @@ using Microsoft.Extensions.Hosting;
 using ShadowrunDiscordBot.Extensions;
 using ShadowrunDiscordBot.Services;
 using ShadowrunDiscordBot.Commands;
+using ShadowrunDiscordBot.Models;
+using ContentType = ShadowrunDiscordBot.Services.ContentType;
 
 namespace ShadowrunDiscordBot;
 

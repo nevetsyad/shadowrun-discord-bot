@@ -13,6 +13,7 @@ using ShadowrunDiscordBot.Queries.Combat;
 using ShadowrunDiscordBot.Repositories;
 using ShadowrunDiscordBot.Services;
 using Serilog;
+using ShadowrunDiscordBot.Application.Services;
 
 namespace ShadowrunDiscordBot;
 
@@ -43,7 +44,7 @@ class Program
             // Check if token is provided via command line or environment
             var tokenFromArgs = args.FirstOrDefault(a => a.StartsWith("--token="))?.Substring(8);
             var tokenFromEnv = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
-            
+
             string? discordToken = tokenFromArgs ?? tokenFromEnv;
 
             // If no token provided, prompt interactively
@@ -64,73 +65,79 @@ class Program
             Console.WriteLine("Token received. Starting bot...");
             Console.WriteLine();
 
-        try
-        {
-            var host = CreateHostBuilder(args, discordToken).Build();
-            var logger = host.Services.GetRequiredService<ILogger<Program>>();
-
-            logger.LogInformation("Starting Shadowrun Discord Bot...");
-
-            // Setup graceful shutdown
-            Console.CancelKeyPress += (sender, e) =>
+            try
             {
-                e.Cancel = true;
-                logger.LogInformation("Shutdown signal received...");
-                _cts.Cancel();
-            };
+                var host = CreateHostBuilder(args, discordToken).Build();
+                var logger = host.Services.GetRequiredService<ILogger<Program>>();
 
-            AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
+                logger.LogInformation("Starting Shadowrun Discord Bot...");
+
+                // Setup graceful shutdown
+                Console.CancelKeyPress += (sender, e) =>
+                {
+                    e.Cancel = true;
+                    logger.LogInformation("Shutdown signal received...");
+                    _cts.Cancel();
+                };
+
+                AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
+                {
+                    logger.LogInformation("Process exit signal received...");
+                    _cts.Cancel();
+                };
+
+                Console.WriteLine();
+                Console.WriteLine("==========================================");
+                Console.WriteLine("✨ Shadowrun Discord Bot Started! ✨");
+                Console.WriteLine("==========================================");
+                Console.WriteLine();
+                Console.WriteLine("Commands available:");
+                Console.WriteLine("  /character create/list/view/delete - Character management");
+                Console.WriteLine("  /dice [notation] - Roll dice (e.g., 2d6+3)");
+                Console.WriteLine("  /shadowrun-dice basic/initiative - Shadowrun dice rolls");
+                Console.WriteLine("  /magic status/spells/foci/cast/summon - Magic system");
+                Console.WriteLine("  /combat start/status/end/add/remove/next/attack/reroll-init - Combat system");
+                Console.WriteLine("  /matrix deck-info - Matrix commands");
+                Console.WriteLine("  /cyberware list - Cyberware management");
+                Console.WriteLine();
+                Console.WriteLine("  Dynamic Content (Phase 5):");
+                Console.WriteLine("  /difficulty - View/adjust difficulty");
+                Console.WriteLine("  /campaign arc - Campaign arc management");
+                Console.WriteLine("  /content regenerate - Regenerate content");
+                Console.WriteLine("  /learning status - AI learning status");
+                Console.WriteLine("  /story evolve/hook - Story evolution");
+                Console.WriteLine("  /npc learn/profile - NPC learning");
+                Console.WriteLine();
+                Console.WriteLine("  /help - Get help with commands");
+                Console.WriteLine();
+                Console.WriteLine("Press Ctrl+C to exit...");
+                Console.WriteLine();
+
+                await host.RunAsync(_cts.Token);
+                return 0;
+            }
+            catch (OperationCanceledException)
             {
-                logger.LogInformation("Process exit signal received...");
-                _cts.Cancel();
-            };
+                // Expected during shutdown
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Fatal error occurred");
+                Console.Error.WriteLine($"Fatal error: {ex}");
+                return 1;
+            }
+            finally {
+                Log.CloseAndFlush();
+            }
+        } Catch(Exception e) {
 
-            Console.WriteLine();
-            Console.WriteLine("==========================================");
-            Console.WriteLine("✨ Shadowrun Discord Bot Started! ✨");
-            Console.WriteLine("==========================================");
-            Console.WriteLine();
-            Console.WriteLine("Commands available:");
-            Console.WriteLine("  /character create/list/view/delete - Character management");
-            Console.WriteLine("  /dice [notation] - Roll dice (e.g., 2d6+3)");
-            Console.WriteLine("  /shadowrun-dice basic/initiative - Shadowrun dice rolls");
-            Console.WriteLine("  /magic status/spells/foci/cast/summon - Magic system");
-            Console.WriteLine("  /combat start/status/end/add/remove/next/attack/reroll-init - Combat system");
-            Console.WriteLine("  /matrix deck-info - Matrix commands");
-            Console.WriteLine("  /cyberware list - Cyberware management");
-            Console.WriteLine();
-            Console.WriteLine("  Dynamic Content (Phase 5):");
-            Console.WriteLine("  /difficulty - View/adjust difficulty");
-            Console.WriteLine("  /campaign arc - Campaign arc management");
-            Console.WriteLine("  /content regenerate - Regenerate content");
-            Console.WriteLine("  /learning status - AI learning status");
-            Console.WriteLine("  /story evolve/hook - Story evolution");
-            Console.WriteLine("  /npc learn/profile - NPC learning");
-            Console.WriteLine();
-            Console.WriteLine("  /help - Get help with commands");
-            Console.WriteLine();
-            Console.WriteLine("Press Ctrl+C to exit...");
-            Console.WriteLine();
+        }
+        Finally {
 
-            await host.RunAsync(_cts.Token);
-            return 0;
-        }
-        catch (OperationCanceledException)
-        {
-            // Expected during shutdown
-            return 0;
-        }
-        catch (Exception ex)
-        {
-            Log.Fatal(ex, "Fatal error occurred");
-            Console.Error.WriteLine($"Fatal error: {ex}");
-            return 1;
-        }
-        finally
-        {
-            Log.CloseAndFlush();
         }
     }
+
 
     private static IHostBuilder CreateHostBuilder(string[] args, string discordToken) =>
         Host.CreateDefaultBuilder(args)
@@ -250,6 +257,6 @@ class Program
                 services.AddHostedService<WebUIService>();
 
                 // Main bot service (hosted)
-                services.AddHostedService(provider => provider.GetRequiredService<BotService>());
+                IServiceCollection serviceCollection = services.AddHostedService(provider => provider.GetRequiredService<BotService>());
             });
 }

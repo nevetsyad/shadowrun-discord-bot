@@ -5,6 +5,9 @@ using Microsoft.Extensions.Logging;
 using ShadowrunDiscordBot.Models;
 using ShadowrunDiscordBot.Domain.Entities;
 using ShadowrunDiscordBot.Application.Services;
+using ShadowrunDiscordBot.Services;
+
+using CharacterSkill = ShadowrunDiscordBot.Models.CharacterSkill;
 
 namespace ShadowrunDiscordBot.Commands;
 
@@ -13,23 +16,28 @@ namespace ShadowrunDiscordBot.Commands;
 /// </summary>
 public class CharacterCommands : BaseCommandModule
 {
+
+
     // Constants for character creation
-    private const int StartingKarma = 5;
-    private const int StartingNuyen = 5000;
-    private const int DeckerBonusNuyen = 100000;
-    private const int RiggerBonusNuyen = 50000;
-    private const int DefaultAttribute = 3;
-    private const int DefaultMagic = 6;
+    private const int _startingKarma = 5;
+    private const int _startingNuyen = 5000;
+    private const int _deckerBonusNuyen = 100000;
+    private const int _riggerBonusNuyen = 50000;
+    private const int _defaultAttribute = 3;
+    private const int _defaultMagic = 6;
 
     // FIX: MED-002 - Define valid metatypes and archetypes for validation
-    private static readonly HashSet<string> ValidMetatypes = new(StringComparer.OrdinalIgnoreCase)
+    // TODO: convert to enum and maintain a list of all enums for selection  this is sloppy and relies on string comparisons across the app.
+    // This enum should be moved into a common file that's used throughout the application
+    private static readonly HashSet<string> _validMetatypes = new(StringComparer.OrdinalIgnoreCase)
     {
         "Human", "Elf", "Dwarf", "Ork", "Troll"
     };
 
     // GPT-5.4 FIX: Updated to use archetype IDs instead of display names
     // Only 3 archetypes are available: street-samurai, mage, decker
-    private static readonly HashSet<string> ValidArchetypeIds = new(StringComparer.OrdinalIgnoreCase)
+    // use anotations on enum to provide additional details or formating
+    private static readonly HashSet<string> _validArchetypeIds = new(StringComparer.OrdinalIgnoreCase)
     {
         "street-samurai",
         "mage",
@@ -37,7 +45,7 @@ public class CharacterCommands : BaseCommandModule
     };
 
     // GPT-5.4 FIX: Display name mapping for archetypes
-    private static readonly Dictionary<string, string> ArchetypeDisplayNames = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, string> _archetypeDisplayNames = new(StringComparer.OrdinalIgnoreCase)
     {
         { "street-samurai", "Street Samurai" },
         { "mage", "Mage" },
@@ -45,8 +53,8 @@ public class CharacterCommands : BaseCommandModule
     };
 
     // FIX: MED-002 - Attribute bounds
-    private const int MinAttributeValue = 1;
-    private const int MaxAttributeValue = 10;
+    private const int _minAttributeValue = 1;
+    private const int _maxAttributeValue = 10;
 
     public CharacterCommands(
         ILogger<CharacterCommands> logger,
@@ -83,10 +91,10 @@ public class CharacterCommands : BaseCommandModule
             }
 
             // FIX: MED-002 - Validate metatype
-            if (!ValidMetatypes.Contains(metatype!))
+            if (!_validMetatypes.Contains(metatype!))
             {
                 await command.RespondAsync(
-                    $"⚠️ Invalid metatype '{metatype}'. Valid options are: {string.Join(", ", ValidMetatypes)}",
+                    $"⚠️ Invalid metatype '{metatype}'. Valid options are: {string.Join(", ", _validMetatypes)}",
                     ephemeral: true);
                 return;
             }
@@ -95,14 +103,47 @@ public class CharacterCommands : BaseCommandModule
             // If no archetype is selected, this is a priority-based character creation
             if (!string.IsNullOrWhiteSpace(archetypeId))
             {
-                if (!ValidArchetypeIds.Contains(archetypeId!))
+                if (!_validArchetypeIds.Contains(archetypeId!))
                 {
                     await command.RespondAsync(
-                        $"⚠️ Invalid archetype '{archetypeId}'. Valid options are: {string.Join(", ", ValidArchetypeIds)}",
+                        $"⚠️ Invalid archetype '{archetypeId}'. Valid options are: {string.Join(", ", _validArchetypeIds)}",
                         ephemeral: true);
                     return;
                 }
 
+                // Check if user already has too many characters
+                var existingChars = await Database.GetUserCharactersAsync(command.User.Id);
+                if (existingChars?.Count >= Config.Bot.MaxCharactersPerUser)
+                {
+                    await command.RespondAsync(
+                        $"⚠️ You already have the maximum number of characters ({Config.Bot.MaxCharactersPerUser}). " +
+                        "Please delete one before creating a new one.",
+                        ephemeral: true);
+                    return;
+                }
+
+                // Check if character name already exists
+                if (existingChars?.Any(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) ?? false )
+                {
+                    await command.RespondAsync($"⚠️ You already have a character named '{name}'.", ephemeral: true);
+                    return;
+                }
+
+                // Legacy archetype system
+                var character = CreateCharacterWithArchetypeSystem(command.User.Id, name!, metatype!, archetypeId!);
+                character.PriorityLevel = null; // No priority system used
+
+                await Database.CreateCharacterAsync(character);
+
+                var embed = BuildCharacterEmbed(character, "✨ Character Created (Archetype)");
+
+                await command.RespondAsync(embed: embed);
+                return;
+            }
+            else
+            {
+
+                // Priority System: Create character with priority allocation
                 // Check if user already has too many characters
                 var existingChars = await Database.GetUserCharactersAsync(command.User.Id);
                 if (existingChars.Count >= Config.Bot.MaxCharactersPerUser)
@@ -121,45 +162,15 @@ public class CharacterCommands : BaseCommandModule
                     return;
                 }
 
-                // Legacy archetype system
-                var character = CreateCharacterWithArchetypeSystem(command.User.Id, name!, metatype!, archetypeId!);
-                character.PriorityLevel = null; // No priority system used
+                // Priority System: Create character with priority allocation
+                var character = CreateCharacterWithPrioritySystem(command.User.Id, name!, metatype!);
 
                 await Database.CreateCharacterAsync(character);
 
-                var embed = BuildCharacterEmbed(character, "✨ Character Created (Archetype)");
+                var embed = BuildCharacterEmbedWithPriority(character, "✨ Character Created (Priority)");
 
                 await command.RespondAsync(embed: embed);
-                return;
             }
-
-            // Priority System: Create character with priority allocation
-            // Check if user already has too many characters
-            var existingChars = await Database.GetUserCharactersAsync(command.User.Id);
-            if (existingChars.Count >= Config.Bot.MaxCharactersPerUser)
-            {
-                await command.RespondAsync(
-                    $"⚠️ You already have the maximum number of characters ({Config.Bot.MaxCharactersPerUser}). " +
-                    "Please delete one before creating a new one.",
-                    ephemeral: true);
-                return;
-            }
-
-            // Check if character name already exists
-            if (existingChars.Any(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
-            {
-                await command.RespondAsync($"⚠️ You already have a character named '{name}'.", ephemeral: true);
-                return;
-            }
-
-            // Priority System: Create character with priority allocation
-            var character = CreateCharacterWithPrioritySystem(command.User.Id, name!, metatype!);
-
-            await Database.CreateCharacterAsync(character);
-
-            var embed = BuildCharacterEmbedWithPriority(character, "✨ Character Created (Priority)");
-
-            await command.RespondAsync(embed: embed);
         }
         catch (Exception ex)
         {
@@ -263,12 +274,12 @@ public class CharacterCommands : BaseCommandModule
     private ShadowrunCharacter CreateCharacterWithArchetype(ulong userId, string name, string metatype, string archetype)
     {
         // SR3 COMPLIANCE: Start with base attributes (default 3 for all)
-        var baseBody = DefaultAttribute;
-        var baseQuickness = DefaultAttribute;
-        var baseStrength = DefaultAttribute;
-        var baseCharisma = DefaultAttribute;
-        var baseIntelligence = DefaultAttribute;
-        var baseWillpower = DefaultAttribute;
+        var baseBody = _defaultAttribute;
+        var baseQuickness = _defaultAttribute;
+        var baseStrength = _defaultAttribute;
+        var baseCharisma = _defaultAttribute;
+        var baseIntelligence = _defaultAttribute;
+        var baseWillpower = _defaultAttribute;
 
         var character = new ShadowrunCharacter
         {
@@ -276,8 +287,8 @@ public class CharacterCommands : BaseCommandModule
             Name = name,
             Metatype = metatype,
             Archetype = archetype,
-            Karma = StartingKarma,
-            Nuyen = StartingNuyen,
+            Karma = _startingKarma,
+            Nuyen = _startingNuyen,
             IsCustomBuild = true,
             
             // Store base attributes
@@ -454,7 +465,7 @@ public class CharacterCommands : BaseCommandModule
     // GPT-5.4 FIX: Create character using archetype system with SR3 racial modifier support
     private ShadowrunCharacter CreateCharacterWithArchetypeSystem(ulong userId, string name, string metatype, string archetypeId)
     {
-        var archetypeName = ArchetypeDisplayNames.GetValueOrDefault(archetypeId, archetypeId);
+        var archetypeName = _archetypeDisplayNames.GetValueOrDefault(archetypeId, archetypeId);
 
         // SR3 COMPLIANCE: Define base attributes for each archetype
         // These are the BASE values before racial modifiers
@@ -475,12 +486,12 @@ public class CharacterCommands : BaseCommandModule
                 baseCharisma = 3; baseIntelligence = 6; baseWillpower = 4;
                 break;
             default:
-                baseBody = DefaultAttribute;
-                baseQuickness = DefaultAttribute;
-                baseStrength = DefaultAttribute;
-                baseCharisma = DefaultAttribute;
-                baseIntelligence = DefaultAttribute;
-                baseWillpower = DefaultAttribute;
+                baseBody = _defaultAttribute;
+                baseQuickness = _defaultAttribute;
+                baseStrength = _defaultAttribute;
+                baseCharisma = _defaultAttribute;
+                baseIntelligence = _defaultAttribute;
+                baseWillpower = _defaultAttribute;
                 break;
         }
 
@@ -552,37 +563,37 @@ public class CharacterCommands : BaseCommandModule
 
         if (arch is "mage" or "shaman" or "physical adept")
         {
-            character.Magic = DefaultMagic;
+            character.Magic = _defaultMagic;
         }
 
         switch (arch)
         {
             case "mage":
-                character.Skills.Add(new CharacterSkill { SkillName = "Sorcery", Rating = DefaultMagic });
+                character.Skills.Add(new CharacterSkill { SkillName = "Sorcery", Rating = _defaultMagic });
                 character.Skills.Add(new CharacterSkill { SkillName = "Conjuring", Rating = 4 });
                 break;
             case "shaman":
                 character.Skills.Add(new CharacterSkill { SkillName = "Sorcery", Rating = 5 });
-                character.Skills.Add(new CharacterSkill { SkillName = "Conjuring", Rating = DefaultMagic });
+                character.Skills.Add(new CharacterSkill { SkillName = "Conjuring", Rating = _defaultMagic });
                 break;
             case "physical adept":
-                character.Skills.Add(new CharacterSkill { SkillName = "Unarmed Combat", Rating = DefaultMagic });
+                character.Skills.Add(new CharacterSkill { SkillName = "Unarmed Combat", Rating = _defaultMagic });
                 character.Skills.Add(new CharacterSkill { SkillName = "Athletics", Rating = 5 });
                 break;
             case "street samurai":
-                character.Skills.Add(new CharacterSkill { SkillName = "Pistols", Rating = DefaultMagic });
+                character.Skills.Add(new CharacterSkill { SkillName = "Pistols", Rating = _defaultMagic });
                 character.Skills.Add(new CharacterSkill { SkillName = "Edged Weapons", Rating = 5 });
                 character.Skills.Add(new CharacterSkill { SkillName = "Athletics", Rating = 4 });
                 break;
             case "decker":
-                character.Skills.Add(new CharacterSkill { SkillName = "Computer", Rating = DefaultMagic });
+                character.Skills.Add(new CharacterSkill { SkillName = "Computer", Rating = _defaultMagic });
                 character.Skills.Add(new CharacterSkill { SkillName = "Electronics", Rating = 5 });
-                character.Nuyen += DeckerBonusNuyen;
+                character.Nuyen += _deckerBonusNuyen;
                 break;
             case "rigger":
-                character.Skills.Add(new CharacterSkill { SkillName = "Vehicle Operation", Rating = DefaultMagic });
+                character.Skills.Add(new CharacterSkill { SkillName = "Vehicle Operation", Rating = _defaultMagic });
                 character.Skills.Add(new CharacterSkill { SkillName = "Gunnery", Rating = 5 });
-                character.Nuyen += RiggerBonusNuyen;
+                character.Nuyen += _riggerBonusNuyen;
                 break;
         }
     }

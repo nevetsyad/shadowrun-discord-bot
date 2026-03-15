@@ -122,6 +122,7 @@ public partial class DatabaseService : IAsyncDisposable
             .ConfigureAwait(false);
     }
 
+
     public async Task<List<ShadowrunCharacter>> GetUserCharactersAsync(ulong userId)
     {
         return await _context.Characters
