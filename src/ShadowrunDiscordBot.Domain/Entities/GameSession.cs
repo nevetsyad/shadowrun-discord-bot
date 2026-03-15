@@ -7,6 +7,9 @@ namespace ShadowrunDiscordBot.Domain.Entities;
 /// </summary>
 public class GameSession : BaseEntity
 {
+    public new DateTime? CreatedAt { get; set; }
+    public new DateTime? UpdatedAt { get; set; }
+
     public ulong DiscordGuildId { get; set; }
     public ulong DiscordChannelId { get; set; }
     public ulong? DMUserId { get; set; }
@@ -15,6 +18,4 @@ public class GameSession : BaseEntity
     public DateTime StartedAt { get; set; }
     public DateTime? EndedAt { get; set; }
     public string? StoryNotes { get; set; }
-    public DateTime? CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
 }

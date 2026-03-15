@@ -7,6 +7,9 @@ namespace ShadowrunDiscordBot.Domain.Entities;
 /// </summary>
 public class MatrixRun : BaseEntity
 {
+    public new DateTime? CreatedAt { get; set; }
+    public new DateTime? UpdatedAt { get; set; }
+
     public int CharacterId { get; set; }
     public ulong DiscordUserId { get; set; }
     public string RunName { get; set; } = string.Empty;
@@ -18,6 +21,4 @@ public class MatrixRun : BaseEntity
     public bool IsActive { get; set; }
     public DateTime? StartedAt { get; set; }
     public DateTime? EndedAt { get; set; }
-    public DateTime? CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
 }
