@@ -16,4 +16,5 @@ public class CombatSession : BaseEntity
     public DateTime? EndedAt { get; set; }
     public ulong? WinnerId { get; set; }
     public string? WinnerType { get; set; } // "team", "elimination", etc.
+    public List<Character> Participants { get; set; } = [];
 }

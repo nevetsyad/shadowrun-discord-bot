@@ -1,9 +1,8 @@
-namespace ShadowrunDiscordBot.Domain.Entities;
-
 using ShadowrunDiscordBot.Domain.Common;
 using ShadowrunDiscordBot.Domain.Events.Characters;
 using ShadowrunDiscordBot.Domain.ValueObjects;
 
+namespace ShadowrunDiscordBot.Domain.Entities;
 /// <summary>
 /// Shadowrun 3rd Edition Character entity with domain logic and invariants
 /// SR3 COMPLIANCE: Supports base attributes + racial modifiers = final attributes
@@ -35,7 +34,7 @@ public class Character : BaseEntity
     public int Willpower { get; private set; }
     
     // SR3 COMPLIANCE: Racial modifiers applied (for display)
-    public Dictionary<string, int> AppliedRacialModifiers { get; private set; } = new();
+    public Dictionary<string, int> AppliedRacialModifiers { get; private set; } = [];
     
     // Derived Attributes
     public int Reaction => (Quickness + Intelligence) / 2;
@@ -62,23 +61,23 @@ public class Character : BaseEntity
     public int StunConditionMonitor => (Willpower + 8) / 2;
     
     // Collections
-    private readonly List<CharacterSkill> _skills = new();
+    private readonly List<CharacterSkill> _skills = [];
     public IReadOnlyCollection<CharacterSkill> Skills => _skills.AsReadOnly();
     
-    private readonly List<CharacterCyberware> _cyberware = new();
+    private readonly List<CharacterCyberware> _cyberware = [];
     public IReadOnlyCollection<CharacterCyberware> Cyberware => _cyberware.AsReadOnly();
     
-    private readonly List<CharacterSpell> _spells = new();
+    private readonly List<CharacterSpell> _spells = [];
     public IReadOnlyCollection<CharacterSpell> Spells => _spells.AsReadOnly();
     
-    private readonly List<CharacterSpirit> _spirits = new();
+    private readonly List<CharacterSpirit> _spirits = [];
     public IReadOnlyCollection<CharacterSpirit> Spirits => _spirits.AsReadOnly();
     
-    private readonly List<CharacterGear> _gear = new();
+    private readonly List<CharacterGear> _gear = [];
     public IReadOnlyCollection<CharacterGear> Gear => _gear.AsReadOnly();
     
     // Domain Events
-    private readonly List<DomainEvent> _domainEvents = new();
+    private readonly List<DomainEvent> _domainEvents = [];
     public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents.AsReadOnly();
     
     // Priority System
@@ -95,6 +94,7 @@ public class Character : BaseEntity
     /// The archetype ID used to create this character (null for legacy characters)
     /// </summary>
     public string? ArchetypeId { get; private set; }
+    public Character CharacterData { get; set; } = new();
 
     // Private constructor for EF Core
     private Character()

@@ -16,4 +16,5 @@ public class CombatParticipant : BaseEntity
     public bool IsEliminated { get; set; }
     public DateTime? JoinedAt { get; set; }
     public DateTime? EliminatedAt { get; set; }
+    public Character? Character { get; set; }
 }

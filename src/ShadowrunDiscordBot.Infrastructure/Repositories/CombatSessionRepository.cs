@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ShadowrunDiscordBot.Domain.Entities;
 using ShadowrunDiscordBot.Domain.Interfaces;
+using ShadowrunDiscordBot.Infrastructure.Data;
 
 namespace ShadowrunDiscordBot.Infrastructure.Repositories;
 
@@ -18,7 +19,7 @@ public class CombatSessionRepository : Repository<CombatSession>, ICombatSession
     {
         return await _dbSet
             .Include(s => s.Participants)
-                .ThenInclude(p => p.Character)
+                .ThenInclude(p => p.CharacterData)
             .FirstOrDefaultAsync(s => s.DiscordChannelId == channelId && s.IsActive)
             .ConfigureAwait(false);
     }
@@ -28,7 +29,7 @@ public class CombatSessionRepository : Repository<CombatSession>, ICombatSession
     {
         return await _dbSet
             .Include(s => s.Participants)
-                .ThenInclude(p => p.Character)
+                .ThenInclude(p => p.CharacterData)
             .FirstOrDefaultAsync(s => s.Id == sessionId)
             .ConfigureAwait(false);
     }

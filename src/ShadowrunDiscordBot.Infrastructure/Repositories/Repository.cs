@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ShadowrunDiscordBot.Domain.Entities;
 using ShadowrunDiscordBot.Domain.Interfaces;
+using ShadowrunDiscordBot.Infrastructure.Data;
 
 namespace ShadowrunDiscordBot.Infrastructure.Repositories;
 
@@ -28,7 +29,7 @@ public class Repository<T> : IRepository<T> where T : class
     /// <inheritdoc/>
     public virtual async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _dbSet.FindAsync(new object[] { id }, cancellationToken).ConfigureAwait(false);
+        return await _dbSet.FindAsync([id], cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -59,9 +60,9 @@ public class Repository<T> : IRepository<T> where T : class
     }
 
     /// <inheritdoc/>
-    public virtual async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
+    public virtual async Task<bool> ExistsAsync(ulong id, CancellationToken cancellationToken = default)
     {
-        return await _dbSet.AnyAsync(e => EF.Property<int>(e, "Id") == id, cancellationToken).ConfigureAwait(false);
+        return await _dbSet.AnyAsync(e => EF.Property<ulong>(e, "Id") == id, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>

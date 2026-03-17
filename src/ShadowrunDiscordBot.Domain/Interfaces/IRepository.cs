@@ -36,7 +36,7 @@ public interface IRepository<T> where T : class
     /// <summary>
     /// Check if entity exists by ID
     /// </summary>
-    Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> ExistsAsync(ulong id, CancellationToken cancellationToken = default);
 
     // Specialized overloads for commonly used queries
     /// <summary>

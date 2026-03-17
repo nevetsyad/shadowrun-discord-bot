@@ -1,4 +1,5 @@
 using ShadowrunDiscordBot.Domain.Common;
+using ShadowrunDiscordBot.Models;
 
 namespace ShadowrunDiscordBot.Domain.Entities;
 
@@ -18,4 +19,10 @@ public class GameSession : BaseEntity
     public DateTime StartedAt { get; set; }
     public DateTime? EndedAt { get; set; }
     public string? StoryNotes { get; set; }
+    public List<Character> Participants { get; set; } = [];
+    public SessionStatus? Status { get; set; }
+    public List<NarrativeEvent> NarrativeEvents { get; set; } = [];
+    public List<PlayerChoice> PlayerChoices { get; set; } = [];
+    public List<NPCRelationship> NPCRelationships { get; set; } = [];
+    public List<Mission> ActiveMissions { get; set; } = [];
 }

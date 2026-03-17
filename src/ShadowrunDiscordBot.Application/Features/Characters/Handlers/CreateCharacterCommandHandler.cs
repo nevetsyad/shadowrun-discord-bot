@@ -1,5 +1,3 @@
-namespace ShadowrunDiscordBot.Application.Features.Characters.Handlers;
-
 using MediatR;
 using Microsoft.Extensions.Logging;
 using ShadowrunDiscordBot.Domain.Entities;
@@ -8,6 +6,7 @@ using ShadowrunDiscordBot.Application.DTOs;
 using ShadowrunDiscordBot.Application.Features.Characters.Commands;
 using ShadowrunDiscordBot.Application.Services;
 
+namespace ShadowrunDiscordBot.Application.Features.Characters.Handlers;
 /// <summary>
 /// SR3 COMPLIANT: Handler for creating a new character with base attributes + racial modifiers
 /// User provides BASE attributes, system automatically applies racial modifiers to get FINAL attributes
@@ -66,7 +65,7 @@ public class CreateCharacterCommandHandler : IRequestHandler<CreateCharacterComm
         // Check if character already exists
         var exists = await _characterRepository.ExistsAsync(
             request.DiscordUserId,
-            request.Character.Name,
+           // request.Character.Name,
             cancellationToken);
 
         if (exists)
@@ -134,12 +133,7 @@ public class CreateCharacterCommandHandler : IRequestHandler<CreateCharacterComm
     private async Task<ArchetypeTemplate> ValidateArchetypeAsync(CreateCharacterDto characterDto, CancellationToken cancellationToken)
     {
         // Retrieve archetype
-        var archetype = await _archetypeService.GetArchetypeByIdAsync(characterDto.ArchetypeId!, cancellationToken);
-        if (archetype == null)
-        {
-            throw new ArgumentException($"Archetype '{characterDto.ArchetypeId}' not found", nameof(characterDto.ArchetypeId));
-        }
-
+        var archetype = await _archetypeService.GetArchetypeByIdAsync(characterDto.ArchetypeId!, cancellationToken) ?? throw new ArgumentException($"Archetype '{characterDto.ArchetypeId}' not found", nameof(characterDto.ArchetypeId));
         if (!archetype.IsActive)
         {
             throw new ArgumentException($"Archetype '{archetype.Name}' is not available for character creation", nameof(characterDto.ArchetypeId));
@@ -176,14 +170,11 @@ public class CreateCharacterCommandHandler : IRequestHandler<CreateCharacterComm
             finalAttributes["Willpower"],
             cancellationToken);
 
-        if (!isValid)
-        {
-            throw new ArgumentException(
+        return !isValid
+            ? throw new ArgumentException(
                 $"Attributes do not meet archetype requirements:\n{string.Join("\n", errors)}",
-                nameof(characterDto));
-        }
-
-        return archetype;
+                nameof(characterDto))
+            : archetype;
     }
 
     /// <summary>
