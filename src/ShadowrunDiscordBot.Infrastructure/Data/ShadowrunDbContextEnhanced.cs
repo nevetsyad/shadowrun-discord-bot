@@ -14,6 +14,8 @@ public class ShadowrunDbContext : DbContext
     public DbSet<CharacterSkill> Skills { get; set; } = null!;
     public DbSet<CharacterGear> Gear { get; set; } = null!;
     public DbSet<CombatSession> CombatSessions { get; set; } = null!;
+    public DbSet<CombatParticipant> CombatParticipants { get; set; } = null!;
+    public DbSet<CombatAction> CombatActions { get; set; } = null!;
     
     // Enhanced entities (new)
     public DbSet<PriorityAllocation> PriorityAllocations { get; set; } = null!;
@@ -27,7 +29,23 @@ public class ShadowrunDbContext : DbContext
     public DbSet<CharacterCyberware> Cyberware { get; set; } = null!;
     public DbSet<CharacterSpell> Spells { get; set; } = null!;
     public DbSet<CharacterSpirit> Spirits { get; set; } = null!;
-    
+
+    // Game Session entities
+    public DbSet<GameSession> GameSessions { get; set; } = null!;
+    public DbSet<SessionParticipant> SessionParticipants { get; set; } = null!;
+    public DbSet<NarrativeEvent> NarrativeEvents { get; set; } = null!;
+    public DbSet<PlayerChoice> PlayerChoices { get; set; } = null!;
+    public DbSet<NPCRelationship> NPCRelationships { get; set; } = null!;
+    public DbSet<ActiveMission> ActiveMissions { get; set; } = null!;
+    public DbSet<SessionBreak> SessionBreaks { get; set; } = null!;
+    public DbSet<SessionTag> SessionTags { get; set; } = null!;
+    public DbSet<SessionNote> SessionNotes { get; set; } = null!;
+
+    // Completed Session entities
+    public DbSet<CompletedSession> CompletedSessions { get; set; } = null!;
+    public DbSet<CompletedSessionTag> CompletedSessionTags { get; set; } = null!;
+    public DbSet<CompletedSessionNote> CompletedSessionNotes { get; set; } = null!;
+
     public ShadowrunDbContext(DbContextOptions<ShadowrunDbContext> options)
         : base(options)
     {
@@ -486,7 +504,603 @@ public class ShadowrunDbContext : DbContext
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(true);
         });
-        
+
+        #endregion
+
+        #region Combat Participant Configuration
+
+        modelBuilder.Entity<CombatParticipant>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => e.CombatSessionId)
+                .HasDatabaseName("IX_CombatParticipants_CombatSessionId");
+
+            entity.HasIndex(e => e.CharacterId)
+                .HasDatabaseName("IX_CombatParticipants_CharacterId");
+
+            entity.HasIndex(e => new { e.CombatSessionId, e.TeamId })
+                .HasDatabaseName("IX_CombatParticipants_Session_Team");
+
+            entity.HasIndex(e => new { e.CombatSessionId, e.IsEliminated })
+                .HasDatabaseName("IX_CombatParticipants_Session_Active");
+
+            // Properties
+            entity.Property(e => e.TeamId)
+                .HasDefaultValue(0);
+
+            entity.Property(e => e.HitPoints)
+                .HasDefaultValue(10);
+
+            entity.Property(e => e.DamageTrack)
+                .HasDefaultValue(0);
+
+            entity.Property(e => e.IsEliminated)
+                .HasDefaultValue(false);
+
+            // Relationships
+            entity.HasOne(e => e.CombatSession)
+                .WithMany()
+                .HasForeignKey(e => e.CombatSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Character)
+                .WithMany()
+                .HasForeignKey(e => e.CharacterId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        #endregion
+
+        #region Combat Action Configuration
+
+        modelBuilder.Entity<CombatAction>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => e.CombatSessionId)
+                .HasDatabaseName("IX_CombatActions_CombatSessionId");
+
+            entity.HasIndex(e => e.ActorId)
+                .HasDatabaseName("IX_CombatActions_ActorId");
+
+            entity.HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_CombatActions_CreatedAt");
+
+            entity.HasIndex(e => new { e.CombatSessionId, e.CreatedAt })
+                .HasDatabaseName("IX_CombatActions_Session_Time");
+
+            // Properties
+            entity.Property(e => e.ActionType)
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasDefaultValue("Attack");
+
+            entity.Property(e => e.ActorName)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.TargetName)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Description)
+                .HasMaxLength(500);
+        });
+
+        #endregion
+
+        #region Game Session Configuration
+
+        modelBuilder.Entity<GameSession>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => e.DiscordChannelId)
+                .HasDatabaseName("IX_GameSessions_ChannelId");
+
+            entity.HasIndex(e => e.DiscordGuildId)
+                .HasDatabaseName("IX_GameSessions_GuildId");
+
+            entity.HasIndex(e => e.GameMasterUserId)
+                .HasDatabaseName("IX_GameSessions_GMUserId");
+
+            entity.HasIndex(e => new { e.Status, e.IsActive })
+                .HasDatabaseName("IX_GameSessions_Status_Active");
+
+            entity.HasIndex(e => e.InGameDateTime)
+                .HasDatabaseName("IX_GameSessions_InGameDateTime");
+
+            entity.HasIndex(e => e.LastActivityAt)
+                .HasDatabaseName("IX_GameSessions_LastActivityAt");
+
+            // Properties
+            entity.Property(e => e.CurrentLocation)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(e => e.LocationDescription)
+                .HasMaxLength(1000);
+
+            entity.Property(e => e.SessionName)
+                .HasMaxLength(200);
+
+            entity.Property(e => e.Notes)
+                .HasMaxLength(5000);
+
+            entity.Property(e => e.Metadata)
+                .HasColumnType("json");
+
+            // Relationships
+            entity.HasMany(e => e.Participants)
+                .WithOne()
+                .HasForeignKey(p => p.GameSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.NarrativeEvents)
+                .WithOne()
+                .HasForeignKey(e => e.GameSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.PlayerChoices)
+                .WithOne()
+                .HasForeignKey(c => c.GameSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.NPCRelationships)
+                .WithOne()
+                .HasForeignKey(r => r.GameSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.ActiveMissions)
+                .WithOne()
+                .HasForeignKey(m => m.GameSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        #endregion
+
+        #region Session Participant Configuration
+
+        modelBuilder.Entity<SessionParticipant>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => new { e.GameSessionId, e.DiscordUserId })
+                .IsUnique()
+                .HasDatabaseName("IX_SessionParticipants_Session_UserId");
+
+            entity.HasIndex(e => e.CharacterId)
+                .HasDatabaseName("IX_SessionParticipants_CharacterId");
+
+            entity.HasIndex(e => new { e.GameSessionId, e.IsActive })
+                .HasDatabaseName("IX_SessionParticipants_Session_Active");
+
+            entity.HasIndex(e => e.SessionKarma)
+                .HasDatabaseName("IX_SessionParticipants_Karma");
+
+            // Properties
+            entity.Property(e => e.Notes)
+                .HasMaxLength(1000);
+
+            // Relationships
+            entity.HasOne(e => e.GameSession)
+                .WithMany(s => s.Participants)
+                .HasForeignKey(e => e.GameSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Character)
+                .WithMany()
+                .HasForeignKey(e => e.CharacterId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        #endregion
+
+        #region Narrative Event Configuration
+
+        modelBuilder.Entity<NarrativeEvent>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => new { e.GameSessionId, e.EventType })
+                .HasDatabaseName("IX_NarrativeEvents_Session_Type");
+
+            entity.HasIndex(e => new { e.GameSessionId, e.Importance })
+                .HasDatabaseName("IX_NarrativeEvents_Session_Importance");
+
+            entity.HasIndex(e => new { e.GameSessionId, e.InGameDateTime })
+                .HasDatabaseName("IX_NarrativeEvents_Session_DateTime");
+
+            entity.HasIndex(e => new { e.GameSessionId, e.RecordedAt })
+                .HasDatabaseName("IX_NarrativeEvents_Session_Time");
+
+            // Properties
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(e => e.Description)
+                .IsRequired()
+                .HasMaxLength(2000);
+
+            entity.Property(e => e.NPCsInvolved)
+                .HasMaxLength(500);
+
+            entity.Property(e => e.Location)
+                .HasMaxLength(200);
+
+            entity.Property(e => e.Tags)
+                .HasMaxLength(500);
+
+            // Relationships
+            entity.HasOne(e => e.GameSession)
+                .WithMany(s => s.NarrativeEvents)
+                .HasForeignKey(e => e.GameSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.RelatedNarrativeEvent)
+                .WithMany()
+                .HasForeignKey(e => e.RelatedNarrativeEventId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        #endregion
+
+        #region Player Choice Configuration
+
+        modelBuilder.Entity<PlayerChoice>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => new { e.GameSessionId, e.MadeAt })
+                .HasDatabaseName("IX_PlayerChoices_Session_Time");
+
+            entity.HasIndex(e => e.DiscordUserId)
+                .HasDatabaseName("IX_PlayerChoices_UserId");
+
+            entity.HasIndex(e => e.IsResolved)
+                .HasDatabaseName("IX_PlayerChoices_IsResolved");
+
+            // Properties
+            entity.Property(e => e.ChoiceDescription)
+                .IsRequired()
+                .HasMaxLength(500);
+
+            entity.Property(e => e.PlayerDecision)
+                .IsRequired()
+                .HasMaxLength(500);
+
+            entity.Property(e => e.Consequences)
+                .HasMaxLength(1000);
+
+            // Relationships
+            entity.HasOne(e => e.GameSession)
+                .WithMany(s => s.PlayerChoices)
+                .HasForeignKey(e => e.GameSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.RelatedNarrativeEvent)
+                .WithMany()
+                .HasForeignKey(e => e.RelatedNarrativeEventId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        #endregion
+
+        #region NPC Relationship Configuration
+
+        modelBuilder.Entity<NPCRelationship>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => new { e.GameSessionId, e.NPCName })
+                .IsUnique()
+                .HasDatabaseName("IX_NPCRelationships_Session_Name");
+
+            entity.HasIndex(e => e.Attitude)
+                .HasDatabaseName("IX_NPCRelationships_Attitude");
+
+            entity.HasIndex(e => e.TrustLevel)
+                .HasDatabaseName("IX_NPCRelationships_Trust");
+
+            entity.HasIndex(e => new { e.GameSessionId, e.IsActive })
+                .HasDatabaseName("IX_NPCRelationships_Session_Active");
+
+            // Properties
+            entity.Property(e => e.NPCName)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.Property(e => e.NPCRole)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Organization)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Notes)
+                .HasMaxLength(1000);
+
+            entity.Property(e => e.FirstMeeting)
+                .HasMaxLength(500);
+
+            entity.Property(e => e.InteractionHistory)
+                .HasMaxLength(2000);
+
+            // Relationships
+            entity.HasOne(e => e.GameSession)
+                .WithMany(s => s.NPCRelationships)
+                .HasForeignKey(e => e.GameSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        #endregion
+
+        #region Active Mission Configuration
+
+        modelBuilder.Entity<ActiveMission>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => new { e.GameSessionId, e.Status })
+                .HasDatabaseName("IX_ActiveMissions_Session_Status");
+
+            entity.HasIndex(e => new { e.GameSessionId, e.MissionType })
+                .HasDatabaseName("IX_ActiveMissions_Session_Type");
+
+            entity.HasIndex(e => e.Deadline)
+                .HasDatabaseName("IX_ActiveMissions_Deadline");
+
+            entity.HasIndex(e => new { e.GameSessionId, e.Status, e.Deadline })
+                .HasFilter("[Status] IN ('InProgress', 'Planning')")
+                .HasDatabaseName("IX_ActiveMissions_Active_Deadline");
+
+            // Properties
+            entity.Property(e => e.MissionName)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(e => e.Johnson)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.MissionType)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(e => e.Objective)
+                .IsRequired()
+                .HasMaxLength(1000);
+
+            entity.Property(e => e.TargetLocation)
+                .HasMaxLength(200);
+
+            entity.Property(e => e.TargetOrganization)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Notes)
+                .HasMaxLength(2000);
+
+            // Relationships
+            entity.HasOne(e => e.GameSession)
+                .WithMany(s => s.ActiveMissions)
+                .HasForeignKey(e => e.GameSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        #endregion
+
+        #region Session Break Configuration
+
+        modelBuilder.Entity<SessionBreak>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => new { e.GameSessionId, e.BreakStartedAt })
+                .HasDatabaseName("IX_SessionBreaks_Session_Time");
+
+            entity.HasIndex(e => e.BreakEndedAt)
+                .HasDatabaseName("IX_SessionBreaks_EndedAt");
+
+            entity.HasIndex(e => new { e.GameSessionId, e.IsAutomatic })
+                .HasDatabaseName("IX_SessionBreaks_Session_Automatic");
+
+            // Properties
+            entity.Property(e => e.Reason)
+                .HasMaxLength(200);
+
+            // Relationships
+            entity.HasOne(e => e.GameSession)
+                .WithMany()
+                .HasForeignKey(e => e.GameSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        #endregion
+
+        #region Session Tag Configuration
+
+        modelBuilder.Entity<SessionTag>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => new { e.GameSessionId, e.TagName })
+                .IsUnique()
+                .HasDatabaseName("IX_SessionTags_Session_Name");
+
+            entity.HasIndex(e => new { e.GameSessionId, e.Category })
+                .HasDatabaseName("IX_SessionTags_Session_Category");
+
+            // Properties
+            entity.Property(e => e.TagName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(e => e.Category)
+                .HasMaxLength(50);
+
+            // Relationships
+            entity.HasOne(e => e.GameSession)
+                .WithMany(s => s.Tags)
+                .HasForeignKey(e => e.GameSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        #endregion
+
+        #region Session Note Configuration
+
+        modelBuilder.Entity<SessionNote>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => new { e.GameSessionId, e.IsPinned })
+                .HasDatabaseName("IX_SessionNotes_Session_Pinned");
+
+            entity.HasIndex(e => new { e.GameSessionId, e.NoteType })
+                .HasDatabaseName("IX_SessionNotes_Session_Type");
+
+            entity.HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_SessionNotes_CreatedAt");
+
+            // Properties
+            entity.Property(e => e.Content)
+                .IsRequired()
+                .HasMaxLength(2000);
+
+            entity.Property(e => e.NoteType)
+                .HasMaxLength(50);
+
+            // Relationships
+            entity.HasOne(e => e.GameSession)
+                .WithMany(s => s.Notes)
+                .HasForeignKey(e => e.GameSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        #endregion
+
+        #region Completed Session Configuration
+
+        modelBuilder.Entity<CompletedSession>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => new { e.OriginalSessionId })
+                .HasDatabaseName("IX_CompletedSessions_OriginalId");
+
+            entity.HasIndex(e => e.DiscordChannelId)
+                .HasDatabaseName("IX_CompletedSessions_ChannelId");
+
+            entity.HasIndex(e => e.DiscordGuildId)
+                .HasDatabaseName("IX_CompletedSessions_GuildId");
+
+            entity.HasIndex(e => e.StartedAt)
+                .HasDatabaseName("IX_CompletedSessions_StartedAt");
+
+            entity.HasIndex(e => e.ArchivedAt)
+                .HasDatabaseName("IX_CompletedSessions_ArchivedAt");
+
+            entity.HasIndex(e => new { e.Category, e.ArchivedAt })
+                .HasDatabaseName("IX_CompletedSessions_Category_Date");
+
+            // Properties
+            entity.Property(e => e.SessionName)
+                .HasMaxLength(200);
+
+            entity.Property(e => e.Outcome)
+                .HasMaxLength(2000);
+
+            entity.Property(e => e.Category)
+                .HasMaxLength(50);
+
+            entity.Property(e => e.Metadata)
+                .HasColumnType("json");
+
+            // Relationships
+            entity.HasOne(e => e.GameSession)
+                .WithMany()
+                .HasForeignKey(e => e.OriginalSessionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(e => e.Tags)
+                .WithOne()
+                .HasForeignKey(t => t.CompletedSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Notes)
+                .WithOne()
+                .HasForeignKey(n => n.CompletedSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        #endregion
+
+        #region Completed Session Tag Configuration
+
+        modelBuilder.Entity<CompletedSessionTag>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => new { e.CompletedSessionId, e.TagName })
+                .IsUnique()
+                .HasDatabaseName("IX_CompletedSessionTags_Session_Name");
+
+            // Properties
+            entity.Property(e => e.TagName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(e => e.Category)
+                .HasMaxLength(50);
+
+            // Relationships
+            entity.HasOne(e => e.CompletedSession)
+                .WithMany(s => s.Tags)
+                .HasForeignKey(e => e.CompletedSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        #endregion
+
+        #region Completed Session Note Configuration
+
+        modelBuilder.Entity<CompletedSessionNote>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Indexes
+            entity.HasIndex(e => new { e.CompletedSessionId, e.NoteType })
+                .HasDatabaseName("IX_CompletedSessionNotes_Session_Type");
+
+            entity.HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("IX_CompletedSessionNotes_CreatedAt");
+
+            // Properties
+            entity.Property(e => e.Content)
+                .IsRequired()
+                .HasMaxLength(2000);
+
+            entity.Property(e => e.NoteType)
+                .HasMaxLength(50);
+
+            // Relationships
+            entity.HasOne(e => e.CompletedSession)
+                .WithMany(s => s.Notes)
+                .HasForeignKey(e => e.CompletedSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         #endregion
     }
 }
