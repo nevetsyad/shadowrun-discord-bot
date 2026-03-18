@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text;
 using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ShadowrunDiscordBot.Commands;
 using ShadowrunDiscordBot.Services;

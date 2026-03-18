@@ -708,6 +708,22 @@ public class CompletedSession
     public string? Metadata { get; set; }
 
     /// <summary>
+    /// Total karma awarded during the session (for tracking rewards)
+    /// </summary>
+    public int TotalKarmaAwarded { get; set; }
+
+    /// <summary>
+    /// Total nuyen awarded during the session (for tracking rewards)
+    /// </summary>
+    public long TotalNuyenAwarded { get; set; }
+
+    /// <summary>
+    /// Summary of session outcomes and key events
+    /// </summary>
+    [MaxLength(3000)]
+    public string? Summary { get; set; }
+
+    /// <summary>
     /// Tags associated with this session
     /// </summary>
     public virtual ICollection<CompletedSessionTag> Tags { get; set; } = new List<CompletedSessionTag>();

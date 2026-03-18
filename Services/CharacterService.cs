@@ -102,17 +102,18 @@ public class CharacterService
                 Name = createDto.Name,
                 Metatype = createDto.Metatype ?? "Human",
                 Body = createDto.Body ?? 1,
-                Agility = createDto.Agility ?? 1,
-                Reaction = createDto.Reaction ?? 1,
+                // SR3 FIX: Agility maps to Quickness in SR3
+                Quickness = createDto.Agility ?? createDto.Quickness ?? 1,
+                // SR3 FIX: Reaction is calculated (Quickness + Intelligence) / 2, can't be set directly
                 Strength = createDto.Strength ?? 1,
                 Charisma = createDto.Charisma ?? 1,
-                Intuition = createDto.Intuition ?? 1,
-                Logic = createDto.Logic ?? 1,
+                // SR3 FIX: Intuition/Logic map to Intelligence in SR3
+                Intelligence = createDto.Intuition ?? createDto.Logic ?? createDto.Intelligence ?? 1,
                 Willpower = createDto.Willpower ?? 1,
-                Edge = createDto.Edge ?? 1,
+                // SR3 FIX: Edge doesn't exist in SR3, ignoring
                 Magic = createDto.Magic ?? 0,
-                Resonance = createDto.Resonance ?? 0,
-                Essence = createDto.Essence ?? 6.0m,
+                // SR3 FIX: Resonance doesn't exist in SR3, ignoring
+                Essence = (int)((createDto.Essence ?? 6.0m) * 100), // Convert to internal format
                 Nuyen = createDto.Nuyen ?? 0,
                 Karma = createDto.Karma ?? 0
             };
@@ -146,17 +147,19 @@ public class CharacterService
             if (updateDto.Name != null) character.Name = updateDto.Name;
             if (updateDto.Metatype != null) character.Metatype = updateDto.Metatype;
             if (updateDto.Body.HasValue) character.Body = updateDto.Body.Value;
-            if (updateDto.Agility.HasValue) character.Agility = updateDto.Agility.Value;
-            if (updateDto.Reaction.HasValue) character.Reaction = updateDto.Reaction.Value;
+            // SR3 FIX: Agility maps to Quickness
+            if (updateDto.Agility.HasValue) character.Quickness = updateDto.Agility.Value;
+            // SR3 FIX: Reaction is calculated, can't be set directly - ignoring
             if (updateDto.Strength.HasValue) character.Strength = updateDto.Strength.Value;
             if (updateDto.Charisma.HasValue) character.Charisma = updateDto.Charisma.Value;
-            if (updateDto.Intuition.HasValue) character.Intuition = updateDto.Intuition.Value;
-            if (updateDto.Logic.HasValue) character.Logic = updateDto.Logic.Value;
+            // SR3 FIX: Intuition/Logic map to Intelligence
+            if (updateDto.Intuition.HasValue) character.Intelligence = updateDto.Intuition.Value;
+            if (updateDto.Logic.HasValue) character.Intelligence = updateDto.Logic.Value;
             if (updateDto.Willpower.HasValue) character.Willpower = updateDto.Willpower.Value;
-            if (updateDto.Edge.HasValue) character.Edge = updateDto.Edge.Value;
+            // SR3 FIX: Edge doesn't exist in SR3 - ignoring
             if (updateDto.Magic.HasValue) character.Magic = updateDto.Magic.Value;
-            if (updateDto.Resonance.HasValue) character.Resonance = updateDto.Resonance.Value;
-            if (updateDto.Essence.HasValue) character.Essence = updateDto.Essence.Value;
+            // SR3 FIX: Resonance doesn't exist in SR3 - ignoring
+            if (updateDto.Essence.HasValue) character.Essence = (int)(updateDto.Essence.Value * 100);
             if (updateDto.Nuyen.HasValue) character.Nuyen = updateDto.Nuyen.Value;
             if (updateDto.Karma.HasValue) character.Karma = updateDto.Karma.Value;
 
@@ -340,17 +343,21 @@ public class CharacterService
             SpellsCount = c.Spells?.Count ?? 0,
             GearCount = c.Gear?.Count ?? 0,
             Body = c.Body,
-            Agility = c.Agility,
+            // SR3 FIX: Map Quickness to Agility for SR4/5 compatibility
+            Agility = c.Quickness,
             Reaction = c.Reaction,
             Strength = c.Strength,
             Charisma = c.Charisma,
-            Intuition = c.Intuition,
-            Logic = c.Logic,
+            // SR3 FIX: SR3 has Intelligence, not Intuition/Logic
+            Intuition = c.Intelligence,
+            Logic = c.Intelligence,
             Willpower = c.Willpower,
-            Edge = c.Edge,
+            // SR3 FIX: Edge doesn't exist in SR3, default to 0
+            Edge = 0,
             Magic = c.Magic,
-            Resonance = c.Resonance,
-            Essence = c.Essence
+            // SR3 FIX: Resonance doesn't exist in SR3, default to 0
+            Resonance = 0,
+            Essence = c.EssenceDecimal
         };
     }
 
@@ -365,17 +372,21 @@ public class CharacterService
             CreatedAt = c.CreatedAt,
             UpdatedAt = c.UpdatedAt,
             Body = c.Body,
-            Agility = c.Agility,
+            // SR3 FIX: Map Quickness to Agility for SR4/5 compatibility
+            Agility = c.Quickness,
             Reaction = c.Reaction,
             Strength = c.Strength,
             Charisma = c.Charisma,
-            Intuition = c.Intuition,
-            Logic = c.Logic,
+            // SR3 FIX: SR3 has Intelligence, not Intuition/Logic
+            Intuition = c.Intelligence,
+            Logic = c.Intelligence,
             Willpower = c.Willpower,
-            Edge = c.Edge,
+            // SR3 FIX: Edge doesn't exist in SR3, default to 0
+            Edge = 0,
             Magic = c.Magic,
-            Resonance = c.Resonance,
-            Essence = c.Essence,
+            // SR3 FIX: Resonance doesn't exist in SR3, default to 0
+            Resonance = 0,
+            Essence = c.EssenceDecimal,
             Nuyen = c.Nuyen,
             Karma = c.Karma,
             Skills = c.Skills?.Select(s => new CharacterSkillDto

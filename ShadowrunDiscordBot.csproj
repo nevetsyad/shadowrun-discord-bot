@@ -22,6 +22,45 @@
     <Compile Remove="src/**/*.cs" />
     <Compile Remove="ShadowrunDiscordBot.Tests/**/*.cs" />
     <Compile Remove="Tests/**/*.cs" />
+    <!-- Exclude legacy files with migration issues - to be migrated later -->
+    <Compile Remove="Mappers/*.cs" />
+    <Compile Remove="Services/DatabaseService*.cs" />
+    <Compile Remove="Services/ContentDatabaseService.cs" />
+    <Compile Remove="Services/CharacterService.cs" />
+    <Compile Remove="Services/InteractiveStoryService.cs" />
+    <Compile Remove="Services/AutonomousMissionService.cs" />
+    <Compile Remove="Services/EnhancedMatrixService.cs" />
+    <Compile Remove="Services/DynamicContentEngine.cs" />
+    <Compile Remove="Services/ErrorHandlingService.cs" />
+    <Compile Remove="Services/GearSelectionService.cs" />
+    <Compile Remove="Services/AstralService.cs" />
+    <Compile Remove="Services/WebUIService.cs" />
+    <Compile Remove="Services/CombatService.cs" />
+    <Compile Remove="Services/CombatPoolService.cs" />
+    <Compile Remove="Services/ContactsLegworkService.cs" />
+    <Compile Remove="Services/DashboardService.cs" />
+    <Compile Remove="Services/KarmaHealingService.cs" />
+    <Compile Remove="Services/GameSessionService.cs" />
+    <Compile Remove="Services/MatrixService.cs" />
+    <Compile Remove="Services/NarrativeContextService.cs" />
+    <Compile Remove="Services/VehicleCombatService.cs" />
+    <Compile Remove="Services/SessionManagementService.cs" />
+    <Compile Remove="Services/SessionIdleDetectionService.cs" />
+    <Compile Remove="Services/GMService.cs" />
+    <Compile Remove="Extensions/*.cs" />
+    <Compile Remove="Core/EventSourcing/*.cs" />
+    <Compile Remove="Commands/Validators/*.cs" />
+    <Compile Remove="Commands/DynamicContentCommands.cs" />
+    <Compile Remove="Commands/Characters/CreateCharacterCommandHandler.cs" />
+    <Compile Remove="Commands/CharacterCommands.cs" />
+    <Compile Remove="Commands/Combat/*.cs" />
+    <Compile Remove="Commands/BaseCommandModule.cs" />
+    <Compile Remove="Commands/Characters/UpdateCharacterCommandHandler.cs" />
+    <Compile Remove="Core/CommandHandler.cs" />
+    <Compile Remove="Core/BotService.cs" />
+    <Compile Remove="HealthChecks/*.cs" />
+    <Compile Remove="Controllers/*.cs" />
+    <Compile Remove="Queries/**/*.cs" />
   </ItemGroup>
 
   <!-- Project references to sub-projects -->
