@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using ShadowrunDiscordBot.Models;
+using ShadowrunDiscordBot.Mappers;
+using ShadowrunDiscordBot.Domain.Entities;
+using Vehicle = ShadowrunDiscordBot.Domain.Entities.Vehicle;
 
 namespace ShadowrunDiscordBot.Services;
 
@@ -113,26 +116,30 @@ public partial class DatabaseService
 
     #region Combat Pool Operations
 
-    public async Task AddCombatPoolStateAsync(CombatPoolState state)
+    public async Task AddCombatPoolStateAsync(Domain.Entities.CombatPoolState state)
     {
-        _context.CombatPoolStates.Add(state);
+        var model = EnhancedSystemsMapper.ToModel(state);
+        _context.CombatPoolStates.Add(model);
         await _context.SaveChangesAsync();
     }
 
-    public async Task<CombatPoolState?> GetCombatPoolStateAsync(int poolStateId)
+    public async Task<Domain.Entities.CombatPoolState?> GetCombatPoolStateAsync(int poolStateId)
     {
-        return await _context.CombatPoolStates.FindAsync(poolStateId);
+        var model = await _context.CombatPoolStates.FindAsync(poolStateId);
+        return model != null ? EnhancedSystemsMapper.ToDomain(model) : null;
     }
 
-    public async Task<CombatPoolState?> GetCombatPoolStateForCharacterAsync(int characterId, int combatSessionId)
+    public async Task<Domain.Entities.CombatPoolState?> GetCombatPoolStateForCharacterAsync(int characterId, int combatSessionId)
     {
-        return await _context.CombatPoolStates
+        var model = await _context.CombatPoolStates
             .FirstOrDefaultAsync(p => p.CharacterId == characterId && p.CombatSessionId == combatSessionId);
+        return model != null ? EnhancedSystemsMapper.ToDomain(model) : null;
     }
 
-    public async Task UpdateCombatPoolStateAsync(CombatPoolState state)
+    public async Task UpdateCombatPoolStateAsync(Domain.Entities.CombatPoolState state)
     {
-        _context.CombatPoolStates.Update(state);
+        var model = EnhancedSystemsMapper.ToModel(state);
+        _context.CombatPoolStates.Update(model);
         await _context.SaveChangesAsync();
     }
 
@@ -148,20 +155,23 @@ public partial class DatabaseService
 
     public async Task AddVehicleAsync(Vehicle vehicle)
     {
-        _context.Vehicles.Add(vehicle);
+        var model = EnhancedSystemsMapper.ToModel(vehicle);
+        _context.Vehicles.Add(model);
         await _context.SaveChangesAsync();
     }
 
     public async Task<Vehicle?> GetVehicleAsync(int vehicleId)
     {
-        return await _context.Vehicles
+        var model = await _context.Vehicles
             .Include(v => v.Weapons)
             .FirstOrDefaultAsync(v => v.Id == vehicleId);
+        return model != null ? EnhancedSystemsMapper.ToDomain(model) : null;
     }
 
     public async Task UpdateVehicleAsync(Vehicle vehicle)
     {
-        _context.Vehicles.Update(vehicle);
+        var model = EnhancedSystemsMapper.ToModel(vehicle);
+        _context.Vehicles.Update(model);
         await _context.SaveChangesAsync();
     }
 
@@ -184,23 +194,26 @@ public partial class DatabaseService
         await _context.SaveChangesAsync();
     }
 
-    public async Task AddDroneAsync(Drone drone)
+    public async Task AddDroneAsync(Domain.Entities.Drone drone)
     {
-        _context.Drones.Add(drone);
+        var model = EnhancedSystemsMapper.ToModel(drone);
+        _context.Drones.Add(model);
         await _context.SaveChangesAsync();
     }
 
-    public async Task<Drone?> GetDroneAsync(int droneId)
+    public async Task<Domain.Entities.Drone?> GetDroneAsync(int droneId)
     {
-        return await _context.Drones
+        var model = await _context.Drones
             .Include(d => d.Autosofts)
             .Include(d => d.Weapons)
             .FirstOrDefaultAsync(d => d.Id == droneId);
+        return model != null ? EnhancedSystemsMapper.ToDomain(model) : null;
     }
 
-    public async Task UpdateDroneAsync(Drone drone)
+    public async Task UpdateDroneAsync(Domain.Entities.Drone drone)
     {
-        _context.Drones.Update(drone);
+        var model = EnhancedSystemsMapper.ToModel(drone);
+        _context.Drones.Update(model);
         await _context.SaveChangesAsync();
     }
 
@@ -212,10 +225,11 @@ public partial class DatabaseService
 
     public async Task<List<Vehicle>> GetCharacterVehiclesAsync(int characterId)
     {
-        return await _context.Vehicles
+        var models = await _context.Vehicles
             .Where(v => v.CharacterId == characterId)
             .Include(v => v.Weapons)
             .ToListAsync();
+        return models.Select(m => EnhancedSystemsMapper.ToDomain(m)).ToList();
     }
 
     #endregion

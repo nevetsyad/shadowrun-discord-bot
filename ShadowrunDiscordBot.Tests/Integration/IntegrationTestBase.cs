@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using ShadowrunDiscordBot.Infrastructure.Data;
 using ShadowrunDiscordBot.Services;
 
 namespace ShadowrunDiscordBot.Tests.Integration;

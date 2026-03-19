@@ -4,6 +4,9 @@ using Microsoft.Extensions.Logging;
 using ShadowrunDiscordBot.Exceptions; // GPT-5.4 FIX: Added for CharacterAlreadyExistsException
 using ShadowrunDiscordBot.Models;
 using ShadowrunDiscordBot.Infrastructure.Data;
+using ShadowrunDiscordBot.Mappers;
+using ShadowrunDiscordBot.Domain.Entities;
+using Character = ShadowrunDiscordBot.Domain.Entities.Character;
 
 namespace ShadowrunDiscordBot.Services;
 
@@ -97,9 +100,9 @@ public partial class DatabaseService : IAsyncDisposable
 
     #region Character Operations
 
-    public async Task<ShadowrunCharacter?> GetCharacterAsync(int characterId)
+    public async Task<Character?> GetCharacterAsync(int characterId)
     {
-        return await _context.Characters
+        var model = await _context.Characters
             .AsNoTracking() // GPT-5.4 FIX: Read-only query should not track entities
             .Include(c => c.Skills)
             .Include(c => c.Cyberware)
@@ -108,11 +111,13 @@ public partial class DatabaseService : IAsyncDisposable
             .Include(c => c.Gear)
             .FirstOrDefaultAsync(c => c.Id == characterId)
             .ConfigureAwait(false);
+
+        return model != null ? CharacterMapper.ToEntity(model) : null;
     }
 
-    public async Task<ShadowrunCharacter?> GetCharacterByNameAsync(ulong userId, string name)
+    public async Task<Character?> GetCharacterByNameAsync(ulong userId, string name)
     {
-        return await _context.Characters
+        var model = await _context.Characters
             .AsNoTracking() // GPT-5.4 FIX: Read-only query should not track entities
             .Include(c => c.Skills)
             .Include(c => c.Cyberware)
@@ -121,26 +126,31 @@ public partial class DatabaseService : IAsyncDisposable
             .Include(c => c.Gear)
             .FirstOrDefaultAsync(c => c.DiscordUserId == userId && c.Name == name)
             .ConfigureAwait(false);
+
+        return model != null ? CharacterMapper.ToEntity(model) : null;
     }
 
 
-    public async Task<List<ShadowrunCharacter>> GetUserCharactersAsync(ulong userId)
+    public async Task<List<Character>> GetUserCharactersAsync(ulong userId)
     {
-        return await _context.Characters
+        var models = await _context.Characters
             .AsNoTracking() // GPT-5.4 FIX: Read-only query should not track entities
             .Where(c => c.DiscordUserId == userId)
             .OrderBy(c => c.Name)
             .ThenBy(c => c.Id) // GPT-5.4 FIX: Stable ordering for deterministic results
             .ToListAsync()
             .ConfigureAwait(false);
+
+        return models.Select(m => CharacterMapper.ToEntity(m)).ToList();
     }
 
-    public async Task<ShadowrunCharacter> CreateCharacterAsync(ShadowrunCharacter character)
+    public async Task<Character> CreateCharacterAsync(Character character)
     {
-        character.CreatedAt = DateTime.UtcNow;
-        character.UpdatedAt = DateTime.UtcNow;
+        var model = CharacterMapper.ToModel(character);
+        model.CreatedAt = DateTime.UtcNow;
+        model.UpdatedAt = DateTime.UtcNow;
 
-        _context.Characters.Add(character);
+        _context.Characters.Add(model);
 
         // GPT-5.4 FIX: Catch unique constraint violation and translate to domain exception
         try
@@ -158,17 +168,18 @@ public partial class DatabaseService : IAsyncDisposable
         _logger.LogInformation("Created character {CharacterName} for user {UserId}",
             character.Name, character.DiscordUserId);
 
-        return character;
+        return CharacterMapper.ToEntity(model);
     }
 
-    public async Task<ShadowrunCharacter> UpdateCharacterAsync(ShadowrunCharacter character)
+    public async Task<Character> UpdateCharacterAsync(Character character)
     {
-        character.UpdatedAt = DateTime.UtcNow;
+        var model = CharacterMapper.ToModel(character);
+        model.UpdatedAt = DateTime.UtcNow;
 
-        _context.Characters.Update(character);
+        _context.Characters.Update(model);
         await _context.SaveChangesAsync().ConfigureAwait(false);
 
-        return character;
+        return CharacterMapper.ToEntity(model);
     }
 
     public async Task<bool> DeleteCharacterAsync(int characterId)
@@ -190,9 +201,9 @@ public partial class DatabaseService : IAsyncDisposable
     /// Get all characters.
     /// GPT-5.4 FIX: Restored original non-paginated semantics for backward compatibility.
     /// </summary>
-    public async Task<List<ShadowrunCharacter>> GetAllCharactersAsync()
+    public async Task<List<Character>> GetAllCharactersAsync()
     {
-        return await _context.Characters
+        var models = await _context.Characters
             .AsNoTracking() // GPT-5.4 FIX: Read-only query should not track entities
             .Include(c => c.Skills)
             .Include(c => c.Cyberware)
@@ -203,6 +214,8 @@ public partial class DatabaseService : IAsyncDisposable
             .ThenBy(c => c.Id) // GPT-5.4 FIX: Stable ordering for deterministic results
             .ToListAsync()
             .ConfigureAwait(false);
+
+        return models.Select(m => CharacterMapper.ToEntity(m)).ToList();
     }
 
     /// <summary>
@@ -212,14 +225,14 @@ public partial class DatabaseService : IAsyncDisposable
     /// <param name="skip">Number of records to skip (for pagination)</param>
     /// <param name="take">Number of records to take (for pagination). Max: 100</param>
     /// <returns>Paginated list of characters</returns>
-    public async Task<List<ShadowrunCharacter>> GetCharactersPageAsync(int skip, int take)
+    public async Task<List<Character>> GetCharactersPageAsync(int skip, int take)
     {
         // GPT-5.4 FIX: Validate pagination parameters
         if (skip < 0) skip = 0;
         if (take <= 0) take = 50;
         if (take > 100) take = 100; // Prevent excessive data retrieval
 
-        return await _context.Characters
+        var models = await _context.Characters
             .AsNoTracking() // GPT-5.4 FIX: Read-only query should not track entities
             .Include(c => c.Skills)
             .Include(c => c.Cyberware)
@@ -232,13 +245,15 @@ public partial class DatabaseService : IAsyncDisposable
             .Take(take)
             .ToListAsync()
             .ConfigureAwait(false);
+
+        return models.Select(m => CharacterMapper.ToEntity(m)).ToList();
     }
 
     #endregion
 
     #region Combat Operations
 
-    public async Task<CombatSession> CreateCombatSessionAsync(ulong channelId, ulong guildId)
+    public async Task<Domain.Entities.CombatSession> CreateCombatSessionAsync(ulong channelId, ulong guildId)
     {
         var session = new CombatSession
         {
@@ -254,43 +269,49 @@ public partial class DatabaseService : IAsyncDisposable
         _logger.LogInformation("Created combat session {SessionId} in channel {ChannelId}",
             session.Id, channelId);
 
-        return session;
+        return CombatMapper.ToDomain(session);
     }
 
-    public async Task<CombatSession> AddCombatSessionAsync(CombatSession session)
+    public async Task<Domain.Entities.CombatSession> AddCombatSessionAsync(Domain.Entities.CombatSession session)
     {
-        _context.CombatSessions.Add(session);
+        var model = CombatMapper.ToModel(session);
+        _context.CombatSessions.Add(model);
         await _context.SaveChangesAsync().ConfigureAwait(false);
 
         _logger.LogInformation("Added combat session {SessionId} in channel {ChannelId}",
             session.Id, session.DiscordChannelId);
 
-        return session;
+        return CombatMapper.ToDomain(model);
     }
 
-    public async Task<CombatSession?> GetActiveCombatSessionAsync(ulong channelId)
+    public async Task<Domain.Entities.CombatSession?> GetActiveCombatSessionAsync(ulong channelId)
     {
-        return await _context.CombatSessions
+        var model = await _context.CombatSessions
             .AsNoTracking() // GPT-5.4 FIX: Read-only query should not track entities
             .Include(s => s.Participants)
                 .ThenInclude(p => p.Character)
             .FirstOrDefaultAsync(s => s.DiscordChannelId == channelId && s.IsActive)
             .ConfigureAwait(false);
+
+        return model != null ? CombatMapper.ToDomain(model) : null;
     }
 
-    public async Task<CombatSession?> GetCombatSessionAsync(int sessionId)
+    public async Task<Domain.Entities.CombatSession?> GetCombatSessionAsync(int sessionId)
     {
-        return await _context.CombatSessions
+        var model = await _context.CombatSessions
             .AsNoTracking() // GPT-5.4 FIX: Read-only query should not track entities
             .Include(s => s.Participants)
                 .ThenInclude(p => p.Character)
             .FirstOrDefaultAsync(s => s.Id == sessionId)
             .ConfigureAwait(false);
+
+        return model != null ? CombatMapper.ToDomain(model) : null;
     }
 
-    public async Task UpdateCombatSessionAsync(CombatSession session)
+    public async Task UpdateCombatSessionAsync(Domain.Entities.CombatSession session)
     {
-        _context.CombatSessions.Update(session);
+        var model = CombatMapper.ToModel(session);
+        _context.CombatSessions.Update(model);
         await _context.SaveChangesAsync().ConfigureAwait(false);
     }
 
@@ -343,25 +364,29 @@ public partial class DatabaseService : IAsyncDisposable
         return action;
     }
 
-    public async Task<CombatSession?> GetAnyActiveCombatSessionAsync()
+    public async Task<Domain.Entities.CombatSession?> GetAnyActiveCombatSessionAsync()
     {
-        return await _context.CombatSessions
+        var model = await _context.CombatSessions
             .AsNoTracking() // GPT-5.4 FIX: Read-only query should not track entities
             .Include(s => s.Participants)
                 .ThenInclude(p => p.Character)
             .FirstOrDefaultAsync(s => s.IsActive)
             .ConfigureAwait(false);
+
+        return model != null ? CombatMapper.ToDomain(model) : null;
     }
 
-    public async Task<List<CombatSession>> GetRecentCombatSessionsAsync(int limit = 10)
+    public async Task<List<Domain.Entities.CombatSession>> GetRecentCombatSessionsAsync(int limit = 10)
     {
-        return await _context.CombatSessions
+        var models = await _context.CombatSessions
             .AsNoTracking() // GPT-5.4 FIX: Read-only query should not track entities
             .Include(s => s.Participants)
             .OrderByDescending(s => s.StartedAt)
             .Take(limit)
             .ToListAsync()
             .ConfigureAwait(false);
+
+        return models.Select(m => CombatMapper.ToDomain(m)).ToList();
     }
 
     public async Task<CombatParticipant?> GetCombatParticipantAsync(int participantId)
@@ -384,9 +409,9 @@ public partial class DatabaseService : IAsyncDisposable
             .ConfigureAwait(false);
     }
 
-    public async Task<ShadowrunCharacter?> GetCharacterByIdAsync(int characterId)
+    public async Task<Character?> GetCharacterByIdAsync(int characterId)
     {
-        return await _context.Characters
+        var model = await _context.Characters
             .AsNoTracking() // GPT-5.4 FIX: Read-only query should not track entities
             .Include(c => c.Skills)
             .Include(c => c.Cyberware)
@@ -395,6 +420,8 @@ public partial class DatabaseService : IAsyncDisposable
             .Include(c => c.Gear)
             .FirstOrDefaultAsync(c => c.Id == characterId)
             .ConfigureAwait(false);
+
+        return model != null ? CharacterMapper.ToEntity(model) : null;
     }
 
     #endregion
@@ -457,38 +484,44 @@ public partial class DatabaseService : IAsyncDisposable
 
     #region Matrix Operations
 
-    public async Task<MatrixRun?> GetActiveMatrixRunAsync(int characterId)
+    public async Task<MatrixSession?> GetActiveMatrixRunAsync(int characterId)
     {
-        return await _context.MatrixRuns
+        var model = await _context.MatrixRuns
             .AsNoTracking() // GPT-5.4 FIX: Read-only query should not track entities
             .Include(r => r.ICEncounters)
             .FirstOrDefaultAsync(r => r.CharacterId == characterId && r.EndedAt == null);
+
+        return model != null ? MatrixRunMapper.ToDomain(model) : null;
     }
 
-    public async Task<MatrixRun?> GetMatrixRunAsync(int runId)
+    public async Task<MatrixSession?> GetMatrixRunAsync(int runId)
     {
-        return await _context.MatrixRuns
+        var model = await _context.MatrixRuns
             .AsNoTracking() // GPT-5.4 FIX: Read-only query should not track entities
             .Include(r => r.ICEncounters)
             .FirstOrDefaultAsync(r => r.Id == runId);
+
+        return model != null ? MatrixRunMapper.ToDomain(model) : null;
     }
 
-    public async Task<MatrixRun> CreateMatrixRunAsync(MatrixRun run)
+    public async Task<MatrixSession> CreateMatrixRunAsync(MatrixSession session)
     {
-        _context.MatrixRuns.Add(run);
+        var model = MatrixRunMapper.ToModel(session);
+        _context.MatrixRuns.Add(model);
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Created matrix run {RunId} for character {CharacterId}",
-            run.Id, run.CharacterId);
+            model.Id, model.CharacterId);
 
-        return run;
+        return MatrixRunMapper.ToDomain(model);
     }
 
-    public async Task<MatrixRun> UpdateMatrixRunAsync(MatrixRun run)
+    public async Task<MatrixSession> UpdateMatrixRunAsync(MatrixSession session)
     {
-        _context.MatrixRuns.Update(run);
+        var model = MatrixRunMapper.ToModel(session);
+        _context.MatrixRuns.Update(model);
         await _context.SaveChangesAsync();
-        return run;
+        return MatrixRunMapper.ToDomain(model);
     }
 
     public async Task<List<ActiveICEncounter>> GetICEncountersAsync(int runId)
