@@ -124,18 +124,18 @@ public class CacheService : ICacheService
 /// </summary>
 public static class CacheKeys
 {
-    private const string Prefix = "shadowrun:";
+    private const string _prefix = "shadowrun:";
     
-    public static string Character(int characterId) => $"{Prefix}character:{characterId}";
-    public static string CharacterByUser(ulong userId, string name) => $"{Prefix}character:user:{userId}:name:{name.ToLowerInvariant()}";
-    public static string UserCharacters(ulong userId) => $"{Prefix}characters:user:{userId}";
+    public static string Character(int characterId) => $"{_prefix}character:{characterId}";
+    public static string CharacterByUser(ulong userId, string name) => $"{_prefix}character:user:{userId}:name:{name.ToLowerInvariant()}";
+    public static string UserCharacters(ulong userId) => $"{_prefix}characters:user:{userId}";
     
-    public static string CombatSession(int sessionId) => $"{Prefix}combat:session:{sessionId}";
-    public static string ActiveCombatSession(ulong channelId) => $"{Prefix}combat:active:channel:{channelId}";
+    public static string CombatSession(int sessionId) => $"{_prefix}combat:session:{sessionId}";
+    public static string ActiveCombatSession(ulong channelId) => $"{_prefix}combat:active:channel:{channelId}";
     
-    public static string GameSession(int sessionId) => $"{Prefix}game:session:{sessionId}";
-    public static string ActiveGameSession(ulong channelId) => $"{Prefix}game:active:channel:{channelId}";
+    public static string GameSession(int sessionId) => $"{_prefix}game:session:{sessionId}";
+    public static string ActiveGameSession(ulong channelId) => $"{_prefix}game:active:channel:{channelId}";
     
-    public static string MatrixRun(int runId) => $"{Prefix}matrix:run:{runId}";
-    public static string ActiveMatrixRun(int characterId) => $"{Prefix}matrix:active:character:{characterId}";
+    public static string MatrixRun(int runId) => $"{_prefix}matrix:run:{runId}";
+    public static string ActiveMatrixRun(int characterId) => $"{_prefix}matrix:active:character:{characterId}";
 }

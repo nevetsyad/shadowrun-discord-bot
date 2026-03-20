@@ -18,13 +18,13 @@ public sealed class DiceService : IDisposable
     /// <summary>
     /// Maximum number of dice that can be rolled in a single pool to prevent resource exhaustion
     /// </summary>
-    private const int MaxPoolSize = 100;
+    private const int _maxPoolSize = 100;
 
     // FIX: HIGH-004 - Reduce max iterations for exploding dice to prevent infinite loops
     /// <summary>
     /// Maximum iterations for exploding dice to prevent excessive computation
     /// </summary>
-    private const int MaxExplodingIterations = 20;
+    private const int _maxExplodingIterations = 20;
 
     public DiceService(ILogger<DiceService>? logger = null)
     {
@@ -236,9 +236,9 @@ public sealed class DiceService : IDisposable
                 throw ex;
             }
 
-            if (poolSize > MaxPoolSize)
+            if (poolSize > _maxPoolSize)
             {
-                var ex = new ArgumentException($"Pool size cannot exceed {MaxPoolSize}", nameof(poolSize));
+                var ex = new ArgumentException($"Pool size cannot exceed {_maxPoolSize}", nameof(poolSize));
                 _logger?.LogError(ex, "Pool size too large: {PoolSize}", poolSize);
                 throw ex;
             }
@@ -330,8 +330,8 @@ public sealed class DiceService : IDisposable
         if (poolSize < 0)
             throw new ArgumentException("Pool size must be non-negative", nameof(poolSize));
 
-        if (poolSize > MaxPoolSize)
-            throw new ArgumentException($"Pool size cannot exceed {MaxPoolSize}", nameof(poolSize));
+        if (poolSize > _maxPoolSize)
+            throw new ArgumentException($"Pool size cannot exceed {_maxPoolSize}", nameof(poolSize));
 
         if (poolSize == 0)
             return new ShadowrunDiceResult
@@ -351,7 +351,7 @@ public sealed class DiceService : IDisposable
         var iterations = 0;
         // FIX: HIGH-004 - Use reduced max iterations constant
 
-        while (currentPool > 0 && iterations < MaxExplodingIterations)
+        while (currentPool > 0 && iterations < _maxExplodingIterations)
         {
             iterations++;
             var rolls = RollDice(currentPool, 6);
@@ -392,8 +392,8 @@ public sealed class DiceService : IDisposable
         if (poolSize < 0)
             throw new ArgumentException("Pool size must be non-negative", nameof(poolSize));
 
-        if (poolSize > MaxPoolSize)
-            throw new ArgumentException($"Pool size cannot exceed {MaxPoolSize}", nameof(poolSize));
+        if (poolSize > _maxPoolSize)
+            throw new ArgumentException($"Pool size cannot exceed {_maxPoolSize}", nameof(poolSize));
 
         if (poolSize == 0)
             return new FriedmanDiceResult
@@ -412,7 +412,7 @@ public sealed class DiceService : IDisposable
         var iterations = 0;
         // FIX: HIGH-004 - Use reduced max iterations constant
 
-        while (currentPool > 0 && iterations < MaxExplodingIterations)
+        while (currentPool > 0 && iterations < _maxExplodingIterations)
         {
             iterations++;
             var rolls = RollDice(currentPool, 6);

@@ -99,6 +99,7 @@ class Program
             .ConfigureServices((context, services) =>
             {
                 // Register repositories from Infrastructure layer
+                services.AddSingleton<IBotConfig, BotConfig>();
                 services.AddScoped<ICharacterRepository, CharacterRepository>();
                 services.AddScoped<ICombatSessionRepository, CombatSessionRepository>();
                 services.AddScoped<ICombatParticipantRepository, CombatParticipantRepository>();
