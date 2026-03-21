@@ -274,19 +274,112 @@ public static class GearDatabase
         // ELECTRONICS
         ["Electronics"] = new List<GearItem>
         {
+            // Cyberdecks - All models from SR3 rulebook
             new GearItem
             {
-                Id = "cyberdeck-base",
-                Name = "Cyberdeck (Base Model)",
+                Id = "cyberdeck-allegience-alpha",
+                Name = "Allegience Alpha",
                 Category = "Electronics",
                 SubCategory = "Cyberdecks",
-                Cost = 100000,
+                Cost = 0, // Found in the game world, not for sale
+                Stats = new Dictionary<string, int>
+                {
+                    ["MPCP"] = 3,
+                    ["Hardening"] = 0,
+                    ["Response"] = 0,
+                    ["ActiveMemory"] = 30,
+                    ["Storage"] = 100,
+                    ["Load"] = 10
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "cyberdeck-pcd-500",
+                Name = "PCD-500",
+                Category = "Electronics",
+                SubCategory = "Cyberdecks",
+                Cost = 5000,
                 Stats = new Dictionary<string, int>
                 {
                     ["MPCP"] = 4,
-                    ["Hardening"] = 4,
+                    ["Hardening"] = 1,
+                    ["Response"] = 0,
                     ["ActiveMemory"] = 50,
-                    ["Storage"] = 100
+                    ["Storage"] = 100,
+                    ["Load"] = 20
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "cyberdeck-fuchi-cyber-5",
+                Name = "Fuchi Cyber-5",
+                Category = "Electronics",
+                SubCategory = "Cyberdecks",
+                Cost = 25000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["MPCP"] = 6,
+                    ["Hardening"] = 2,
+                    ["Response"] = 1,
+                    ["ActiveMemory"] = 100,
+                    ["Storage"] = 500,
+                    ["Load"] = 20
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "cyberdeck-sega-cty-360",
+                Name = "SEGA CTY-360",
+                Category = "Electronics",
+                SubCategory = "Cyberdecks",
+                Cost = 60000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["MPCP"] = 8,
+                    ["Hardening"] = 3,
+                    ["Response"] = 1,
+                    ["ActiveMemory"] = 200,
+                    ["Storage"] = 500,
+                    ["Load"] = 50
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "cyberdeck-fuchi-cyber-7",
+                Name = "Fuchi Cyber-7",
+                Category = "Electronics",
+                SubCategory = "Cyberdecks",
+                Cost = 125000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["MPCP"] = 10,
+                    ["Hardening"] = 4,
+                    ["Response"] = 2,
+                    ["ActiveMemory"] = 300,
+                    ["Storage"] = 1000,
+                    ["Load"] = 50
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "cyberdeck-fairlight-excalibur",
+                Name = "Fairlight Excalibur",
+                Category = "Electronics",
+                SubCategory = "Cyberdecks",
+                Cost = 250000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["MPCP"] = 12,
+                    ["Hardening"] = 5,
+                    ["Response"] = 3,
+                    ["ActiveMemory"] = 500,
+                    ["Storage"] = 1000,
+                    ["Load"] = 100
                 },
                 IsLegal = false
             },
@@ -305,9 +398,10 @@ public static class GearDatabase
             }
         },
 
-        // VEHICLES
+        // VEHICLES - Ground Vehicles (SR3)
         ["Vehicles"] = new List<GearItem>
         {
+            // Cars
             new GearItem
             {
                 Id = "citymaster",
@@ -319,7 +413,8 @@ public static class GearDatabase
                 {
                     ["Body"] = 3,
                     ["Armor"] = 2,
-                    ["Speed"] = 100
+                    ["Speed"] = 100,
+                    ["Handling"] = 3
                 },
                 IsLegal = true
             },
@@ -334,7 +429,146 @@ public static class GearDatabase
                 {
                     ["Body"] = 2,
                     ["Armor"] = 0,
-                    ["Speed"] = 140
+                    ["Speed"] = 140,
+                    ["Handling"] = 4
+                },
+                IsLegal = true
+            },
+            new GearItem
+            {
+                Id = "toyota-camry",
+                Name = "Toyota Camry",
+                Category = "Vehicles",
+                SubCategory = "Ground Vehicles",
+                Cost = 25000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Body"] = 2,
+                    ["Armor"] = 1,
+                    ["Speed"] = 80,
+                    ["Handling"] = 2
+                },
+                IsLegal = true
+            },
+            
+            // Trucks
+            new GearItem
+            {
+                Id = "ford-f150",
+                Name = "Ford F-150",
+                Category = "Vehicles",
+                SubCategory = "Ground Vehicles",
+                Cost = 45000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Body"] = 4,
+                    ["Armor"] = 3,
+                    ["Speed"] = 70,
+                    ["Handling"] = 2
+                },
+                IsLegal = true
+            },
+            
+            // Luxury Vehicles
+            new GearItem
+            {
+                Id = "mercedes-s500",
+                Name = "Mercedes S500",
+                Category = "Vehicles",
+                SubCategory = "Ground Vehicles",
+                Cost = 65000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Body"] = 3,
+                    ["Armor"] = 2,
+                    ["Speed"] = 110,
+                    ["Handling"] = 4
+                },
+                IsLegal = true
+            },
+            
+            // Military Vehicles
+            new GearItem
+            {
+                Id = "m1a2-tank",
+                Name = "M1A2 Tank",
+                Category = "Vehicles",
+                SubCategory = "Ground Vehicles",
+                Cost = 250000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Body"] = 8,
+                    ["Armor"] = 6,
+                    ["Speed"] = 40,
+                    ["Handling"] = 1
+                },
+                IsLegal = false
+            },
+            
+            // Aircraft - SR3 Air Vehicles
+            new GearItem
+            {
+                Id = "cessna-citation",
+                Name = "Cessna Citation",
+                Category = "Vehicles",
+                SubCategory = "Air Vehicles",
+                Cost = 450000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Body"] = 2,
+                    ["Armor"] = 1,
+                    ["Speed"] = 300,
+                    ["Handling"] = 5
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "f22-raptor",
+                Name = "F-22 Raptor",
+                Category = "Vehicles",
+                SubCategory = "Air Vehicles",
+                Cost = 2500000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Body"] = 5,
+                    ["Armor"] = 4,
+                    ["Speed"] = 800,
+                    ["Handling"] = 6
+                },
+                IsLegal = false
+            },
+            
+            // Water Vehicles - SR3 Watercraft
+            new GearItem
+            {
+                Id = "sea-doo",
+                Name = "Sea-Doo Spark",
+                Category = "Vehicles",
+                SubCategory = "Water Vehicles",
+                Cost = 15000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Body"] = 1,
+                    ["Armor"] = 0,
+                    ["Speed"] = 80,
+                    ["Handling"] = 3
+                },
+                IsLegal = true
+            },
+            new GearItem
+            {
+                Id = "yacht-45",
+                Name = "Yacht 45ft",
+                Category = "Vehicles",
+                SubCategory = "Water Vehicles",
+                Cost = 150000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Body"] = 4,
+                    ["Armor"] = 2,
+                    ["Speed"] = 30,
+                    ["Handling"] = 1
                 },
                 IsLegal = true
             }
@@ -368,6 +602,319 @@ public static class GearDatabase
                     ["Range"] = 50
                 },
                 IsLegal = true
+            }
+        },
+
+        // SOFTWARE PROGRAMS - All programs available for installation on cyberdecks
+        ["Software"] = new List<GearItem>
+        {
+            // Hacking Programs (Utility type)
+            new GearItem
+            {
+                Id = "program-scan",
+                Name = "Scan",
+                Category = "Software",
+                SubCategory = "Hacking",
+                Cost = 500,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 1
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-crack",
+                Name = "Crack",
+                Category = "Software",
+                SubCategory = "Hacking",
+                Cost = 1000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 2
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-probe",
+                Name = "Probe",
+                Category = "Software",
+                SubCategory = "Hacking",
+                Cost = 1500,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 3
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-clone",
+                Name = "Clone",
+                Category = "Software",
+                SubCategory = "Hacking",
+                Cost = 2000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 4
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-bypass",
+                Name = "Bypass",
+                Category = "Software",
+                SubCategory = "Hacking",
+                Cost = 2500,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 5
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-fade",
+                Name = "Fade",
+                Category = "Software",
+                SubCategory = "Hacking",
+                Cost = 3000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 6
+                },
+                IsLegal = false
+            },
+            
+            // Combat Programs (Attack type)
+            new GearItem
+            {
+                Id = "program-damage",
+                Name = "Damage",
+                Category = "Software",
+                SubCategory = "Combat",
+                Cost = 1000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 2
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-destroy",
+                Name = "Destroy",
+                Category = "Software",
+                SubCategory = "Combat",
+                Cost = 2000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 3
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-infect",
+                Name = "Infect",
+                Category = "Software",
+                SubCategory = "Combat",
+                Cost = 3000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 4
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-attack",
+                Name = "Attack",
+                Category = "Software",
+                SubCategory = "Combat",
+                Cost = 4000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 5
+                },
+                IsLegal = false
+            },
+            
+            // Defense Programs (Defense type)
+            new GearItem
+            {
+                Id = "program-shield",
+                Name = "Shield",
+                Category = "Software",
+                SubCategory = "Defense",
+                Cost = 1000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 2
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-guard",
+                Name = "Guard",
+                Category = "Software",
+                SubCategory = "Defense",
+                Cost = 2000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 3
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-protect",
+                Name = "Protect",
+                Category = "Software",
+                SubCategory = "Defense",
+                Cost = 3000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 4
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-stasis",
+                Name = "Stasis",
+                Category = "Software",
+                SubCategory = "Defense",
+                Cost = 4000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 5
+                },
+                IsLegal = false
+            },
+            
+            // Utility Programs (Utility type)
+            new GearItem
+            {
+                Id = "program-data-analysis",
+                Name = "Data Analysis",
+                Category = "Software",
+                SubCategory = "Utility",
+                Cost = 500,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 1
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-hacking-tools",
+                Name = "Hacking Tools",
+                Category = "Software",
+                SubCategory = "Utility",
+                Cost = 1000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 2
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-encryption",
+                Name = "Encryption",
+                Category = "Software",
+                SubCategory = "Utility",
+                Cost = 1500,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 3
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-decoy",
+                Name = "Decoy",
+                Category = "Software",
+                SubCategory = "Utility",
+                Cost = 2000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 4
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-misc",
+                Name = "Miscellaneous",
+                Category = "Software",
+                SubCategory = "Utility",
+                Cost = 2500,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 5
+                },
+                IsLegal = false
+            },
+            
+            // Special Programs (Special type)
+            new GearItem
+            {
+                Id = "program-stealth",
+                Name = "Stealth",
+                Category = "Software",
+                SubCategory = "Special",
+                Cost = 3000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 4
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-infiltration",
+                Name = "Infiltration",
+                Category = "Software",
+                SubCategory = "Special",
+                Cost = 4000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 5
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-matrix-armor",
+                Name = "Matrix Armor",
+                Category = "Software",
+                SubCategory = "Special",
+                Cost = 5000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 6
+                },
+                IsLegal = false
+            },
+            new GearItem
+            {
+                Id = "program-spyware",
+                Name = "Spyware",
+                Category = "Software",
+                SubCategory = "Special",
+                Cost = 6000,
+                Stats = new Dictionary<string, int>
+                {
+                    ["Memory"] = 7
+                },
+                IsLegal = false
             }
         }
     };
